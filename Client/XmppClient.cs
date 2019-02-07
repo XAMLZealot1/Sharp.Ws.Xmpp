@@ -678,6 +678,36 @@ namespace Sharp.Xmpp.Client
         /// <summary>
         /// Initializes a new instance of the XmppClient class.
         /// </summary>
+        /// <param name="address">The XMPP server IP address.</param>
+        /// <param name="hostname">The hostname of the XMPP server to connect to.</param>
+        /// <param name="username">The username with which to authenticate. In XMPP jargon
+        /// this is known as the 'node' part of the JID.</param>
+        /// <param name="password">The password with which to authenticate.</param>
+        /// <param name="port">The port number of the XMPP service of the server.</param>
+        /// <param name="tls">If true the session will be TLS/SSL-encrypted if the server
+        /// supports TLS/SSL-encryption.</param>
+        /// <param name="validate">A delegate used for verifying the remote Secure Sockets
+        /// Layer (SSL) certificate which is used for authentication. Can be null if not
+        /// needed.</param>
+        /// <exception cref="ArgumentNullException">The hostname parameter or the
+        /// username parameter or the password parameter is null.</exception>
+        /// <exception cref="ArgumentException">The hostname parameter or the username
+        /// parameter is the empty string.</exception>
+        /// <exception cref="ArgumentOutOfRangeException">The value of the port parameter
+        /// is not a valid port number.</exception>
+        /// <remarks>Use this constructor if you wish to connect to an XMPP server using
+        /// an existing set of user credentials.</remarks>
+        public XmppClient(string address, string hostname, string username, string password,
+            int port = 5222, bool tls = true, RemoteCertificateValidationCallback validate = null)
+        {
+            im = new XmppIm(address, hostname, username, password, port, tls, validate);
+            // Initialize the various extension modules.
+            LoadExtensions();
+        }
+
+        /// <summary>
+        /// Initializes a new instance of the XmppClient class.
+        /// </summary>
         /// <param name="hostname">The hostname of the XMPP server to connect to.</param>
         /// <param name="username">The username with which to authenticate. In XMPP jargon
         /// this is known as the 'node' part of the JID.</param>
