@@ -163,6 +163,38 @@ namespace Sharp.Xmpp.Client
         private MessageCarbons messageCarbons;
 
         /// <summary>
+        /// Is web socket used - false by default
+        /// </summary>
+        public bool UseWebSocket
+        {
+            get
+            {
+                return im.UseWebSocket;
+            }
+
+            set
+            {
+                im.UseWebSocket = value;
+            }
+        }
+
+        /// <summary>
+        /// URI to use for web socket connection
+        /// </summary>
+        public string WebSocketUri
+        {
+            get
+            {
+                return im.WebSocketUri;
+            }
+
+            set
+            {
+                im.WebSocketUri = value;
+            }
+        }
+
+        /// <summary>
         /// The hostname of the XMPP server to connect to.
         /// </summary>
         public string Hostname
@@ -2048,12 +2080,14 @@ namespace Sharp.Xmpp.Client
             dataForms = im.LoadExtension<DataForms>();
             featureNegotiation = im.LoadExtension<FeatureNegotiation>();
             streamInitiation = im.LoadExtension<StreamInitiation>();
-            siFileTransfer = im.LoadExtension<SIFileTransfer>();
-            inBandBytestreams = im.LoadExtension<InBandBytestreams>();
             userActivity = im.LoadExtension<UserActivity>();
+
             socks5Bytestreams = im.LoadExtension<Socks5Bytestreams>();
+            inBandBytestreams = im.LoadExtension<InBandBytestreams>();
+            siFileTransfer = im.LoadExtension<SIFileTransfer>();
             FileTransferSettings = new FileTransferSettings(socks5Bytestreams,
                 siFileTransfer);
+            
             serverIpCheck = im.LoadExtension<ServerIpCheck>();
             messageCarbons = im.LoadExtension<MessageCarbons>();
             inBandRegistration = im.LoadExtension<InBandRegistration>();

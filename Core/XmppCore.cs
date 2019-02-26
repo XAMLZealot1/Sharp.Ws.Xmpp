@@ -14,6 +14,8 @@ using System.Threading;
 using System.Threading.Tasks;
 using System.Xml;
 
+using log4net;
+
 namespace Sharp.Xmpp.Core
 {
     /// <summary>
@@ -22,6 +24,18 @@ namespace Sharp.Xmpp.Core
     /// <remarks>For implementation details, refer to RFC 3920.</remarks>
     public class XmppCore : IDisposable
     {
+        private static readonly ILog log = LogManager.GetLogger(typeof(XmppCore));
+
+        private const String BIND_ID = "bind-0";
+
+        public const String ACTION_CREATE_SESSION = "CREATE_SESSION";
+        public const String ACTION_SERVICE_DISCOVERY = "ACTION_SERVICE_DISCOVERY";
+        public const String ACTION_ENABLE_MESSAGE_CARBONS = "ENABLE_MESSAGE_CARBON";
+        public const String ACTION_GET_ROSTER = "GET_ROSTER";
+        public const String ACTION_SEND_STATUS = "ACTION_SEND_STATUS";
+
+        public event EventHandler<TextEventArgs> ActionToPerform;
+
         /// <summary>
         /// The DNS SRV name records
         /// </summary>
@@ -40,7 +54,9 @@ namespace Sharp.Xmpp.Core
         /// <summary>
         /// The TCP connection to the XMPP server.
         /// </summary>
-        private TcpClient client;
+        private TcpClient tcpClient;
+
+        private WebSocket webSocketClient;
 
         /// <summary>
         /// The (network) stream used for sending and receiving XML data.
@@ -56,6 +72,16 @@ namespace Sharp.Xmpp.Core
         /// True if the instance has been disposed of.
         /// </summary>
         private bool disposed;
+
+        /// <summary>
+        /// True if web socket is used
+        /// </summary>
+        private bool useWebSocket = false;
+
+        /// <summary>
+        /// URI to use for web socket connection
+        /// </summary>
+        private string webSocketUri;
 
         /// <summary>
         /// Used for creating unique IQ stanza ids.
@@ -91,6 +117,8 @@ namespace Sharp.Xmpp.Core
         /// The resource to use for binding.
         /// </summary>
         private string resource;
+
+        SaslMechanism saslMechanism = null;
 
         /// <summary>
         /// Write lock for the network stream.
@@ -140,6 +168,38 @@ namespace Sharp.Xmpp.Core
         /// A cancellation token source for cancelling the dispatcher, if neccessary.
         /// </summary>
         private CancellationTokenSource cancelDispatch = new CancellationTokenSource();
+
+        /// <summary>
+        /// Is web socket used - false by default
+        /// </summary>
+        public bool UseWebSocket
+        {
+            get
+            {
+                return useWebSocket;
+            }
+
+            set
+            {
+                useWebSocket = value;
+            }
+        }
+
+        /// <summary>
+        /// URI to use for web socket connection
+        /// </summary>
+        public string WebSocketUri
+        {
+            get
+            {
+                return webSocketUri;
+            }
+
+            set
+            {
+                webSocketUri = value;
+            }
+        }
 
         /// <summary>
         /// The hostname of the XMPP server to connect to.
@@ -372,6 +432,7 @@ namespace Sharp.Xmpp.Core
                     Port = port;
                     Address = hostname;
                 }
+
             }
             else
             {
@@ -510,20 +571,66 @@ namespace Sharp.Xmpp.Core
             this.resource = resource;
             try
             {
-                client = new TcpClient(Address, Port);
-                stream = client.GetStream();
-                // Sets up the connection which includes TLS and possibly SASL negotiation.
-                SetupConnection(this.resource);
-                // We are connected.
-                Connected = true;
-                // Set up the listener and dispatcher tasks.
-                Task.Factory.StartNew(ReadXmlStream, TaskCreationOptions.LongRunning);
-                Task.Factory.StartNew(DispatchEvents, TaskCreationOptions.LongRunning);
+                if(UseWebSocket)
+                {
+                    if(String.IsNullOrEmpty(WebSocketUri))
+                        throw new XmppException("URI not provided for WebSocket connection");
+
+                    webSocketClient = new WebSocket(WebSocketUri);
+                    webSocketClient.WebSocketOpened += new EventHandler(WebSocketClient_WebSocketOpened);
+                    webSocketClient.WebSocketClosed += new EventHandler(WebSocketClient_WebSocketClosed);
+                    webSocketClient.WebSocketError += new EventHandler(WebSocketClient_WebSocketError);
+
+                    webSocketClient.Open();
+                }
+                else
+                {
+                    tcpClient = new TcpClient(Address, Port);
+                    stream = tcpClient.GetStream();
+
+                    // Sets up the connection which includes TLS and possibly SASL negotiation.
+                    SetupConnection(this.resource);
+
+                    // We are connected.
+                    Connected = true;
+
+                    // Set up the listener and dispatcher tasks.
+                    Task.Factory.StartNew(ReadXmlStream, TaskCreationOptions.LongRunning);
+                    Task.Factory.StartNew(DispatchEvents, TaskCreationOptions.LongRunning);
+                }
             }
             catch (XmlException e)
             {
                 throw new XmppException("The XML stream could not be negotiated.", e);
             }
+        }
+
+        private void WebSocketClient_WebSocketError(object sender, EventArgs e)
+        {
+            //TODO
+        }
+
+        private void WebSocketClient_WebSocketClosed(object sender, EventArgs e)
+        {
+            //TODO
+        }
+
+        private void WebSocketClient_WebSocketOpened(object sender, EventArgs e)
+        {
+            // We are connected.
+            Connected = true;
+
+            // Set up the listener and dispatcher tasks.
+            Task.Factory.StartNew(ReadAction, TaskCreationOptions.LongRunning | TaskCreationOptions.DenyChildAttach);
+            Task.Factory.StartNew(ReadXmlWebSocketMessage, TaskCreationOptions.LongRunning | TaskCreationOptions.DenyChildAttach);
+            Task.Factory.StartNew(DispatchEvents, TaskCreationOptions.LongRunning | TaskCreationOptions.DenyChildAttach);
+
+            var xml = Xml.Element("open", "urn:ietf:params:xml:ns:xmpp-framing")
+                .Attr("to", hostname)
+                .Attr("version", "1.0")
+                .Attr("xmlns:stream", "http://etherx.jabber.org/streams")
+                .Attr("xml:lang", CultureInfo.CurrentCulture.Name);
+            Send(xml.ToXmlString(xmlDeclaration: true, leaveOpen: false));
         }
 
         /// <summary>
@@ -716,45 +823,59 @@ namespace Sharp.Xmpp.Core
             }
             else timeOut = millisecondsTimeout;
             // Generate a unique ID for the IQ request.
-            request.Id = GetId();
-            AutoResetEvent ev = new AutoResetEvent(false);
-            Send(request);
-            // Wait for event to be signaled by task that processes the incoming
-            // XML stream.
-            waitHandles[request.Id] = ev;
-            int index = WaitHandle.WaitAny(new WaitHandle[] { ev, cancelIq.Token.WaitHandle },
-                timeOut);
-            if (index == WaitHandle.WaitTimeout)
+            if(request.Id == null)
+                request.Id = GetId();
+
+            if (useWebSocket)
             {
-                //An entity that receives an IQ request of type "get" or "set" MUST reply with an IQ response of type
-                //"result" or "error" (the response MUST preserve the 'id' attribute of the request).
-                //http://xmpp.org/rfcs/rfc3920.html#stanzas
-                //if (request.Type == IqType.Set || request.Type == IqType.Get)
-
-                //Make sure that its a request towards the server and not towards any client
-                var ping = request.Data["ping"];
-
-                if (request.To.Domain == Jid.Domain && (request.To.Node == null || request.To.Node == "") && (ping != null && ping.NamespaceURI == "urn:xmpp:ping"))
-                {
-                    Connected = false;
-                    var e = new XmppDisconnectionException("Timeout Disconnection happened at IqRequest");
-                    if (!disposed)
-                        Error.Raise(this, new ErrorEventArgs(e));
-                    //throw new TimeoutException();
-                }
-
-                //This check is somehow not really needed doue to the IQ must be either set or get
-            }
-            // Reader task errored out.
-            if (index == 1)
-                throw new IOException("The incoming XML stream could not read.");
-            // Fetch response stanza.
-            Iq response;
-            if (iqResponses.TryRemove(request.Id, out response))
+                log.DebugFormat("before to send IqRequest:", request.Id);
+                webSocketClient.AddExpectedIqId(request.Id);
+                Send(request);
+                Iq response = webSocketClient.DequeueExpectedIqMessage();
                 return response;
-            // Shouldn't happen.
+            }
+            else
+            {
+                //TODO: need to add time out ...
+                AutoResetEvent ev = new AutoResetEvent(false);
+                Send(request);
+                // Wait for event to be signaled by task that processes the incoming
+                // XML stream.
+                waitHandles[request.Id] = ev;
+                int index = WaitHandle.WaitAny(new WaitHandle[] { ev, cancelIq.Token.WaitHandle },
+                    timeOut);
+                if (index == WaitHandle.WaitTimeout)
+                {
+                    //An entity that receives an IQ request of type "get" or "set" MUST reply with an IQ response of type
+                    //"result" or "error" (the response MUST preserve the 'id' attribute of the request).
+                    //http://xmpp.org/rfcs/rfc3920.html#stanzas
+                    //if (request.Type == IqType.Set || request.Type == IqType.Get)
 
-            throw new InvalidOperationException();
+                    //Make sure that its a request towards the server and not towards any client
+                    var ping = request.Data["ping"];
+
+                    if (request.To.Domain == Jid.Domain && (request.To.Node == null || request.To.Node == "") && (ping != null && ping.NamespaceURI == "urn:xmpp:ping"))
+                    {
+                        Connected = false;
+                        var e = new XmppDisconnectionException("Timeout Disconnection happened at IqRequest");
+                        if (!disposed)
+                            Error.Raise(this, new ErrorEventArgs(e));
+                        //throw new TimeoutException();
+                    }
+
+                    //This check is somehow not really needed doue to the IQ must be either set or get
+                }
+                // Reader task errored out.
+                if (index == 1)
+                    throw new IOException("The incoming XML stream could not read.");
+                // Fetch response stanza.
+                Iq response;
+                if (iqResponses.TryRemove(request.Id, out response))
+                    return response;
+                // Shouldn't happen.
+
+                throw new InvalidOperationException();
+            }
         }
 
         /// <summary>
@@ -909,11 +1030,28 @@ namespace Sharp.Xmpp.Core
                 if (disposing)
                 {
                     if (parser != null)
+                    {
                         parser.Close();
-                    parser = null;
-                    if (client != null)
-                        client.Close();
-                    client = null;
+                        parser = null;
+                    }
+
+                    if (tcpClient != null)
+                    {
+                        tcpClient.Close();
+                        tcpClient = null;
+                    }
+
+                    if (webSocketClient != null)
+                    {
+                        webSocketClient.Close();
+
+                        webSocketClient.WebSocketClosed -= WebSocketClient_WebSocketClosed;
+                        webSocketClient.WebSocketOpened -= WebSocketClient_WebSocketOpened;
+                        webSocketClient.WebSocketError -= WebSocketClient_WebSocketError;
+
+                        webSocketClient.Dispose();
+                        webSocketClient = null;
+                    }
                 }
                 // Get rid of unmanaged resources.
             }
@@ -990,6 +1128,7 @@ namespace Sharp.Xmpp.Core
                 throw new AuthenticationException("Authentication failed.", e);
             }
         }
+
 
         /// <summary>
         /// Initiates an XML stream with the specified entity.
@@ -1126,7 +1265,8 @@ namespace Sharp.Xmpp.Core
         private string SelectMechanism(IEnumerable<string> mechanisms)
         {
             // Precedence: SCRAM-SHA-1, DIGEST-MD5, PLAIN.
-            string[] m = new string[] { "SCRAM-SHA-1", "DIGEST-MD5", "PLAIN" };
+            //string[] m = new string[] { "SCRAM-SHA-1", "DIGEST-MD5", "PLAIN" };
+            string[] m = new string[] { "PLAIN" };
             for (int i = 0; i < m.Length; i++)
             {
                 if (mechanisms.Contains(m[i], StringComparer.InvariantCultureIgnoreCase))
@@ -1153,7 +1293,7 @@ namespace Sharp.Xmpp.Core
         {
             var xml = Xml.Element("iq")
                 .Attr("type", "set")
-                .Attr("id", "bind-0");
+                .Attr("id", BIND_ID);
             var bind = Xml.Element("bind", "urn:ietf:params:xml:ns:xmpp-bind");
             if (resourceName != null)
                 bind.Child(Xml.Element("resource").Text(resourceName));
@@ -1190,6 +1330,13 @@ namespace Sharp.Xmpp.Core
             xml.ThrowIfNull("xml");
             // XMPP is guaranteed to be UTF-8.
             byte[] buf = Encoding.UTF8.GetBytes(xml);
+
+            if (useWebSocket)
+            {
+                webSocketClient.Send(xml);
+                return;
+            }
+
             lock (writeLock)
             {
                 //FIXME
@@ -1249,6 +1396,204 @@ namespace Sharp.Xmpp.Core
                 throw e;
             }
         }
+
+        private void ReadAction()
+        {
+            while (true)
+            {
+                string action = webSocketClient.DequeueActionToPerform();
+                log.DebugFormat("Action dequeued:{0}", action);
+
+                if (ActionToPerform != null)
+                {
+                    try
+                    {
+                        ActionToPerform(this, new TextEventArgs(action));
+                    }
+                    catch (Exception ex)
+                    {
+                        //TODO
+                    }
+                }
+            }
+        }
+
+        public void QueueActionToPerform(string action)
+        {
+            webSocketClient.QueueActionToPerform(action);
+        }
+
+        /// <summary>
+        /// Listens for incoming XML stanzas and raises the appropriate events.
+        /// </summary>
+        /// <remarks>This runs in the context of a separate thread. In case of an
+        /// exception, the Error event is raised and the thread is shutdown.</remarks>
+        private void ReadXmlWebSocketMessage()
+        {
+            EventHandler h = null;
+            try
+            {
+                while (true)
+                {
+                    string message = webSocketClient.DequeueMessageReceived();
+
+                    try
+                    {
+                        XmlDocument xmlDocument;
+                        XmlElement elem, subElem;
+                        XmlElement xmlResponse;
+
+                        string response;
+                        string attribute;
+
+                        xmlDocument = new XmlDocument();
+                        xmlDocument.LoadXml(message);
+                        
+                        elem = xmlDocument.DocumentElement;
+
+                        switch (elem.Name)
+                        {
+                            case "challenge":
+                                log.Debug("challenge received");
+                                response = saslMechanism.GetResponse(elem.InnerText);
+                                xmlResponse = Xml.Element("response", 
+                                    "urn:ietf:params:xml:ns:xmpp-sasl").Text(response);
+                                Send(xmlResponse);
+                                break;
+
+                            case "success":
+                                log.Debug("success received");
+                                if ( saslMechanism.IsCompleted ||
+                                        (saslMechanism.GetResponse(elem.InnerText) == String.Empty) )
+                                {
+                                    Authenticated = true;
+
+                                    elem = Xml.Element("open", "urn:ietf:params:xml:ns:xmpp-framing")
+                                            .Attr("to", hostname)
+                                            .Attr("version", "1.0")
+                                            .Attr("xmlns:stream", "http://etherx.jabber.org/streams")
+                                            .Attr("xml:lang", CultureInfo.CurrentCulture.Name);
+                                    Send(elem.ToXmlString(xmlDeclaration: true, leaveOpen: false));
+                                }
+                                break;
+
+                            case "failure":
+                                log.Debug("failure received");
+                                //TO DOlog.Debug
+                                break;
+
+                            case "stream:features":
+                                log.Debug("stream:features received");
+
+                                subElem = (XmlElement)elem.FirstChild;
+                                if (subElem.Name == "mechanisms")
+                                {
+                                    var mech = subElem.FirstChild;
+                                    var list = new HashSet<string>();
+                                    while (mech != null)
+                                    {
+                                        list.Add(mech.InnerText);
+                                        mech = mech.NextSibling;
+                                    }
+                                    string name = SelectMechanism(list);
+                                    saslMechanism = SaslFactory.Create(name);
+                                    saslMechanism.Properties.Add("Username", username);
+                                    saslMechanism.Properties.Add("Password", password);
+                                    xmlResponse = Xml.Element("auth", "urn:ietf:params:xml:ns:xmpp-sasl")
+                                        .Attr("mechanism", name)
+                                        .Text(saslMechanism.HasInitial ? saslMechanism.GetResponse(String.Empty) : String.Empty);
+                                    Send(xmlResponse);
+                                }
+                                else if (subElem.Name == "bind")
+                                {
+                                    xmlResponse = Xml.Element("iq")
+                                        .Attr("type", "set")
+                                        .Attr("id", BIND_ID);
+                                    var bind = Xml.Element("bind", "urn:ietf:params:xml:ns:xmpp-bind");
+                                    if (resource != null)
+                                        bind.Child(Xml.Element("resource").Text(resource));
+                                    xmlResponse.Child(bind);
+                                    Send(xmlResponse);
+                                }
+                                break;
+
+                            case "iq":
+                                log.Debug("iq received");
+
+                                attribute = elem.GetAttribute("id");
+                                if (attribute == BIND_ID)
+                                {
+                                    Jid = new Jid(elem["bind"]["jid"].InnerText);
+                                    webSocketClient.QueueActionToPerform(ACTION_CREATE_SESSION);
+                                    break;
+                                }
+
+                                Iq iq = new Iq(elem);
+                                log.Debug("iq.Id: " + iq.Id);
+                                if (webSocketClient.IsExpectedIqId(iq.Id))
+                                {
+                                    webSocketClient.QueueExpectedIqMessage(iq);
+                                    break;
+                                }
+                                else
+                                {
+                                    log.DebugFormat("Not an expected Iq Message:{0}", iq.Id);
+                                }
+
+
+                                if (iq.IsRequest)
+                                {
+                                    log.DebugFormat("Iq is request:{0}", iq.Id);
+                                    stanzaQueue.Add(iq);
+                                }
+                                else
+                                {
+                                    log.DebugFormat("Handle Id response:{0}", iq.Id);
+                                    HandleIqResponse(iq);
+                                }
+                                break;
+
+                            case "message":
+                                log.DebugFormat("message received");
+
+                                stanzaQueue.Add(new Message(elem));
+                                break;
+
+                            case "presence":
+                                log.DebugFormat("presence received");
+
+                                stanzaQueue.Add(new Presence(elem));
+                                break;
+                        }
+
+                    }
+                    catch
+                    {
+
+                    }
+                }
+            }
+            catch (Exception e)
+            {
+                // Shut down the dispatcher task.
+                cancelDispatch.Cancel();
+                cancelDispatch = new CancellationTokenSource();
+                // Unblock any threads blocking on pending IQ requests.
+                cancelIq.Cancel();
+                cancelIq = new CancellationTokenSource();
+                //Add the failed connection
+                if ((e is IOException) || (e is XmppDisconnectionException))
+                {
+                    Connected = false;
+                    var ex = new XmppDisconnectionException(e.ToString());
+                    e = ex;
+                }
+                // Raise the error event.
+                if (!disposed)
+                    Error.Raise(this, new ErrorEventArgs(e));
+            }
+        }
+
 
         /// <summary>
         /// Listens for incoming XML stanzas and raises the appropriate events.
@@ -1362,7 +1707,7 @@ namespace Sharp.Xmpp.Core
         /// Generates a unique id.
         /// </summary>
         /// <returns>A unique id.</returns>
-        private string GetId()
+        public string GetId()
         {
             Interlocked.Increment(ref id);
             return id.ToString();
@@ -1375,8 +1720,18 @@ namespace Sharp.Xmpp.Core
         {
             if (!Connected)
                 return;
+
             // Close the XML stream.
             Send("</stream:stream>");
+
+            if (useWebSocket)
+            {
+                if (webSocketClient != null)
+                {
+                    
+                }
+            }
+            
             Connected = false;
             Authenticated = false;
         }

@@ -4,6 +4,15 @@ using System.Xml;
 
 namespace Sharp.Xmpp
 {
+    public class TextEventArgs : EventArgs
+    {
+        public TextEventArgs(string text)
+        {
+            Text = text;
+        }
+        public string Text { get; private set; }
+    }
+
     /// <summary>
     /// Contains utility and extension methods.
     /// </summary>

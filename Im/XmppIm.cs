@@ -10,6 +10,8 @@ using System.Net.Sockets;
 using System.Security.Authentication;
 using System.Xml;
 
+using log4net;
+
 namespace Sharp.Xmpp.Im
 {
     /// <summary>
@@ -18,6 +20,8 @@ namespace Sharp.Xmpp.Im
     /// <remarks>For implementation details, refer to RFC 3921.</remarks>
     public class XmppIm : IDisposable
     {
+        private static readonly ILog log = LogManager.GetLogger(typeof(XmppIm));
+
         /// <summary>
         /// Provides access to the core facilities of XMPP.
         /// </summary>
@@ -32,6 +36,38 @@ namespace Sharp.Xmpp.Im
         /// The set of loaded extensions.
         /// </summary>
         private ISet<XmppExtension> extensions = new HashSet<XmppExtension>();
+
+        /// <summary>
+        /// Is web socket used - false by default
+        /// </summary>
+        public bool UseWebSocket
+        {
+            get
+            {
+                return core.UseWebSocket;
+            }
+
+            set
+            {
+                core.UseWebSocket = value;
+            }
+        }
+
+        /// <summary>
+        /// URI to use for web socket connection
+        /// </summary>
+        public string WebSocketUri
+        {
+            get
+            {
+                return core.WebSocketUri;
+            }
+
+            set
+            {
+                core.WebSocketUri = value;
+            }
+        }
 
         /// <summary>
         /// The hostname of the XMPP server to connect to.
@@ -392,20 +428,73 @@ namespace Sharp.Xmpp.Im
             try
             {
                 core.Connect(resource);
-                // If no username has been providd, don't establish a session.
-                if (Username == null)
-                    return null;
-                // Establish a session (Refer to RFC 3921, Section 3. Session Establishment).
-                EstablishSession();
-                // Retrieve user's roster as recommended (Refer to RFC 3921, Section 7.3).
-                Roster roster = GetRoster();
-                // Send initial presence.
-                SendPresence(new Presence());
-                return roster;
+                if (UseWebSocket)
+                {
+                    core.ActionToPerform += Core_ActionToPerform;
+                }
+                else
+                {
+
+                    // If no username has been providd, don't establish a session.
+                    if (Username == null)
+                        return null;
+
+                    // Establish a session (Refer to RFC 3921, Section 3. Session Establishment).
+                    EstablishSession();
+                    // Retrieve user's roster as recommended (Refer to RFC 3921, Section 7.3).
+                    Roster roster = GetRoster();
+                    // Send initial presence.
+                    SendPresence(new Presence());
+
+                    return roster;
+                }
+                return null;
             }
             catch (SocketException e)
             {
                 throw new IOException("Could not connect to the server", e);
+            }
+        }
+
+        private void Core_ActionToPerform(object sender, TextEventArgs e)
+        {
+
+            string action = e.Text;
+            switch (action)
+            {
+                case XmppCore.ACTION_CREATE_SESSION:
+                    EstablishSession();
+                    core.QueueActionToPerform(XmppCore.ACTION_SERVICE_DISCOVERY);
+                    break;
+
+                case XmppCore.ACTION_SERVICE_DISCOVERY:
+                    Extension[] extensions = new Extension[] { Extension.Ping, Extension.MessageCarbons, Extension.MultiUserChat, Extension.ChatStateNotifications };
+                    ServiceDiscovery serviceDiscovery = GetExtension<ServiceDiscovery>();
+                    serviceDiscovery.Supports(core.Jid.Domain, extensions);
+
+                    core.QueueActionToPerform(XmppCore.ACTION_ENABLE_MESSAGE_CARBONS);
+                    break;
+
+                case XmppCore.ACTION_ENABLE_MESSAGE_CARBONS:
+                    MessageCarbons messageCarbons = GetExtension<MessageCarbons>();
+                    messageCarbons.EnableCarbons(true);
+
+                    core.QueueActionToPerform(XmppCore.ACTION_GET_ROSTER);
+                    break;
+
+                case XmppCore.ACTION_GET_ROSTER:
+                    GetRoster();
+
+                    core.QueueActionToPerform(XmppCore.ACTION_SEND_STATUS);
+                    break;
+
+                case XmppCore.ACTION_SEND_STATUS:
+                    SetStatus(Availability.Online, "message status", 5);
+                    break;
+
+                default:
+                    log.DebugFormat("Unknown action: {0}", action);
+                    break;
             }
         }
 
@@ -674,11 +763,11 @@ namespace Sharp.Xmpp.Im
             if (availability != Availability.Online)
             {
                 var states = new Dictionary<Availability, string>() {
-						{ Availability.Away, "away" },
-						{ Availability.Dnd, "dnd" },
-						{ Availability.Xa, "xa" },
-						{ Availability.Chat, "chat" }
-					};
+                        { Availability.Away, "away" },
+                        { Availability.Dnd, "dnd" },
+                        { Availability.Xa, "xa" },
+                        { Availability.Chat, "chat" }
+                    };
                 elems.Add(Xml.Element("show").Text(states[availability]));
             }
             if (priority != 0)
@@ -720,11 +809,11 @@ namespace Sharp.Xmpp.Im
             if (availability != Availability.Online)
             {
                 var states = new Dictionary<Availability, string>() {
-						{ Availability.Away, "away" },
-						{ Availability.Dnd, "dnd" },
-						{ Availability.Xa, "xa" },
-						{ Availability.Chat, "chat" }
-					};
+                        { Availability.Away, "away" },
+                        { Availability.Dnd, "dnd" },
+                        { Availability.Xa, "xa" },
+                        { Availability.Chat, "chat" }
+                    };
                 elems.Add(Xml.Element("show").Text(states[availability]));
             }
             if (priority != 0)
@@ -1794,11 +1883,11 @@ namespace Sharp.Xmpp.Im
         {
             Roster roster = new Roster();
             var states = new Dictionary<string, SubscriptionState>() {
-				{ "none", SubscriptionState.None },
-				{ "to", SubscriptionState.To },
-				{ "from", SubscriptionState.From },
-				{ "both", SubscriptionState.Both }
-			};
+                { "none", SubscriptionState.None },
+                { "to", SubscriptionState.To },
+                { "from", SubscriptionState.From },
+                { "both", SubscriptionState.Both }
+            };
             var items = query.GetElementsByTagName("item");
             foreach (XmlElement item in items)
             {
@@ -1829,11 +1918,11 @@ namespace Sharp.Xmpp.Im
         private void ProcessRosterIq(Iq iq)
         {
             var states = new Dictionary<string, SubscriptionState>() {
-				{ "none", SubscriptionState.None },
-				{ "to", SubscriptionState.To },
-				{ "from", SubscriptionState.From },
-				{ "both", SubscriptionState.Both }
-			};
+                { "none", SubscriptionState.None },
+                { "to", SubscriptionState.To },
+                { "from", SubscriptionState.From },
+                { "both", SubscriptionState.Both }
+            };
             // Ensure roster push is from a trusted source.
             bool trusted = iq.From == null || iq.From == Jid || iq.From
                 == Jid.GetBareJid();
@@ -1893,11 +1982,11 @@ namespace Sharp.Xmpp.Im
             string type = item.GetAttribute("type");
             string value = item.GetAttribute("value");
             var states = new Dictionary<string, SubscriptionState>() {
-				{ "none", SubscriptionState.None },
-				{ "to", SubscriptionState.To },
-				{ "from", SubscriptionState.From },
-				{ "both", SubscriptionState.Both }
-			};
+                { "none", SubscriptionState.None },
+                { "to", SubscriptionState.To },
+                { "from", SubscriptionState.From },
+                { "both", SubscriptionState.Both }
+            };
             if (!String.IsNullOrEmpty(type))
             {
                 if (String.IsNullOrEmpty(value))
