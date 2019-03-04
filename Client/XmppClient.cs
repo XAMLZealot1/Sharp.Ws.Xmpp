@@ -422,6 +422,21 @@ namespace Sharp.Xmpp.Client
         }
 
         /// <summary>
+        /// The event that is raised when the connection status with the server is modified
+        /// received.
+        /// </summary>
+        public event EventHandler<Sharp.Xmpp.Core.ConnectionStatusEventArgs> ConnectionStatus
+        {
+            add
+            {
+                im.ConnectionStatus += value;
+            }
+            remove
+            {
+                im.ConnectionStatus -= value;
+            }
+        }
+        /// <summary>
         /// The event that is raised when a status notification has been received.
         /// </summary>
         public event EventHandler<StatusEventArgs> StatusChanged

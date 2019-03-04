@@ -276,6 +276,12 @@ namespace Sharp.Xmpp.Im
         }
 
         /// <summary>
+        /// The event that is raised when the connection status with the server is modified
+        /// received.
+        /// </summary>
+        public event EventHandler<ConnectionStatusEventArgs> ConnectionStatus;
+
+        /// <summary>
         /// The event that is raised when a status notification from a contact has been
         /// received.
         /// </summary>
@@ -431,6 +437,7 @@ namespace Sharp.Xmpp.Im
                 if (UseWebSocket)
                 {
                     core.ActionToPerform += Core_ActionToPerform;
+                    core.ConnectionStatus += Core_ConnectionStatus;
                 }
                 else
                 {
@@ -456,9 +463,14 @@ namespace Sharp.Xmpp.Im
             }
         }
 
+        private void Core_ConnectionStatus(object sender, ConnectionStatusEventArgs e)
+        {
+            log.DebugFormat("[Core_ConnectionStatus] - connected:{0}", e.Connected);
+            RaiseConnectionStatus(e.Connected);
+        }
+
         private void Core_ActionToPerform(object sender, TextEventArgs e)
         {
-
             string action = e.Text;
             switch (action)
             {
@@ -468,7 +480,7 @@ namespace Sharp.Xmpp.Im
                     break;
 
                 case XmppCore.ACTION_SERVICE_DISCOVERY:
-                    Extension[] extensions = new Extension[] { Extension.Ping, Extension.MessageCarbons, Extension.MultiUserChat, Extension.ChatStateNotifications };
+                    Extension[] extensions = new Extension[] { Extension.Ping, Extension.MessageCarbons, Extension.MultiUserChat, Extension.ChatStateNotifications, Extension.MessageArchiveManagment };
                     ServiceDiscovery serviceDiscovery = GetExtension<ServiceDiscovery>();
                     serviceDiscovery.Supports(core.Jid.Domain, extensions);
 
@@ -485,11 +497,11 @@ namespace Sharp.Xmpp.Im
                 case XmppCore.ACTION_GET_ROSTER:
                     GetRoster();
 
-                    core.QueueActionToPerform(XmppCore.ACTION_SEND_STATUS);
+                    core.QueueActionToPerform(XmppCore.ACTION_FULLY_CONNECTED);
                     break;
 
-                case XmppCore.ACTION_SEND_STATUS:
-                    SetStatus(Availability.Online, "message status", 5);
+                case XmppCore.ACTION_FULLY_CONNECTED:
+                    RaiseConnectionStatus(true);
                     break;
 
                 default:
@@ -1778,6 +1790,24 @@ namespace Sharp.Xmpp.Im
             // a body.
             if (message.Data["body"] != null)
                 Message.Raise(this, new MessageEventArgs(message.From, message));
+            // Also raise when the messages comes from an archive
+            // Due to the different format the inner message is sent forward with the external timestamp included
+            if (message.Data["result"] != null && message.Data["result"]["forwarded"] != null)
+            {
+                var realMessageNode = message.Data["result"]["forwarded"]["message"];
+                var timestamp = message.Data["result"]["forwarded"]["delay"];
+                realMessageNode.AppendChild(timestamp);
+                var realMessage = new Message(new Core.Message(realMessageNode));
+                Message.Raise(this, new MessageEventArgs(realMessage.From, realMessage));
+            }
+
+            if (message.Data["event"] != null && message.Data["event"]["items"] != null && message.Data["event"]["items"]["item"] != null && message.Data["event"]["items"]["item"]["message"] != null)
+            {
+                var realMessageNode = message.Data["event"]["items"]["item"]["message"];
+                var realMessage = new Message(new Core.Message(realMessageNode));
+                Console.WriteLine(realMessageNode);
+                Message.Raise(this, new MessageEventArgs(realMessage.From, realMessage));
+            }
         }
 
         /// <summary>
@@ -2013,6 +2043,23 @@ namespace Sharp.Xmpp.Im
             }
             // If the element has no 'type' attribute, it's a generic privacy rule.
             return new PrivacyRule(allow, order, granularity);
+        }
+
+        private void RaiseConnectionStatus(bool connected)
+        {
+            log.DebugFormat("[RaiseConnectionStatus] connected:{0}", connected);
+            EventHandler<ConnectionStatusEventArgs> h = this.ConnectionStatus;
+            if (h != null)
+            {
+                try
+                {
+                    h(this, new ConnectionStatusEventArgs(connected));
+                }
+                catch (Exception e)
+                {
+                    //TODO
+                }
+            }
         }
     }
 }

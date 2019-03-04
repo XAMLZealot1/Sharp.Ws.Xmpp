@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="utf-8"?>
+﻿<?xml version="1.0" encoding="utf-8"?>
 <Project ToolsVersion="4.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <Import Project="$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props" Condition="Exists('$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props')" />
   <PropertyGroup>
@@ -191,6 +191,7 @@
     <Compile Include="Extensions\XEP-0280\MessageCarbons.cs" />
     <Compile Include="Extensions\XEP-0313\MessageArchiveManagmentExtension.cs" />
     <Compile Include="Extensions\XEP-0313\MessageArchiveManagmentRequestDelegate.cs" />
+    <Compile Include="Core\ConnectionStatusEventArgs.cs" />
     <Compile Include="Im\SubscriptionRequest.cs" />
     <Compile Include="XmppDisconnectionException.cs" />
     <Compile Include="XmppExceptions.cs" />

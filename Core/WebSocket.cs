@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Timers;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
@@ -18,11 +19,13 @@ namespace Sharp.Xmpp.Core
 {
     internal class WebSocket
     {
+        private const int TIMER_WEBSOCKET_ALIVE = 10000;
+
         private static readonly ILog log = LogManager.GetLogger(typeof(WebSocket));
 
         public event EventHandler WebSocketOpened;
         public event EventHandler WebSocketClosed;
-        public event EventHandler WebSocketError;
+        public event EventHandler<ExceptionEventArgs> WebSocketError;
 
         private bool rootElement;
         private string uri;
@@ -35,6 +38,8 @@ namespace Sharp.Xmpp.Core
         private BlockingCollection<string> messagesReceived;
         private BlockingCollection<Iq> iqMessagesReceived;
         private HashSet<String> iqIdList;
+
+        private Timer reconnectTimer;
 
         private WebSocket4Net.WebSocket webSocket4NetClient = null;
 
@@ -64,6 +69,18 @@ namespace Sharp.Xmpp.Core
             Task.Factory.StartNew(CreateAndManageWebSocket, TaskCreationOptions.LongRunning | TaskCreationOptions.DenyChildAttach);
         }
 
+        private void ReconnectTimer_Elapsed(object sender, System.Timers.ElapsedEventArgs e)
+        {
+            if (webSocket4NetClient != null)
+            {
+                if (webSocket4NetClient.State != WebSocketState.Connecting && webSocket4NetClient.State != WebSocketState.Open)
+                {
+                    log.DebugFormat("[ReconnectTimer_Elapsed] no more opened ...");
+                    RaiseWebSocketClosed();
+                }
+            }
+        }
+
         private void CreateAndManageWebSocket()
         {
             if (webSocket4NetClient == null)
@@ -73,13 +90,19 @@ namespace Sharp.Xmpp.Core
                 if (uri.ToLower().StartsWith("wss"))
                     webSocket4NetClient.Security.EnabledSslProtocols = System.Security.Authentication.SslProtocols.Tls12;
 
-                webSocket4NetClient.EnableAutoSendPing = true;
-                webSocket4NetClient.AutoSendPingInterval = 60000;
-
                 webSocket4NetClient.Opened += new EventHandler(WebSocket4NetClient_Opened);
                 webSocket4NetClient.Closed += new EventHandler(WebSocket4NetClient_Closed);
                 webSocket4NetClient.Error += new EventHandler<SuperSocket.ClientEngine.ErrorEventArgs>(WebSocket4NetClient_Error);
                 webSocket4NetClient.MessageReceived += new EventHandler<MessageReceivedEventArgs>(WebSocket4NetClient_MessageReceived);
+                webSocket4NetClient.DataReceived += new EventHandler<WebSocket4Net.DataReceivedEventArgs>(WebSocket4NetClient_DataReceived);
+
+                // Use timer to ensure the connection is still alive or not
+                reconnectTimer = new Timer
+                {
+                    Interval = TIMER_WEBSOCKET_ALIVE
+                };
+                reconnectTimer.Elapsed += ReconnectTimer_Elapsed;
+
             }
             webSocket4NetClient.Open();
 
@@ -87,22 +110,28 @@ namespace Sharp.Xmpp.Core
 
             while(true)
             {
-                switch(webSocket4NetClient.State)
+                if (webSocket4NetClient != null)
                 {
-                    case WebSocketState.Connecting:
-                    case WebSocketState.Open:
-                        if (messagesToSend.TryTake(out message, 100))
-                        {
-                            log.DebugFormat("Message send:{0}", message);
-                            webSocket4NetClient.Send(message);
-                        }
-                        break;
+                    switch (webSocket4NetClient.State)
+                    {
+                        case WebSocketState.Connecting:
+                        case WebSocketState.Open:
+                            if (messagesToSend.TryTake(out message, 100))
+                            {
+                                log.DebugFormat("Message send:{0}", message);
+                                if (webSocket4NetClient != null)
+                                    webSocket4NetClient.Send(message);
+                            }
+                            break;
 
-                    case WebSocketState.Closed:
-                    case WebSocketState.Closing:
-                    case WebSocketState.None:
-                        return;
+                        case WebSocketState.Closed:
+                        case WebSocketState.Closing:
+                        case WebSocketState.None:
+                            return;
+                    }
                 }
+                else
+                    return;
             }                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                   
         }
 
@@ -214,6 +243,9 @@ namespace Sharp.Xmpp.Core
         {
             if (webSocket4NetClient != null)
             {
+                reconnectTimer.Stop();
+                reconnectTimer.Close();
+
                 webSocket4NetClient.Dispose();
                 webSocket4NetClient = null;
             }
@@ -239,6 +271,11 @@ namespace Sharp.Xmpp.Core
             QueueMessageToSend(xml);
         }
 
+        private void WebSocket4NetClient_DataReceived(object sender, WebSocket4Net.DataReceivedEventArgs e)
+        {
+            log.DebugFormat("[WebSocket4NetClient_MessageReceived] Data received ... Not handled yet ...");
+        }
+
         private void WebSocket4NetClient_MessageReceived(object sender, MessageReceivedEventArgs e)
         {
             lock (writeLock)
@@ -247,7 +284,7 @@ namespace Sharp.Xmpp.Core
 
                 sb.Append(e.Message);
 
-                log.DebugFormat("Message received: {0}", e.Message);
+                log.DebugFormat("[WebSocket4NetClient_MessageReceived] Message received: {0}", e.Message);
 
                 XmlDocument xmlDocument = new XmlDocument();
                 try
@@ -295,6 +332,12 @@ namespace Sharp.Xmpp.Core
 
         private void WebSocket4NetClient_Closed(object sender, EventArgs e)
         {
+            log.DebugFormat("[WebSocket4NetClient_Closed]");
+            RaiseWebSocketClosed();
+        }
+
+        private void RaiseWebSocketClosed()
+        {
             log.DebugFormat("Web socket closed");
             EventHandler h = this.WebSocketClosed;
 
@@ -302,7 +345,7 @@ namespace Sharp.Xmpp.Core
             {
                 try
                 {
-                    h(this, e);
+                    h(this, new EventArgs());
                 }
                 catch (Exception)
                 {
@@ -314,14 +357,14 @@ namespace Sharp.Xmpp.Core
         private void WebSocket4NetClient_Error(object sender, SuperSocket.ClientEngine.ErrorEventArgs e)
         {
             //TODO: enhance error log
-            log.DebugFormat("Web socket error:", e.Exception.Message);
-            EventHandler h = this.WebSocketError;
-
+            log.DebugFormat("[WebSocket4NetClient_Error] exception message:", e.Exception.Message);
+            EventHandler <ExceptionEventArgs> h = this.WebSocketError;
+            
             if (h != null)
             {
                 try
                 {
-                    h(this, e);
+                    h(this, new ExceptionEventArgs(e.Exception));
                 }
                 catch (Exception)
                 {

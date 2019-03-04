@@ -13,6 +13,16 @@ namespace Sharp.Xmpp
         public string Text { get; private set; }
     }
 
+    public class ExceptionEventArgs : EventArgs
+    {
+        public ExceptionEventArgs(Exception exception)
+        {
+            Exception = exception;
+        }
+
+        public Exception Exception { get; private set; }
+    }
+
     /// <summary>
     /// Contains utility and extension methods.
     /// </summary>

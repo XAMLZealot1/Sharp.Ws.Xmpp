@@ -29,12 +29,13 @@ namespace Sharp.Xmpp.Core
         private const String BIND_ID = "bind-0";
 
         public const String ACTION_CREATE_SESSION = "CREATE_SESSION";
-        public const String ACTION_SERVICE_DISCOVERY = "ACTION_SERVICE_DISCOVERY";
+        public const String ACTION_SERVICE_DISCOVERY = "SERVICE_DISCOVERY";
         public const String ACTION_ENABLE_MESSAGE_CARBONS = "ENABLE_MESSAGE_CARBON";
         public const String ACTION_GET_ROSTER = "GET_ROSTER";
-        public const String ACTION_SEND_STATUS = "ACTION_SEND_STATUS";
+        public const String ACTION_FULLY_CONNECTED = "FULLY_CONNECTED";
 
         public event EventHandler<TextEventArgs> ActionToPerform;
+        public event EventHandler<ConnectionStatusEventArgs> ConnectionStatus;
 
         /// <summary>
         /// The DNS SRV name records
@@ -579,7 +580,7 @@ namespace Sharp.Xmpp.Core
                     webSocketClient = new WebSocket(WebSocketUri);
                     webSocketClient.WebSocketOpened += new EventHandler(WebSocketClient_WebSocketOpened);
                     webSocketClient.WebSocketClosed += new EventHandler(WebSocketClient_WebSocketClosed);
-                    webSocketClient.WebSocketError += new EventHandler(WebSocketClient_WebSocketError);
+                    webSocketClient.WebSocketError += new EventHandler<ExceptionEventArgs>(WebSocketClient_WebSocketError);
 
                     webSocketClient.Open();
                 }
@@ -605,18 +606,40 @@ namespace Sharp.Xmpp.Core
             }
         }
 
-        private void WebSocketClient_WebSocketError(object sender, EventArgs e)
+        private void WebSocketClient_WebSocketError(object sender, ExceptionEventArgs e)
         {
-            //TODO
+            log.DebugFormat("[WebSocketClient_WebSocketError] Exception:[{0}]", e.Exception.ToString());
         }
 
         private void WebSocketClient_WebSocketClosed(object sender, EventArgs e)
         {
-            //TODO
+            log.DebugFormat("[WebSocketClient_WebSocketClosed]");
+            Connected = false;
+            RaiseConnectionStatus(false);
+        }
+
+        private void RaiseConnectionStatus(bool connected)
+        {
+            log.DebugFormat("[RaiseConnectionStatus] connected:{0}", connected);
+            EventHandler<ConnectionStatusEventArgs> h = this.ConnectionStatus;
+            if (h != null)
+            {
+                try
+                {
+                    log.DebugFormat("[RaiseConnectionStatus] handler fired - connected:{0}", connected);
+                    h(this, new ConnectionStatusEventArgs(connected));
+                }
+                catch (Exception)
+                {
+                    //TODO
+                }
+            }
         }
 
         private void WebSocketClient_WebSocketOpened(object sender, EventArgs e)
         {
+            log.DebugFormat("[WebSocketClient_WebSocketOpened]");
+
             // We are connected.
             Connected = true;
 
@@ -1594,7 +1617,6 @@ namespace Sharp.Xmpp.Core
             }
         }
 
-
         /// <summary>
         /// Listens for incoming XML stanzas and raises the appropriate events.
         /// </summary>
@@ -1728,7 +1750,7 @@ namespace Sharp.Xmpp.Core
             {
                 if (webSocketClient != null)
                 {
-                    
+                    webSocketClient.Close();
                 }
             }
             
