@@ -131,7 +131,7 @@ namespace Sharp.Xmpp.Extensions
         /// error condition.</exception>
         /// <exception cref="XmppException">The server returned invalid data or another
         /// unspecified XMPP error occurred.</exception>
-        public void RequestCustomIqAsync(Jid jid, string request, Action callback)
+        public void RequestCustomIqAsync(Jid jid, string request, CustomIqRequestDelegate callback)
         {
             jid.ThrowIfNull("jid");
             request.ThrowIfNull("str");
@@ -157,7 +157,7 @@ namespace Sharp.Xmpp.Extensions
                         //An empty response means the message was received
                         if (callback != null)
                         {
-                            callback.Invoke();
+                            callback.Invoke(jid, id);
                         }
                     }
                     catch (Exception e)

@@ -163,6 +163,11 @@ namespace Sharp.Xmpp.Client
         private MessageCarbons messageCarbons;
 
         /// <summary>
+        /// Provides the MaM extension
+        /// </summary>
+        private MessageArchiveManagment mam;
+
+        /// <summary>
         /// Is web socket used - false by default
         /// </summary>
         public bool UseWebSocket
@@ -955,7 +960,7 @@ namespace Sharp.Xmpp.Client
             sbyte priority = 0, CultureInfo language = null)
         {
             AssertValid();
-            im.SetStatus(availability, message, 0, language);
+            im.SetStatus(availability, message, priority, language);
         }
 
         /// <summary>
@@ -1201,12 +1206,19 @@ namespace Sharp.Xmpp.Client
         /// <param name="str">The payload string to provide to the Request</param>
         /// <param name="callback">The callback method to call after the Request Result has being received. Included the serialised dat
         /// of the answer to the request</param>
-        public void RequestCustomIq(Jid jid, string str, Action callback = null)
+        public void RequestCustomIq(Jid jid, string str, CustomIqRequestDelegate callback = null)
         {
             AssertValid();
             if (callback == null) cusiqextension.RequestCustomIq(jid, str);
             else
                 cusiqextension.RequestCustomIqAsync(jid, str, callback);
+        }
+
+        public void RequestArchivedMessages(Jid jid, int maxNumber, MessageArchiveManagmentRequestDelegate callback, string before = null, string after = null)
+        {
+            AssertValid();
+            // TODO add support for first, last and direction (after/before)
+            mam.RequestCustomIqAsync(jid, maxNumber, callback, before, after);
         }
 
         /// <summary>
@@ -2096,6 +2108,7 @@ namespace Sharp.Xmpp.Client
             vcardAvatars = im.LoadExtension<VCardAvatars>();
             cusiqextension = im.LoadExtension<CustomIqExtension>();
             groupChat = im.LoadExtension<MultiUserChat>();
+            mam = im.LoadExtension<MessageArchiveManagment>();
         }
     }
 }
