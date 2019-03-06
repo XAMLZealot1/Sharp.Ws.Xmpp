@@ -30,7 +30,7 @@ namespace Sharp.Xmpp.Extensions
             get
             {
                 return new string[] {
-					 "vcard-temp:x:update" ,
+					 //"vcard-temp:x:update" ,
 					 "vcard-temp"
 				};
             }
