@@ -480,9 +480,8 @@ namespace Sharp.Xmpp.Im
                     break;
 
                 case XmppCore.ACTION_SERVICE_DISCOVERY:
-                    Extension[] extensions = new Extension[] { Extension.Ping, Extension.MessageCarbons, Extension.MultiUserChat, Extension.ChatStateNotifications, Extension.MessageArchiveManagment };
                     ServiceDiscovery serviceDiscovery = GetExtension<ServiceDiscovery>();
-                    serviceDiscovery.Supports(core.Jid.Domain, extensions);
+                    serviceDiscovery.Supports(core.Jid.Domain, new Extension[] { });
 
                     core.QueueActionToPerform(XmppCore.ACTION_ENABLE_MESSAGE_CARBONS);
                     break;
