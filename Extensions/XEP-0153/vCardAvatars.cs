@@ -13,12 +13,18 @@ namespace Sharp.Xmpp.Extensions
     /// <summary>
     /// Implements the 'vCard based Avatars' extension as defined in XEP-0153.
     /// </summary>
-    internal class VCardAvatars : XmppExtension, IInputFilter<Iq>
+    internal class VCardAvatars : XmppExtension, IInputFilter<Iq>, IInputFilter<Im.Presence>
     {
         /// <summary>
         /// A reference to the 'Entity Capabilities' extension instance.
         /// </summary>
         private EntityCapabilities ecapa;
+
+        /// <summary>
+		/// The event that is raised when a VCard is Changed
+		/// avatar image.
+		/// </summary>
+		public event EventHandler<VCardChangedEventArgs> VCardChanged;
 
         /// <summary>
         /// An enumerable collection of XMPP namespaces the extension implements.
@@ -66,12 +72,31 @@ namespace Sharp.Xmpp.Extensions
         {
             if (stanza.Type != IqType.Get)
                 return false;
-            var vcard = stanza.Data["vCard "];
+            var vcard = stanza.Data["vCard"];
             if (vcard == null || vcard.NamespaceURI != "vcard-temp")
                 return false;
             im.IqResult(stanza);
             // We took care of this IQ request, so intercept it and don't pass it
             // on to other handlers.
+            return true;
+        }
+
+
+        /// <summary>
+        /// Invoked when a presence stanza is being received.
+        /// </summary>
+        /// <param name="stanza">The stanza which is being received.</param>
+        /// <returns>true to intercept the stanza or false to pass the stanza
+        /// on to the next handler.</returns>
+        public bool Input(Im.Presence stanza)
+        {
+            var vcard = stanza.Data["x"];
+            if (vcard == null || vcard.NamespaceURI != "vcard-temp:x:update")
+                return false;
+
+            // Raise 'VCardChanged' event.
+            VCardChanged.Raise(this, new VCardChangedEventArgs(stanza.From));
+
             return true;
         }
 

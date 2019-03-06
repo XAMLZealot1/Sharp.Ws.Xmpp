@@ -481,6 +481,21 @@ namespace Sharp.Xmpp.Client
             }
         }
 
+        /// <summary>
+        /// The event that is raised when a VCard has been updated.
+        /// </summary>
+        public event EventHandler<VCardChangedEventArgs> VCardChanged
+        {
+            add
+            {
+                vcardAvatars.VCardChanged += value;
+            }
+            remove
+            {
+                vcardAvatars.VCardChanged -= value;
+            }
+        }
+
 #if WINDOWSPLATFORM
 		/// <summary>
 		/// The event that is raised when a contact has updated his or her avatar.
@@ -2101,7 +2116,7 @@ namespace Sharp.Xmpp.Client
             pep = im.LoadExtension<Pep>();
             userTune = im.LoadExtension<UserTune>();
 #if WINDOWSPLATFORM
-			userAvatar = im.LoadExtension<UserAvatar>();
+			ertguserAvatar = im.LoadExtension<UserAvatar>();
 #endif
             userMood = im.LoadExtension<UserMood>();
             dataForms = im.LoadExtension<DataForms>();

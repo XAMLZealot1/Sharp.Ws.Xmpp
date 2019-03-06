@@ -184,6 +184,7 @@
     <Compile Include="Extensions\XEP-0118\TuneInformation.cs" />
     <Compile Include="Extensions\XEP-0118\UserTune.cs" />
     <Compile Include="Extensions\XEP-0153\vCardAvatars.cs" />
+    <Compile Include="Extensions\XEP-0153\VCardChangedEventArgs.cs" />
     <Compile Include="Extensions\XEP-0163\Pep.cs" />
     <Compile Include="Extensions\XEP-0231\BitsOfBinary.cs" />
     <Compile Include="Extensions\XEP-0231\BobData.cs" />
