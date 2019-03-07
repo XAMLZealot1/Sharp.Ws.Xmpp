@@ -32,6 +32,7 @@ namespace Sharp.Xmpp.Core
         public const String ACTION_SERVICE_DISCOVERY = "SERVICE_DISCOVERY";
         public const String ACTION_ENABLE_MESSAGE_CARBONS = "ENABLE_MESSAGE_CARBON";
         public const String ACTION_GET_ROSTER = "GET_ROSTER";
+        public const String ACTION_SET_DEFAULT_STATUS = "SET_DEFAULT_STATUS";
         public const String ACTION_FULLY_CONNECTED = "FULLY_CONNECTED";
 
         public event EventHandler<TextEventArgs> ActionToPerform;
@@ -851,7 +852,7 @@ namespace Sharp.Xmpp.Core
 
             if (useWebSocket)
             {
-                log.DebugFormat("before to send IqRequest:", request.Id);
+                //log.DebugFormat("before to send IqRequest:", request.Id);
                 webSocketClient.AddExpectedIqId(request.Id);
                 Send(request);
                 Iq response = webSocketClient.DequeueExpectedIqMessage();
@@ -1425,7 +1426,7 @@ namespace Sharp.Xmpp.Core
             while (true)
             {
                 string action = webSocketClient.DequeueActionToPerform();
-                log.DebugFormat("Action dequeued:{0}", action);
+                //log.DebugFormat("Action dequeued:{0}", action);
 
                 if (ActionToPerform != null)
                 {
@@ -1477,7 +1478,7 @@ namespace Sharp.Xmpp.Core
                         switch (elem.Name)
                         {
                             case "challenge":
-                                log.Debug("challenge received");
+                                //log.Debug("challenge received");
                                 response = saslMechanism.GetResponse(elem.InnerText);
                                 xmlResponse = Xml.Element("response", 
                                     "urn:ietf:params:xml:ns:xmpp-sasl").Text(response);
@@ -1485,7 +1486,7 @@ namespace Sharp.Xmpp.Core
                                 break;
 
                             case "success":
-                                log.Debug("success received");
+                                //log.Debug("success received");
                                 if ( saslMechanism.IsCompleted ||
                                         (saslMechanism.GetResponse(elem.InnerText) == String.Empty) )
                                 {
@@ -1501,12 +1502,12 @@ namespace Sharp.Xmpp.Core
                                 break;
 
                             case "failure":
-                                log.Debug("failure received");
+                                log.Warn("Failure received");
                                 //TO DOlog.Debug
                                 break;
 
                             case "stream:features":
-                                log.Debug("stream:features received");
+                                //log.Debug("stream:features received");
 
                                 subElem = (XmlElement)elem.FirstChild;
                                 if (subElem.Name == "mechanisms")
@@ -1541,7 +1542,7 @@ namespace Sharp.Xmpp.Core
                                 break;
 
                             case "iq":
-                                log.Debug("iq received");
+                                //log.Debug("iq received");
 
                                 attribute = elem.GetAttribute("id");
                                 if (attribute == BIND_ID)
@@ -1552,39 +1553,38 @@ namespace Sharp.Xmpp.Core
                                 }
 
                                 Iq iq = new Iq(elem);
-                                log.Debug("iq.Id: " + iq.Id);
+                                //log.Debug("iq.Id: " + iq.Id);
                                 if (webSocketClient.IsExpectedIqId(iq.Id))
                                 {
                                     webSocketClient.QueueExpectedIqMessage(iq);
                                     break;
                                 }
-                                else
-                                {
-                                    log.DebugFormat("Not an expected Iq Message:{0}", iq.Id);
-                                }
+                                //else
+                                //{
+                                //    log.DebugFormat("Not an expected Iq Message:{0}", iq.Id);
+                                //}
 
 
                                 if (iq.IsRequest)
                                 {
-                                    log.DebugFormat("Iq is request:{0}", iq.Id);
+                                    //log.DebugFormat("Iq is request:{0}", iq.Id);
                                     stanzaQueue.Add(iq);
                                 }
-                                else
-                                {
-                                    log.DebugFormat("Handle Id response:{0}", iq.Id);
-                                    HandleIqResponse(iq);
-                                }
+                                //else
+                                //{
+                                //    log.DebugFormat("Handle Id response:{0}", iq.Id);
+                                //    HandleIqResponse(iq);
+                                //}
                                 break;
 
                             case "message":
-                                log.DebugFormat("message received");
+                                //log.DebugFormat("message received");
 
                                 stanzaQueue.Add(new Message(elem));
                                 break;
 
                             case "presence":
-                                log.DebugFormat("presence received");
-
+                                //log.DebugFormat("presence received");
                                 stanzaQueue.Add(new Presence(elem));
                                 break;
                         }

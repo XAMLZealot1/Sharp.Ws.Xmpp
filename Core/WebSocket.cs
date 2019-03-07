@@ -118,7 +118,7 @@ namespace Sharp.Xmpp.Core
                         case WebSocketState.Open:
                             if (messagesToSend.TryTake(out message, 100))
                             {
-                                log.DebugFormat("Message send:{0}", message);
+                                log.DebugFormat("[Message_Send]{0}", message);
                                 if (webSocket4NetClient != null)
                                     webSocket4NetClient.Send(message);
                             }
@@ -138,29 +138,29 @@ namespace Sharp.Xmpp.Core
         #region Iq stuff
         public void AddExpectedIqId(string id)
         {
-            log.DebugFormat("AddExpectedIqId:{0}", id);
+            //log.DebugFormat("AddExpectedIqId:{0}", id);
             if (!iqIdList.Contains(id))
                 iqIdList.Add(id);
         }
 
         public bool IsExpectedIqId(string id)
         {
-            log.DebugFormat("IsExpectedIqId:{0}", id);
+            //log.DebugFormat("IsExpectedIqId:{0}", id);
             return iqIdList.Contains(id);
         }
 
         public void QueueExpectedIqMessage(Iq iq)
         {
-            log.DebugFormat("QueueExpectedIqMessage :{0}", iq.ToString());
+            //log.DebugFormat("QueueExpectedIqMessage :{0}", iq.ToString());
             iqMessagesReceived.Add(iq);
         }
 
         public Iq DequeueExpectedIqMessage()
         {
             Iq iq = null;
-            log.DebugFormat("DequeueExpectedIqMessage - START");
+            //log.DebugFormat("DequeueExpectedIqMessage - START");
             iq = iqMessagesReceived.Take();
-            log.DebugFormat("DequeueExpectedIqMessage - END");
+            //log.DebugFormat("DequeueExpectedIqMessage - END");
             return iq;
 
         }
@@ -169,15 +169,15 @@ namespace Sharp.Xmpp.Core
         #region Action to perform
         public void QueueActionToPerform(String action)
         {
-            log.DebugFormat("QueueActionToPerform");
+            //log.DebugFormat("QueueActionToPerform");
             actionsToPerform.Add(action);
         }
 
         public string DequeueActionToPerform()
         {
-            log.DebugFormat("DequeueActionToPerform - START");
+            //log.DebugFormat("DequeueActionToPerform - START");
             string action = actionsToPerform.Take();
-            log.DebugFormat("DequeueActionToPerform - END");
+            //log.DebugFormat("DequeueActionToPerform - END");
             return action;
         }
         #endregion
@@ -217,7 +217,7 @@ namespace Sharp.Xmpp.Core
                     if (rootElement)
                     {
                         // Add XML message in the queue
-                        log.DebugFormat("Queue XML message received");
+                        //log.DebugFormat("Queue XML message received");
                         messagesReceived.Add(xmlMessage);
                     }
                     else
@@ -232,9 +232,9 @@ namespace Sharp.Xmpp.Core
 
         public string DequeueMessageReceived()
         {
-            log.DebugFormat("Dequeue XML Message Received - START");
+            //log.DebugFormat("Dequeue XML Message Received - START");
             string message = messagesReceived.Take();
-            log.DebugFormat("Dequeue XML Message Received - END");
+            //log.DebugFormat("Dequeue XML Message Received - END");
             return message;
         }
         #endregion
@@ -273,7 +273,7 @@ namespace Sharp.Xmpp.Core
 
         private void WebSocket4NetClient_DataReceived(object sender, WebSocket4Net.DataReceivedEventArgs e)
         {
-            log.DebugFormat("[WebSocket4NetClient_MessageReceived] Data received ... Not handled yet ...");
+            log.DebugFormat("[WebSocket4NetClient_DataReceived] Not handled yet ...");
         }
 
         private void WebSocket4NetClient_MessageReceived(object sender, MessageReceivedEventArgs e)
@@ -284,7 +284,7 @@ namespace Sharp.Xmpp.Core
 
                 sb.Append(e.Message);
 
-                log.DebugFormat("[WebSocket4NetClient_MessageReceived] Message received: {0}", e.Message);
+                log.DebugFormat("[Message_Received]: {0}", e.Message);
 
                 XmlDocument xmlDocument = new XmlDocument();
                 try
@@ -338,7 +338,7 @@ namespace Sharp.Xmpp.Core
 
         private void RaiseWebSocketClosed()
         {
-            log.DebugFormat("Web socket closed");
+            log.DebugFormat("[RaiseWebSocketClosed]");
             EventHandler h = this.WebSocketClosed;
 
             if (h != null)

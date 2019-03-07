@@ -496,6 +496,12 @@ namespace Sharp.Xmpp.Im
                 case XmppCore.ACTION_GET_ROSTER:
                     GetRoster();
 
+                    core.QueueActionToPerform(XmppCore.ACTION_SET_DEFAULT_STATUS);
+                    break;
+
+                case XmppCore.ACTION_SET_DEFAULT_STATUS:
+                    SetStatus(Availability.Online, "", 5);
+
                     core.QueueActionToPerform(XmppCore.ACTION_FULLY_CONNECTED);
                     break;
 
@@ -1734,6 +1740,7 @@ namespace Sharp.Xmpp.Im
         /// <param name="presence">The received presence stanza.</param>
         private void OnPresence(Presence presence)
         {
+            log.Debug("[OnPresence]");
             // Invoke IInput<Presence> Plugins.
             foreach (var ext in extensions)
             {
@@ -1742,7 +1749,14 @@ namespace Sharp.Xmpp.Im
                 {
                     // Swallow presence stanza?
                     if (filter.Input(presence))
+                    {
+                        log.DebugFormat("[OnPresence] filter used by extension [{0}]", ext.Xep.ToString());
                         return;
+                    }
+                    else
+                    {
+                        log.DebugFormat("[OnPresence] filter not usedby extension [{0}]", ext.Xep.ToString());
+                    }
                 }
             }
             switch (presence.Type)
