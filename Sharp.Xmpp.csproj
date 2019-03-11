@@ -3,6 +3,15 @@
   <PropertyGroup>
     <TargetFramework>netstandard2.0</TargetFramework>
     <AssemblyName>Sharp.Ws.Xmpp</AssemblyName>
+    <Version>0.0.1.0</Version>
+    <Authors>Christophe Irles</Authors>
+    <Company>ALE International</Company>
+    <Product>Sharp.Ws.Xmpp</Product>
+    <Description>Based on project Sharp.Xmpp, this package allow XMPP features using Web socket</Description>
+    <PackageProjectUrl>https://github.com/ALE-Rainbow/Sharp.Xmpp</PackageProjectUrl>
+    <Copyright>ALE International</Copyright>
+    <PackageLicenseUrl>https://github.com/ALE-Rainbow/Sharp.Xmpp/blob/master/License.md</PackageLicenseUrl>
+    <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
   </PropertyGroup>
 
   <ItemGroup>
