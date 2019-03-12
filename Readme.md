@@ -1,8 +1,8 @@
 ### Introduction
 
 This repository contains an easy-to-use and well-documented .NET assembly for communicating with
-an XMPP server. It supports basic Instant Messaging and Presence funtionality as well as a variety
-of XMPP extensions.
+an XMPP server using Web Socket. It supports basic Instant Messaging and Presence funtionality as well as a variety
+of XMPP extensions. Tcp stream is no more supported in this project.
 
 
 ### Supported XMPP Features
@@ -63,16 +63,17 @@ guide, examples and details on using the classes and methods exposed by the S22.
 
 ### Credits
 
+The Sharp.Ws.Xmpp library is copyright © 2019 ALE International.
 The Sharp.Xmpp library is copyright © 2015 Panagiotis Georgiou Stathopoulos.
 The initial S22.Xmpp library is copyright © 2013-2014 Torben Könke.
 
 
 ### License
 
-This library is released under the [MIT license](https://github.com/pgstath/Sharp.Xmpp/blob/master/License.md).
+This library is released under the [MIT license](https://github.com/ALE-Rainbow/Sharp.Xmpp/blob/master/License.md).
 
 
 ### Bug reports
 
-Please send your bug reports to [pgstath@gmail.com](mailto:pgstath@gmail.com) or create a new
+Please send your bug reports to [christophe.irles@al-enterprise.com](mailto:christophe.irles@al-enterprise.) or create a new
 issue on the GitHub project homepage.
