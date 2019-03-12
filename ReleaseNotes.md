@@ -1,4 +1,14 @@
-﻿# 1.0.2.2
+﻿# 0.0.1.0
+Firts Sharp.Ws.Xmpp Release
+
+##Other improvements
+Add support of Web Socket as the primary transport layer (TCPStream)
+Update project to build a .Net Standard 2.0 library so  there is no more dependencies to 'ARSoft.Tools.Net'
+
+##XMPP Extensions Improved
+* XEP-0153: vCard-Based Avatars - now manage Avatar Update using <x xmlns='vcard-temp:x:update'> message
+
+# 1.0.2.2
 
 ##XMPP Extensions Added
 * XEP-0280: Message Carbons, contributed by Ignacio Nicolás Rodríguez, ignacionr 
@@ -37,7 +47,6 @@ XmppClient.DefaultTimeOut & XmppIm.DefaultTimeOut & XmppCore.DefaultTimeOut
 ##Open Issues and Limitations
 * Connection is performed only on first SRV DNS record server. No reconnections on SRV records with less priority are supported for the time being
 * Proxy only File Transfer is supported and tested on the build version
-* XEP0153 Avatar Update, <x xmlns='vcard-temp:x:update'> message is to be implemented
 * __XmppCore.AssertValid should not check for Connection Online and raise InvalidOperationException__
 * XmppCore.Close should include again AssertValid?
 

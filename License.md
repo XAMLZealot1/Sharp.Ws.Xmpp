@@ -1,5 +1,6 @@
 ### The MIT License
 
+Sharp.Ws.Xmpp Copyright (c) 2019 ALE International.
 Sharp.Xmpp Copyright (c) 2015 Panos Georgiou Stath.
 S22.Xmpp Copyright (c) 2013-2014 Torben Könke
 
