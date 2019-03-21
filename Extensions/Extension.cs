@@ -163,6 +163,11 @@
         /// <summary>
         /// An extension to have archive of messages
         /// </summary>
-        MessageArchiveManagment
+        MessageArchiveManagment,
+
+        /// <summary>
+        /// An extension added by Rainbow Hub
+        /// </summary>
+        Configuration
     }
 }

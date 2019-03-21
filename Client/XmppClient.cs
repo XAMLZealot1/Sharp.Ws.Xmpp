@@ -168,6 +168,11 @@ namespace Sharp.Xmpp.Client
         private MessageArchiveManagment mam;
 
         /// <summary>
+        /// Provides the Configuration extension
+        /// </summary>
+        private Configuration configuration;
+
+        /// <summary>
         /// Is web socket used - false by default
         /// </summary>
         public bool UseWebSocket
@@ -739,6 +744,21 @@ namespace Sharp.Xmpp.Client
             remove
             {
                 im.Error -= value;
+            }
+        }
+
+        /// <summary>
+        /// The event that is raised when an user invatation occurs
+        /// </summary>
+        public event EventHandler<UserInvitationEventArgs> UserInvitation
+        {
+            add
+            {
+                configuration.UserInvitation += value;
+            }
+            remove
+            {
+                configuration.UserInvitation -= value;
             }
         }
 
@@ -2139,6 +2159,8 @@ namespace Sharp.Xmpp.Client
             cusiqextension = im.LoadExtension<CustomIqExtension>();
             groupChat = im.LoadExtension<MultiUserChat>();
             mam = im.LoadExtension<MessageArchiveManagment>();
+
+            configuration = im.LoadExtension<Configuration>();
         }
     }
 }
