@@ -379,6 +379,14 @@ namespace Sharp.Xmpp.Core
         /// </summary>
         public event EventHandler<PresenceEventArgs> Presence;
 
+        public void SetLanguage()
+        {
+            if(Language == null)
+                Language = webSocketClient.Language;
+            if (Language == null)
+                Language = new CultureInfo("en");
+        }
+
         /// <summary>
         /// Initializes a new instance of the XmppCore class.
         /// </summary>

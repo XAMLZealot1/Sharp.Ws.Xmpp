@@ -480,6 +480,7 @@ namespace Sharp.Xmpp.Im
                     break;
 
                 case XmppCore.ACTION_SERVICE_DISCOVERY:
+                    core.SetLanguage();
                     ServiceDiscovery serviceDiscovery = GetExtension<ServiceDiscovery>();
                     serviceDiscovery.Supports(core.Jid.Domain, new Extension[] { });
 
