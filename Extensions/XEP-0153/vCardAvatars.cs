@@ -94,8 +94,10 @@ namespace Sharp.Xmpp.Extensions
             if (vcard == null || vcard.NamespaceURI != "vcard-temp:x:update")
                 return false;
 
+            VCardInfoChanged type = (stanza.Data.GetElementsByTagName("avatar").Count > 0) ? VCardInfoChanged.Avatar : VCardInfoChanged.Data;
+
             // Raise 'VCardChanged' event.
-            VCardChanged.Raise(this, new VCardChangedEventArgs(stanza.From));
+            VCardChanged.Raise(this, new VCardChangedEventArgs(stanza.From, type));
 
             return true;
         }
