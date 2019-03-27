@@ -531,6 +531,7 @@ namespace Sharp.Xmpp.Core
         private void WebSocketClient_WebSocketError(object sender, ExceptionEventArgs e)
         {
             log.DebugFormat("[WebSocketClient_WebSocketError] Exception:[{0}]", e.Exception.ToString());
+            RaiseConnectionStatus(false);
         }
 
         private void WebSocketClient_WebSocketClosed(object sender, EventArgs e)
@@ -543,19 +544,7 @@ namespace Sharp.Xmpp.Core
         private void RaiseConnectionStatus(bool connected)
         {
             log.DebugFormat("[RaiseConnectionStatus] connected:{0}", connected);
-            EventHandler<ConnectionStatusEventArgs> h = this.ConnectionStatus;
-            if (h != null)
-            {
-                try
-                {
-                    log.DebugFormat("[RaiseConnectionStatus] handler fired - connected:{0}", connected);
-                    h(this, new ConnectionStatusEventArgs(connected));
-                }
-                catch (Exception)
-                {
-                    //TODO
-                }
-            }
+            ConnectionStatus.Raise(this, new ConnectionStatusEventArgs(connected));
         }
 
         private void WebSocketClient_WebSocketOpened(object sender, EventArgs e)
