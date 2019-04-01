@@ -987,6 +987,20 @@ namespace Sharp.Xmpp.Client
         }
 
         /// <summary>
+        /// Sets the chat-state for the conversation with the XMPP user with the
+        /// specified JID.
+        /// </summary>
+        /// <param name="jid">The JID of the XMPP user to set the chat-state
+        /// for.</param>
+        /// <param name="state">The new chat-state.</param>
+        /// <exception cref="ArgumentNullException">The jid parameter is
+        /// null.</exception>
+        public void SetChatState(Jid jid, ChatState state)
+        {
+            chatStateNotifications.SetChatState(jid, state);
+        }
+
+        /// <summary>
         /// Sets the availability status.
         /// </summary>
         /// <param name="availability">The availability state. Can be one of the
