@@ -72,7 +72,7 @@ namespace Sharp.Xmpp.Core
         /// <summary>
         /// Used for creating unique IQ stanza ids.
         /// </summary>
-        private int id;
+        private static int id;
 
         /// <summary>
         /// The port number of the XMPP service of the server.
@@ -1344,7 +1344,7 @@ namespace Sharp.Xmpp.Core
                     {
                         ActionToPerform(this, new TextEventArgs(action));
                     }
-                    catch (Exception ex)
+                    catch (Exception)
                     {
                         //TODO
                     }
@@ -1364,7 +1364,6 @@ namespace Sharp.Xmpp.Core
         /// exception, the Error event is raised and the thread is shutdown.</remarks>
         private void ReadXmlWebSocketMessage()
         {
-            EventHandler h = null;
             try
             {
                 while (true)
@@ -1639,7 +1638,7 @@ namespace Sharp.Xmpp.Core
         /// Generates a unique id.
         /// </summary>
         /// <returns>A unique id.</returns>
-        public string GetId()
+        public static string GetId()
         {
             Interlocked.Increment(ref id);
             return id.ToString();

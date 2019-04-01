@@ -1513,7 +1513,7 @@ namespace Sharp.Xmpp.Im
             XmlElement data = null, CultureInfo language = null,
             int millisecondsTimeout = -1)
         {
-            Iq iq = new Iq(type, core.GetId(), to, from, data, language);
+            Iq iq = new Iq(type, XmppCore.GetId(), to, from, data, language);
             // Invoke IOutput<Iq> Plugins.
             foreach (var ext in extensions)
             {
@@ -1550,7 +1550,7 @@ namespace Sharp.Xmpp.Im
             XmlElement data = null, CultureInfo language = null,
             Action<string, Iq> callback = null)
         {
-            Iq iq = new Iq(type, core.GetId(), to, from, data, language);
+            Iq iq = new Iq(type, XmppCore.GetId(), to, from, data, language);
             // Invoke IOutput<Iq> Plugins.
             foreach (var ext in extensions)
             {
@@ -2069,7 +2069,7 @@ namespace Sharp.Xmpp.Im
                 {
                     h(this, new ConnectionStatusEventArgs(connected));
                 }
-                catch (Exception e)
+                catch (Exception)
                 {
                     //TODO
                 }
