@@ -26,16 +26,26 @@ namespace Sharp.Xmpp.Im
         }
 
         /// <summary>
+        /// True if sent from another resource
+        /// </summary>
+        public Boolean CarbonCopy
+        {
+            get;
+            private set;
+        }
+
+        /// <summary>
         /// Initializes a new instance of the MessageEventArgs class.
         /// </summary>
         /// <exception cref="ArgumentNullException">The jid parameter or the message
         /// parameter is null.</exception>
-        public MessageEventArgs(Jid jid, Message message)
+        public MessageEventArgs(Jid jid, Message message, Boolean carbonCopy = false)
         {
             jid.ThrowIfNull("jid");
             message.ThrowIfNull("message");
             Jid = jid;
             Message = message;
+            CarbonCopy = carbonCopy;
         }
     }
 }

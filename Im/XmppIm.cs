@@ -1822,6 +1822,20 @@ namespace Sharp.Xmpp.Im
                 Console.WriteLine(realMessageNode);
                 Message.Raise(this, new MessageEventArgs(realMessage.From, realMessage));
             }
+
+            // Manage carbon copy
+            if ( (message.Data["sent"] != null) && (message.Data["sent"]["forwarded"] != null) && (message.Data["sent"]["forwarded"]["message"] != null) && (message.Data["sent"]["forwarded"]["message"]["body"] != null))
+            {
+                var realMessageNode = message.Data["sent"]["forwarded"]["message"];
+                var realMessage = new Message(new Core.Message(realMessageNode));
+
+                // need to switch To and From
+                Jid temp = realMessage.To;
+                realMessage.To = realMessage.From;
+                realMessage.From = temp;
+
+                Message.Raise(this, new MessageEventArgs(realMessage.From, realMessage, true));
+            }
         }
 
         /// <summary>
