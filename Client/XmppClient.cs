@@ -5,6 +5,7 @@ using System.Collections.Generic;
 using System.Globalization;
 using System.IO;
 using System.Net.Security;
+using System.Xml;
 
 namespace Sharp.Xmpp.Client
 {
@@ -156,6 +157,11 @@ namespace Sharp.Xmpp.Client
         /// Provides vcard Based Avatar functionality
         /// </summary>
         private VCardAvatars vcardAvatars;
+
+        /// <summary>
+        /// Provides message delivery receipts functionality
+        /// </summary>
+        private MessageDeliveryReceipts msgDeliveryReceipt;
 
         /// <summary>
         /// Provides the Message Carbons extension
@@ -763,6 +769,21 @@ namespace Sharp.Xmpp.Client
         }
 
         /// <summary>
+        /// The event that is raised when an user invatation occurs
+        /// </summary>
+        public event EventHandler<MessageDeliveryReceivedEventArgs> MessageDeliveryReceived
+        {
+            add
+            {
+                msgDeliveryReceipt.MessageDeliveryReceived += value;
+            }
+            remove
+            {
+                msgDeliveryReceipt.MessageDeliveryReceived -= value;
+            }
+        }
+
+        /// <summary>
         /// Initializes a new instance of the XmppClient class.
         /// </summary>
         /// <param name="address">The XMPP server IP address.</param>
@@ -983,6 +1004,31 @@ namespace Sharp.Xmpp.Client
         {
             AssertValid();
             message.ThrowIfNull("message");
+            im.SendMessage(message);
+        }
+
+        /// <summary>
+        /// Mark a message as read (XEP-0184: Message Delivery Receipts). Must be done only on message of type Chat
+        /// </summary>
+        /// <param name="jid">the JID who send the message</param>
+        /// <param name="messageId">The ID of the message to mark as read</param>
+        public void MarkMessageAsRead(Jid jid, string messageId)
+        {
+            Message message = new Message(jid);
+            message.Type = MessageType.Chat;
+
+            XmlElement e = message.Data;
+
+            XmlElement timestamp = e.OwnerDocument.CreateElement("timestamp", "urn:xmpp:receipts");
+            timestamp.SetAttribute("value", DateTime.UtcNow.ToString("o"));
+            e.AppendChild(timestamp);
+
+            XmlElement received = e.OwnerDocument.CreateElement("received", "urn:xmpp:receipts");
+            received.SetAttribute("entity", "client");
+            received.SetAttribute("event", "read");
+            received.SetAttribute("id", messageId);
+            e.AppendChild(received);
+
             im.SendMessage(message);
         }
 
@@ -2175,6 +2221,7 @@ namespace Sharp.Xmpp.Client
             mam = im.LoadExtension<MessageArchiveManagment>();
 
             configuration = im.LoadExtension<Configuration>();
+            msgDeliveryReceipt = im.LoadExtension<MessageDeliveryReceipts>();
         }
     }
 }

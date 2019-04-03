@@ -323,7 +323,7 @@ namespace Sharp.Xmpp.Core
                 {
                     h(this, e);
                 }
-                catch (Exception ex)
+                catch (Exception)
                 {
                     //TODO
                 }

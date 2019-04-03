@@ -70,11 +70,6 @@ namespace Sharp.Xmpp.Core
         private string webSocketUri;
 
         /// <summary>
-        /// Used for creating unique IQ stanza ids.
-        /// </summary>
-        private static int id;
-
-        /// <summary>
         /// The port number of the XMPP service of the server.
         /// </summary>
         private int port;
@@ -644,6 +639,8 @@ namespace Sharp.Xmpp.Core
         {
             AssertValid();
             message.ThrowIfNull("message");
+            if (message.Id == null)
+                message.Id = GetId();
             Send(message);
         }
 
@@ -1640,8 +1637,7 @@ namespace Sharp.Xmpp.Core
         /// <returns>A unique id.</returns>
         public static string GetId()
         {
-            Interlocked.Increment(ref id);
-            return id.ToString();
+            return "Sharp.Ws.Xmpp." + Guid.NewGuid().ToString("N");
         }
 
         /// <summary>

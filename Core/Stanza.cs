@@ -145,12 +145,7 @@ namespace Sharp.Xmpp.Core
             element = Xml.Element(RootElementName, @namespace);
             To = to;
             From = from;
-            if(id == null)
-            {
-                Id = XmppCore.GetId();
-            }
-            else
-                Id = id;
+            Id = id;
 
             Language = language;
             foreach (XmlElement e in data)
@@ -171,9 +166,6 @@ namespace Sharp.Xmpp.Core
         {
             element.ThrowIfNull("element");
             this.element = element;
-
-            if(Id == null)
-                Id = XmppCore.GetId();
         }
 
         /// <summary>

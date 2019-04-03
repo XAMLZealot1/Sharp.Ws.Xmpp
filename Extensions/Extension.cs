@@ -168,6 +168,11 @@
         /// <summary>
         /// An extension added by Rainbow Hub
         /// </summary>
-        Configuration
+        Configuration,
+
+        /// <summary>
+        /// An extension to have message delivery receipts
+        /// </summary>
+        MessageDeliveryReceipts
     }
 }
