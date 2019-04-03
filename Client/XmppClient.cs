@@ -754,7 +754,7 @@ namespace Sharp.Xmpp.Client
         }
 
         /// <summary>
-        /// The event that is raised when an user invatation occurs
+        /// The event that is raised when an user invitation occurs
         /// </summary>
         public event EventHandler<UserInvitationEventArgs> UserInvitation
         {
@@ -765,6 +765,21 @@ namespace Sharp.Xmpp.Client
             remove
             {
                 configuration.UserInvitation -= value;
+            }
+        }
+
+        /// <summary>
+        /// The event that is raised when an conversation has been created / updated / deleted
+        /// </summary>
+        public event EventHandler<ConversationManagementEventArgs> ConversationManagement
+        {
+            add
+            {
+                configuration.ConversationManagement += value;
+            }
+            remove
+            {
+                configuration.ConversationManagement -= value;
             }
         }
 

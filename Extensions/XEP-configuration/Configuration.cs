@@ -45,6 +45,11 @@ namespace Sharp.Xmpp.Extensions
         public event EventHandler<UserInvitationEventArgs> UserInvitation;
 
         /// <summary>
+        /// The event that is raised when an conversation has been created / updated / deleted
+        /// </summary>
+        public event EventHandler<ConversationManagementEventArgs> ConversationManagement;
+
+        /// <summary>
         /// Invoked when a message stanza has been received.
         /// </summary>
         /// <param name="stanza">The stanza which has been received.</param>
@@ -52,10 +57,10 @@ namespace Sharp.Xmpp.Extensions
         /// on to the next handler.</returns>
         public bool Input(Message message)
         {
-            if(message.Type == MessageType.Management)
+            if (message.Type == MessageType.Management)
             {
                 // Do we receive an user invitation ?
-                if(message.Data["userinvite"] != null)
+                if (message.Data["userinvite"] != null)
                 {
                     XmlElement e = message.Data["userinvite"];
 
@@ -67,16 +72,57 @@ namespace Sharp.Xmpp.Extensions
                         string status = e.GetAttribute("status"); // 'canceled', 'accepted' , 'pending'
 
                         UserInvitation.Raise(this, new UserInvitationEventArgs(invitationId, action, type, status));
-                        return true;
                     }
                     catch (Exception)
                     {
 
                     }
                 }
+                // Do we receive message about conversation management
+                else if (message.Data["conversation"] != null)
+                {
+                    XmlElement e = message.Data["conversation"];
 
+                    string conversationID = e.GetAttribute("id");
+                    string action = e.GetAttribute("action"); // 'create', 'update', 'delete'
+                    Dictionary<string, string> data = new Dictionary<string, string>();
+
+                    if (e["type"] != null)
+                        data.Add("type", e["type"].InnerText);
+
+                    if (e["peerId"] != null)
+                        data.Add("peerId", e["peerId"].InnerText);
+
+                    if (e["peer"] != null)
+                        data.Add("jid_im", e["peer"].InnerText);
+
+                    if (e["mute"] != null)
+                        data.Add("mute", e["mute"].InnerText);
+
+                    if (e["isFavorite"] != null)
+                        data.Add("isFavorite", e["isFavorite"].InnerText);
+
+                    if (e["lastMessageText"] != null)
+                        data.Add("lastMessageText", e["lastMessageText"].InnerText);
+
+                    if (e["lastMessageSender"] != null)
+                        data.Add("lastMessageSender", e["lastMessageSender"].InnerText);
+
+                    if (e["lastMessageDate"] != null)
+                        data.Add("lastMessageDate", e["lastMessageDate"].InnerText);
+
+                    if (e["unreceivedMessageNumber"] != null)
+                        data.Add("unreceivedMessageNumber", e["unreceivedMessageNumber"].InnerText);
+
+                    if (e["unreadMessageNumber"] != null)
+                        data.Add("unreadMessageNumber", e["unreadMessageNumber"].InnerText);
+
+                    ConversationManagement.Raise(this, new ConversationManagementEventArgs(conversationID, action, data));
+                }
+
+                // Since it's a Management message we prevent next handler to parse it
+                return true;
             }
-
             // Pass the message on to the next handler.
             return false;
         }
