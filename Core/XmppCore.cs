@@ -1476,11 +1476,11 @@ namespace Sharp.Xmpp.Core
                                     //log.DebugFormat("Iq is request:{0}", iq.Id);
                                     stanzaQueue.Add(iq);
                                 }
-                                //else
-                                //{
+                                else
+                                {
                                 //    log.DebugFormat("Handle Id response:{0}", iq.Id);
-                                //    HandleIqResponse(iq);
-                                //}
+                                    HandleIqResponse(iq);
+                                }
                                 break;
 
                             case "message":

@@ -10,7 +10,7 @@ namespace Sharp.Xmpp.Extensions
     /// <summary>
     /// Implements Mechanism for providing MaM support
     /// </summary>
-    internal class MessageArchiveManagment : XmppExtension
+    internal class MessageArchiveManagment : XmppExtension, IInputFilter<Sharp.Xmpp.Im.Message>
     {
         /// <summary>
         /// A reference to the 'Entity Capabilities' extension instance.
@@ -52,6 +52,34 @@ namespace Sharp.Xmpp.Extensions
             ecapa = im.GetExtension<EntityCapabilities>();
         }
 
+        /// <summary>
+        /// The event that is raised when a result is donrecevied after asking list of messages archive
+        /// </summary>
+        public event EventHandler<MessageArchiveManagementResultEventArgs> MessageArchiveManagementResult;
+
+        /// <summary>
+        /// The event that is raised when a message arcchive has been found
+        /// </summary>
+        public event EventHandler<MessageArchiveEventArgs> MessageArchiveRetrieved;
+
+        /// <summary>
+        /// Invoked when a message stanza has been received.
+        /// </summary>
+        /// <param name="stanza">The stanza which has been received.</param>
+        /// <returns>true to intercept the stanza or false to pass the stanza
+        /// on to the next handler.</returns>
+        public bool Input(Sharp.Xmpp.Im.Message message)
+        {
+            if ( (message.Data["result"] != null)
+                && (message.Data["result"].NamespaceURI == "urn:xmpp:mam:1") )
+            {
+                String queryId = message.Data["result"].GetAttribute("queryid");
+
+                MessageArchiveRetrieved.Raise(this, new MessageArchiveEventArgs(queryId, message));
+                return true;
+            }
+            return false;
+        }
 
         /// <summary>
         /// Requests the XMPP entity with the specified JID a GET command.
@@ -59,6 +87,7 @@ namespace Sharp.Xmpp.Extensions
         /// if fires the callback function
         /// </summary>
         /// <param name="jid">The JID of the XMPP entity to get.</param>
+        /// <param name="queryId">The Id related to this query - it will be used to identify this request</param>
         /// <exception cref="ArgumentNullException">The jid parameter
         /// is null.</exception>
         /// <exception cref="NotSupportedException">The XMPP entity with
@@ -68,17 +97,12 @@ namespace Sharp.Xmpp.Extensions
         /// error condition.</exception>
         /// <exception cref="XmppException">The server returned invalid data or another
         /// unspecified XMPP error occurred.</exception>
-        public void RequestCustomIqAsync(Jid jid, int max, MessageArchiveManagmentRequestDelegate callback, string before = null, string after = null)
+        public void RequestCustomIqAsync(Jid jid, string queryId, int max, MessageArchiveManagmentRequestDelegate callback, string before = null, string after = null)
         {
             jid.ThrowIfNull("jid");
 
-            /*/First check if the Jid entity supports the namespace
-            if (ecapa.Supports(jid, Extension.CustomIqExtension))
-            {
-                throw new NotSupportedException("The XMPP entity does not support the " +
-                    "'CustomIqExtension' extension.");
-            }//*/
             var xml = Xml.Element("query", "urn:xmpp:mam:1");
+            xml.SetAttribute("queryid", queryId);
             var xmlParam = Xml.Element("set", "http://jabber.org/protocol/rsm");
             if ( max > 0 ) xmlParam.Child(Xml.Element("max").Text(max.ToString()));
             if (before == null)
@@ -89,31 +113,51 @@ namespace Sharp.Xmpp.Extensions
                 xmlParam.Child(Xml.Element("after").Text(after));
             xml.Child(xmlParam);
 
-            Debug.WriteLine(xml);
-
             //The Request is Async
             im.IqRequestAsync(IqType.Set, jid, im.Jid, xml, null, (id, iq) =>
             {
-                Debug.WriteLine(iq);
-
                 //For any reply we execute the callback
                 if (iq.Type == IqType.Error)
-                    throw Util.ExceptionFromError(iq, "Could not Send Object to XMPP entity.");
+                {
+                    MessageArchiveManagementResult.Raise(this, new MessageArchiveManagementResultEventArgs());
+                    return;
+                }
+
                 if (iq.Type == IqType.Result)
                 {
+                    string queryid = "";
+                    MamResult complete = MamResult.Error;
+                    int count = 0;
+                    string first = "";
+                    string last = "";
                     try
                     {
-                        //An empty response means the message was received
-                        if (callback != null)
+                        if ( (iq.Data["fin"] != null) && (iq.Data["fin"]["set"] != null) )
                         {
-                            callback.Invoke(id, iq.ToString());
+                            XmlElement e = iq.Data["fin"];
+
+                            queryid = e.GetAttribute("queryid");
+                            complete = (e.GetAttribute("complete") == "false") ? MamResult.InProgress : MamResult.Complete;
+
+                            if(e["set"]["count"] != null)
+                                count = Int16.Parse(e["set"]["count"].InnerText);
+
+                            if (e["set"]["first"] != null)
+                                first = e["set"]["first"].InnerText;
+
+                            if (e["set"]["last"] != null)
+                                last = e["set"]["last"].InnerText;
+
+                            MessageArchiveManagementResult.Raise(this, new MessageArchiveManagementResultEventArgs(queryid, complete, count, first, last));
+                            return;
                         }
                     }
                     catch (Exception e)
                     {
-                        System.Diagnostics.Debug.WriteLine("Not correctly formated response to RequestCustomIqAsync" + e.StackTrace + e.ToString());
-                        throw Util.ExceptionFromError(iq, "Not correctly formated response to RequestCustomIqAsync, " + e.Message);
+                        
                     }
+
+                    MessageArchiveManagementResult.Raise(this, new MessageArchiveManagementResultEventArgs(queryid, MamResult.Error, count, first, last));
                 }
             });
         }

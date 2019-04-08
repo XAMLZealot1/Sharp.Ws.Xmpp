@@ -799,6 +799,36 @@ namespace Sharp.Xmpp.Client
         }
 
         /// <summary>
+        /// The event that is raised when a message arcchive has been found
+        /// </summary>
+        public event EventHandler<MessageArchiveEventArgs> MessageArchiveRetrieved
+        {
+            add
+            {
+                mam.MessageArchiveRetrieved += value;
+            }
+            remove
+            {
+                mam.MessageArchiveRetrieved -= value;
+            }
+        }
+
+        /// <summary>
+        /// The event that is raised when a result is donrecevied after asking list of messages archive
+        /// </summary>
+        public event EventHandler<MessageArchiveManagementResultEventArgs> MessageArchiveManagementResult
+        {
+            add
+            {
+                mam.MessageArchiveManagementResult += value;
+            }
+            remove
+            {
+                mam.MessageArchiveManagementResult -= value;
+            }
+        }
+
+        /// <summary>
         /// Initializes a new instance of the XmppClient class.
         /// </summary>
         /// <param name="address">The XMPP server IP address.</param>
@@ -1339,11 +1369,10 @@ namespace Sharp.Xmpp.Client
                 cusiqextension.RequestCustomIqAsync(jid, str, callback);
         }
 
-        public void RequestArchivedMessages(Jid jid, int maxNumber, MessageArchiveManagmentRequestDelegate callback, string before = null, string after = null)
+        public void RequestArchivedMessages(Jid jid, string queryId, int maxNumber, MessageArchiveManagmentRequestDelegate callback, string before = null, string after = null)
         {
             AssertValid();
-            // TODO add support for first, last and direction (after/before)
-            mam.RequestCustomIqAsync(jid, maxNumber, callback, before, after);
+            mam.RequestCustomIqAsync(jid, queryId, maxNumber, callback, before, after);
         }
 
         /// <summary>
