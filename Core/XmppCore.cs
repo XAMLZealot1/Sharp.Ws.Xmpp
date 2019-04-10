@@ -1366,7 +1366,6 @@ namespace Sharp.Xmpp.Core
                 while (true)
                 {
                     string message = webSocketClient.DequeueMessageReceived();
-
                     try
                     {
                         XmlDocument xmlDocument;
@@ -1478,14 +1477,13 @@ namespace Sharp.Xmpp.Core
                                 }
                                 else
                                 {
-                                //    log.DebugFormat("Handle Id response:{0}", iq.Id);
+                                    //log.DebugFormat("Handle Id response:{0}", iq.Id);
                                     HandleIqResponse(iq);
                                 }
                                 break;
 
                             case "message":
                                 //log.DebugFormat("message received");
-
                                 stanzaQueue.Add(new Message(elem));
                                 break;
 
@@ -1496,14 +1494,16 @@ namespace Sharp.Xmpp.Core
                         }
 
                     }
-                    catch
+                    catch (Exception)
                     {
-
+                        log.ErrorFormat("ReadXmlWebSocketMessage - ERROR");
                     }
                 }
             }
             catch (Exception e)
             {
+                log.ErrorFormat("ReadXmlWebSocketMessage - SUB_ERROR");
+
                 // Shut down the dispatcher task.
                 cancelDispatch.Cancel();
                 cancelDispatch = new CancellationTokenSource();
@@ -1558,6 +1558,8 @@ namespace Sharp.Xmpp.Core
             }
             catch (Exception e)
             {
+                log.ErrorFormat("ReadXmlStream - SUB_ERROR");
+
                 // Shut down the dispatcher task.
                 cancelDispatch.Cancel();
                 cancelDispatch = new CancellationTokenSource();
@@ -1590,23 +1592,27 @@ namespace Sharp.Xmpp.Core
                 try
                 {
                     Stanza stanza = stanzaQueue.Take(cancelDispatch.Token);
-                    if (debugStanzas) System.Diagnostics.Debug.WriteLine(stanza.ToString());
+                    //log.DebugFormat("DispatchEvents - message:[{0}]", stanza.ToString());
                     if (stanza is Iq)
                         Iq.Raise(this, new IqEventArgs(stanza as Iq));
                     else if (stanza is Message)
                         Message.Raise(this, new MessageEventArgs(stanza as Message));
                     else if (stanza is Presence)
                         Presence.Raise(this, new PresenceEventArgs(stanza as Presence));
+                    else
+                        log.ErrorFormat("DispatchEvents - not a valide stanza ....");
                 }
                 catch (OperationCanceledException)
                 {
                     // Quit the task if it's been cancelled.
+                    log.ErrorFormat("DispatchEvents - OperationCanceledException - ERROR");
                     return;
                 }
                 catch (Exception e)
                 {
                     // FIXME: What should we do if an exception is thrown in one of the
                     // event handlers?
+                    log.ErrorFormat("DispatchEvents - global exception - ERROR");
                     System.Diagnostics.Debug.WriteLine("Error in XMPP Core: " + e.StackTrace + e.ToString());
                     //throw e;
                 }

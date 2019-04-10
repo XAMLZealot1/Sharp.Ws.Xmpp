@@ -5,6 +5,8 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Xml;
 
+using log4net;
+
 namespace Sharp.Xmpp.Extensions
 {
     /// <summary>
@@ -12,6 +14,8 @@ namespace Sharp.Xmpp.Extensions
     /// </summary>
     internal class MessageArchiveManagment : XmppExtension, IInputFilter<Sharp.Xmpp.Im.Message>
     {
+        private static readonly ILog log = LogManager.GetLogger(typeof(MessageArchiveManagment));
+
         /// <summary>
         /// A reference to the 'Entity Capabilities' extension instance.
         /// 
@@ -74,6 +78,7 @@ namespace Sharp.Xmpp.Extensions
                 && (message.Data["result"].NamespaceURI == "urn:xmpp:mam:1") )
             {
                 String queryId = message.Data["result"].GetAttribute("queryid");
+                String resultId = message.Data["result"].GetAttribute("id");
 
                 MessageArchiveRetrieved.Raise(this, new MessageArchiveEventArgs(queryId, message));
                 return true;
@@ -152,9 +157,9 @@ namespace Sharp.Xmpp.Extensions
                             return;
                         }
                     }
-                    catch (Exception e)
+                    catch (Exception )
                     {
-                        
+                        log.ErrorFormat("RequestCustomIqAsync - an error occurred ...");
                     }
 
                     MessageArchiveManagementResult.Raise(this, new MessageArchiveManagementResultEventArgs(queryid, MamResult.Error, count, first, last));

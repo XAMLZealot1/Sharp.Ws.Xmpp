@@ -10,8 +10,7 @@ namespace Sharp.Xmpp.Extensions
     /// <summary>
     /// Implements the 'Entity Capabilities' extension as defined in XEP-0092.
     /// </summary>
-    internal class EntityCapabilities : XmppExtension, IInputFilter<Presence>,
-        IOutputFilter<Presence>
+    internal class EntityCapabilities : XmppExtension, IInputFilter<Presence>, IOutputFilter<Presence>
     {
         /// <summary>
         /// A reference to the 'Service Discovery' extension instance.

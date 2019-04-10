@@ -225,7 +225,7 @@ namespace Sharp.Xmpp.Core
                 }
                 catch
                 {
-                    // Nothing more to do
+                    log.ErrorFormat("QueueMessageReceived - ERROR");
                 }
             }
         }
@@ -305,9 +305,9 @@ namespace Sharp.Xmpp.Core
                     else
                         ReadRootElement(xmlDocument);
                 }
-                catch
+                catch (Exception)
                 {
-                    // Nothing more to do
+                    log.ErrorFormat("WebSocket4NetClient_MessageReceived - ERROR");
                 }
             }
         }
@@ -325,7 +325,7 @@ namespace Sharp.Xmpp.Core
                 }
                 catch (Exception)
                 {
-                    //TODO
+                    log.ErrorFormat("WebSocket4NetClient_Opened - ERROR");
                 }
             }
         }
@@ -349,7 +349,7 @@ namespace Sharp.Xmpp.Core
                 }
                 catch (Exception)
                 {
-                    //TODO
+                    log.ErrorFormat("RaiseWebSocketClosed - ERROR");
                 }
             }
         }
@@ -368,7 +368,7 @@ namespace Sharp.Xmpp.Core
                 }
                 catch (Exception)
                 {
-                    //TODO
+                    log.ErrorFormat("WebSocket4NetClient_Error - ERROR");
                 }
             }
         }
@@ -379,7 +379,9 @@ namespace Sharp.Xmpp.Core
             Open = xmlDocument.DocumentElement;
 
             if (Open == null)
-                throw new XmlException("Unexpected XML message received");
+            {
+                log.ErrorFormat("ReadRootElement - Unexpected XML message received");
+            }
 
             if (Open.Name == "open")
             {
@@ -388,8 +390,10 @@ namespace Sharp.Xmpp.Core
                 if (!String.IsNullOrEmpty(lang))
                     Language = new CultureInfo(lang);
             }
-            throw new XmlException("Unexpected XML message received");
-
+            else
+            {
+                log.ErrorFormat("ReadRootElement - ERROR");
+            }
         }
     }
 }

@@ -1670,15 +1670,32 @@ namespace Sharp.Xmpp.Im
             core.Iq += (sender, e) => { OnIq(e.Stanza); };
             core.Presence += (sender, e) =>
             {
-                // FIXME: Raise Error event if constructor raises exception?
-                OnPresence(new Presence(e.Stanza));
+                try
+                {
+                    Presence presence = new Presence(e.Stanza);
+                    OnPresence(presence);
+                }
+                catch (Exception)
+                {
+                    log.ErrorFormat("[SetupEventHandlers] cannot create new Presence object ...");
+                }
+                
             };
             core.Message += (sender, e) =>
             {
-                OnMessage(new Message(e.Stanza));
+                try
+                {
+                    Message message = new Message(e.Stanza);
+                    OnMessage(message);
+                }
+                catch (Exception)
+                {
+                    log.ErrorFormat("[SetupEventHandlers] cannot create new Message object ...");
+                }
             };
             core.Error += (sender, e) =>
             {
+                log.ErrorFormat("[SetupEventHandlers] error fired ...");
                 Error.Raise(sender, new ErrorEventArgs(e.Exception));
             };
         }
@@ -1796,7 +1813,10 @@ namespace Sharp.Xmpp.Im
                 {
                     // Swallow message?
                     if (filter.Input(message))
+                    {
+                        log.DebugFormat("OnMessage - extension used:[{0}] - message:[{1}]", ext.Xep.ToString(), message.ToString());
                         return;
+                    }
                 }
             }
 
