@@ -963,6 +963,7 @@ namespace Sharp.Xmpp.Client
         /// <summary>
         /// Sends a chat message with the specified content to the specified JID.
         /// </summary>
+        /// <param name="to">ID of the message</param>
         /// <param name="to">The JID of the intended recipient.</param>
         /// <param name="body">The content of the message.</param>
         /// <param name="subject">The subject of the message.</param>
@@ -983,14 +984,14 @@ namespace Sharp.Xmpp.Client
         /// <exception cref="ObjectDisposedException">The XmppClient object has been
         /// disposed.</exception>
         /// <include file='Examples.xml' path='S22/Xmpp/Client/XmppClient[@name="SendMessage-1"]/*'/>
-        public void SendMessage(Jid to, string body, string subject = null,
+        public void SendMessage(string id, Jid to, string body, string subject = null,
             string thread = null, MessageType type = MessageType.Normal,
             CultureInfo language = null)
         {
             AssertValid();
             to.ThrowIfNull("to");
             body.ThrowIfNullOrEmpty("body");
-            im.SendMessage(to, body, subject, thread, type, language);
+            im.SendMessage(id, to, body, subject, thread, type, language);
         }
 
         /// <summary>

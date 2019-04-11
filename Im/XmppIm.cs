@@ -552,6 +552,7 @@ namespace Sharp.Xmpp.Im
         /// <summary>
         /// Sends a chat message with the specified content to the specified JID.
         /// </summary>
+        /// <param name="to">ID of the message</param>
         /// <param name="to">The JID of the intended recipient.</param>
         /// <param name="body">The content of the message.</param>
         /// <param name="subject">The subject of the message.</param>
@@ -571,7 +572,7 @@ namespace Sharp.Xmpp.Im
         /// the XMPP server.</exception>
         /// <exception cref="ObjectDisposedException">The XmppIm object has been
         /// disposed.</exception>
-        public void SendMessage(Jid to, string body, string subject = null,
+        public void SendMessage(string id, Jid to, string body, string subject = null,
             string thread = null, MessageType type = MessageType.Normal,
             CultureInfo language = null)
         {
@@ -579,6 +580,7 @@ namespace Sharp.Xmpp.Im
             to.ThrowIfNull("to");
             body.ThrowIfNullOrEmpty("body");
             Message m = new Message(to, body, subject, thread, type, language);
+            m.Id = id;
             SendMessage(m);
         }
 
