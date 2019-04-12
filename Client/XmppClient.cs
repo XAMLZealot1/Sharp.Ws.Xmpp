@@ -1079,6 +1079,32 @@ namespace Sharp.Xmpp.Client
         }
 
         /// <summary>
+        /// Mark a message as received (XEP-0184: Message Delivery Receipts). Must be done only on message of type Chat
+        /// </summary>
+        /// <param name="jid">the JID who send the message</param>
+        /// <param name="messageId">The ID of the message to mark as read</param>
+        public void MarkMessageAsReceive(Jid jid, string messageId)
+        {
+            Message message = new Message(jid);
+            message.Type = MessageType.Chat;
+
+            XmlElement e = message.Data;
+
+            XmlElement timestamp = e.OwnerDocument.CreateElement("timestamp", "urn:xmpp:receipts");
+            timestamp.SetAttribute("value", DateTime.UtcNow.ToString("o"));
+            e.AppendChild(timestamp);
+
+            XmlElement received = e.OwnerDocument.CreateElement("received", "urn:xmpp:receipts");
+            received.SetAttribute("entity", "client");
+            received.SetAttribute("event", "received");
+            received.SetAttribute("id", messageId);
+            e.AppendChild(received);
+
+            im.SendMessage(message);
+        }
+
+
+        /// <summary>
         /// Sets the chat-state for the conversation with the XMPP user with the
         /// specified JID.
         /// </summary>

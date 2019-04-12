@@ -80,7 +80,7 @@ namespace Sharp.Xmpp.Extensions
                 String queryId = message.Data["result"].GetAttribute("queryid");
                 String resultId = message.Data["result"].GetAttribute("id");
 
-                MessageArchiveRetrieved.Raise(this, new MessageArchiveEventArgs(queryId, message));
+                MessageArchiveRetrieved.Raise(this, new MessageArchiveEventArgs(queryId, resultId, message));
                 return true;
             }
             return false;
