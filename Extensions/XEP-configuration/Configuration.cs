@@ -50,6 +50,11 @@ namespace Sharp.Xmpp.Extensions
         public event EventHandler<ConversationManagementEventArgs> ConversationManagement;
 
         /// <summary>
+        /// The event that is raised when an favorite has been created / updated / deleted
+        /// </summary>
+        public event EventHandler<FavoriteManagementEventArgs> FavoriteManagement;
+
+        /// <summary>
         /// Invoked when a message stanza has been received.
         /// </summary>
         /// <param name="stanza">The stanza which has been received.</param>
@@ -99,9 +104,6 @@ namespace Sharp.Xmpp.Extensions
                     if (e["mute"] != null)
                         data.Add("mute", e["mute"].InnerText);
 
-                    if (e["isFavorite"] != null)
-                        data.Add("isFavorite", e["isFavorite"].InnerText);
-
                     if (e["lastMessageText"] != null)
                         data.Add("lastMessageText", e["lastMessageText"].InnerText);
 
@@ -119,8 +121,21 @@ namespace Sharp.Xmpp.Extensions
 
                     ConversationManagement.Raise(this, new ConversationManagementEventArgs(conversationID, action, data));
                 }
+                // Do we receive message about favorite management
+                else if (message.Data["favorite"] != null)
+                {
+                    XmlElement e = message.Data["favorite"];
 
-                // Since it's a Management message we prevent next handler to parse it
+                    string id = e.GetAttribute("id");
+                    string action = e.GetAttribute("action"); // 'create', 'update', 'delete'
+                    string type = e.GetAttribute("type"); // 'user', 'room', 'bot'
+                    string position = e.GetAttribute("position");
+                    string peerId = e.GetAttribute("peer_id");
+                    FavoriteManagement.Raise(this, new FavoriteManagementEventArgs(id, action, type, position, peerId));
+
+                }
+
+                // Since it's a Management message, we prevent next handler to parse it
                 return true;
             }
             // Pass the message on to the next handler.

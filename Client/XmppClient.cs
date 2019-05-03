@@ -784,6 +784,22 @@ namespace Sharp.Xmpp.Client
         }
 
         /// <summary>
+        /// The event that is raised when an conversation has been created / updated / deleted
+        /// </summary>
+        public event EventHandler<FavoriteManagementEventArgs> FavoriteManagement
+        {
+            add
+            {
+                configuration.FavoriteManagement += value;
+            }
+            remove
+            {
+                configuration.FavoriteManagement -= value;
+            }
+        }
+
+
+        /// <summary>
         /// The event that is raised when an user invatation occurs
         /// </summary>
         public event EventHandler<MessageDeliveryReceivedEventArgs> MessageDeliveryReceived

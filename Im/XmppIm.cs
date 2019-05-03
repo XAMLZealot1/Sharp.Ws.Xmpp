@@ -1677,7 +1677,7 @@ namespace Sharp.Xmpp.Im
                     Presence presence = new Presence(e.Stanza);
                     OnPresence(presence);
                 }
-                catch (Exception)
+                catch (Exception ePresence)
                 {
                     log.ErrorFormat("[SetupEventHandlers] cannot create new Presence object ...");
                 }
@@ -1690,7 +1690,7 @@ namespace Sharp.Xmpp.Im
                     Message message = new Message(e.Stanza);
                     OnMessage(message);
                 }
-                catch (Exception)
+                catch (Exception eMessage)
                 {
                     log.ErrorFormat("[SetupEventHandlers] cannot create new Message object ...");
                 }
