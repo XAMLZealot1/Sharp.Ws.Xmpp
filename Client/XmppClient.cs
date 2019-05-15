@@ -798,6 +798,21 @@ namespace Sharp.Xmpp.Client
             }
         }
 
+        /// <summary>
+        /// The event that is raised when the current user password has been updated
+        /// </summary>
+        public event EventHandler<EventArgs> PasswordUpdated
+        {
+            add
+            {
+                configuration.PasswordUpdated += value;
+            }
+            remove
+            {
+                configuration.PasswordUpdated -= value;
+            }
+        }
+
 
         /// <summary>
         /// The event that is raised when an user invatation occurs

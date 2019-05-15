@@ -55,6 +55,11 @@ namespace Sharp.Xmpp.Extensions
         public event EventHandler<FavoriteManagementEventArgs> FavoriteManagement;
 
         /// <summary>
+        /// The event that is raised when the current user password has been updated
+        /// </summary>
+        public event EventHandler<EventArgs> PasswordUpdated;
+
+        /// <summary>
         /// Invoked when a message stanza has been received.
         /// </summary>
         /// <param name="stanza">The stanza which has been received.</param>
@@ -133,6 +138,14 @@ namespace Sharp.Xmpp.Extensions
                     string peerId = e.GetAttribute("peer_id");
                     FavoriteManagement.Raise(this, new FavoriteManagementEventArgs(id, action, type, position, peerId));
 
+                }
+                // Do we receive message about userpassword management
+                else if (message.Data["userpassword"] != null)
+                {
+                    XmlElement e = message.Data["userpassword"];
+                    string action = e.GetAttribute("action"); // 'update' only ?
+                    if (action == "update")
+                        PasswordUpdated.Raise(this, new EventArgs());
                 }
 
                 // Since it's a Management message, we prevent next handler to parse it
