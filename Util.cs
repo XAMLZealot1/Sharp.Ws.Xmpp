@@ -1,5 +1,8 @@
 ﻿using Sharp.Xmpp.Core;
 using System;
+using System.Collections;
+using System.Diagnostics;
+using System.Reflection;
 using System.Xml;
 
 namespace Sharp.Xmpp
@@ -28,6 +31,76 @@ namespace Sharp.Xmpp
     /// </summary>
     internal static class Util
     {
+        /// <summary>
+        /// Permits to serialize exception (to log it for example)
+        /// </summary>
+        /// <param name="exception"><see cref="Exception"/>Exception object to serialize</param>
+        /// <returns>String as a serialization result</returns>
+        public static String SerializeException(Exception exception)
+        {
+            String result = "";
+
+            if (exception == null)
+                return result;
+
+            result += String.Format("Type-FullName: [{0}]\r\n", exception.GetType().FullName);
+
+            if (!String.IsNullOrEmpty(exception.Source))
+                result += String.Format("Source: [{0}]\r\n", exception.Source);
+
+
+            if (!String.IsNullOrEmpty(exception.Message))
+                result += String.Format("Message: [{0}]\r\n", exception.Message);
+
+            if (!String.IsNullOrEmpty(exception.StackTrace))
+            {
+                try
+                {
+                    StackTrace stackTrace = new StackTrace(exception, true);
+                    String fileNames = stackTrace.GetFrame((stackTrace.FrameCount - 1)).GetFileName();
+                    Int32 lineNumber = stackTrace.GetFrame((stackTrace.FrameCount - 1)).GetFileLineNumber();
+                    MethodBase methodBase = stackTrace.GetFrame((stackTrace.FrameCount - 1)).GetMethod();
+                    String methodName = methodBase.Name;
+
+                    result += String.Format("StackStrace: Error in [{0}] - Method name:[{1}] - Line:[{2}]", fileNames, methodName, lineNumber);
+                }
+                catch
+                {
+                    result += String.Format("StackStrace: exception fired when trying to log StackTrace ...");
+                }
+            }
+
+            if (exception.Data.Count > 0)
+            {
+                String dataString = "";
+                String key, value;
+                result += String.Format("Data: [\r\n");
+                try
+                {
+                    foreach (DictionaryEntry de in exception.Data)
+                    {
+                        key = de.Key.ToString();
+                        value = (de.Value == null) ? "" : de.Value.ToString();
+                        dataString = String.Format("Key:[{0}] - Value:[{1}]", key, value);
+                        result += String.Format("\t{0}\r\n", dataString);
+                    }
+                }
+                catch
+                {
+                    result += String.Format("exception fired when trying to log data exception ...");
+                }
+                result += String.Format("]\r\n");
+            }
+
+            if (exception.InnerException != null)
+            {
+                result += String.Format("\tInnerException: [\r\n");
+                result += SerializeException(exception.InnerException);
+                result += String.Format("\t]\r\n");
+            }
+            return result;
+        }
+
         /// <summary>
         /// Creates an exception from the specified Iq stanza.
         /// </summary>

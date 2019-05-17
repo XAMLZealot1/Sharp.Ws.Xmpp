@@ -1679,7 +1679,7 @@ namespace Sharp.Xmpp.Im
                 }
                 catch (Exception ePresence)
                 {
-                    log.ErrorFormat("[SetupEventHandlers] cannot create new Presence object ...");
+                    log.ErrorFormat("[SetupEventHandlers] cannot create new Presence object:\r\n{0}", Util.SerializeException(ePresence));
                 }
                 
             };
@@ -1692,7 +1692,7 @@ namespace Sharp.Xmpp.Im
                 }
                 catch (Exception eMessage)
                 {
-                    log.ErrorFormat("[SetupEventHandlers] cannot create new Message object ...");
+                    log.ErrorFormat("[SetupEventHandlers] cannot create new Message object:\r\n{0}", Util.SerializeException(eMessage));
                 }
             };
             core.Error += (sender, e) =>
