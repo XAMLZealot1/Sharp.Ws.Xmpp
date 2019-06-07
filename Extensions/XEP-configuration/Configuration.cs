@@ -60,6 +60,17 @@ namespace Sharp.Xmpp.Extensions
         public event EventHandler<EventArgs> PasswordUpdated;
 
         /// <summary>
+        /// The event that is raised when an room has been created / updated / deleted
+        /// </summary>
+        public event EventHandler<RoomManagementEventArgs> RoomManagement;
+
+        /// <summary>
+        /// The event that is raised when a user is invited in a room
+        /// </summary>
+        public event EventHandler<RoomInvitationEventArgs> RoomInvitation;
+
+
+        /// <summary>
         /// Invoked when a message stanza has been received.
         /// </summary>
         /// <param name="stanza">The stanza which has been received.</param>
@@ -147,10 +158,66 @@ namespace Sharp.Xmpp.Extensions
                     if (action == "update")
                         PasswordUpdated.Raise(this, new EventArgs());
                 }
+                // Do we receive message about room/bubble management
+                else if (message.Data["room"] != null)
+                {
+                    XmlElement e = message.Data["room"];
+                    string roomId = e.GetAttribute("roomid");
+                    string roomJid = e.GetAttribute("roomjid");
 
+                    string userJid = e.GetAttribute("userjid"); // Not empty if user has been accepted / invited / unsubscribed / deleted
+                    string status = e.GetAttribute("status"); // Not empty if user has been accepted / invited / unsubscribed / deleted
+
+                    string topic = e.GetAttribute("topic"); // Not empty if room updated
+                    string name = e.GetAttribute("name"); // Not empty if room updated
+
+                    string lastAvatarUpdateDate = e.GetAttribute("lastAvatarUpdateDate"); // Not empty if avatar has been updated. if deleted "null" string
+
+                    RoomManagement.Raise(this, new RoomManagementEventArgs(roomId, roomJid, userJid, status, name, topic, lastAvatarUpdateDate));
+                }
                 // Since it's a Management message, we prevent next handler to parse it
                 return true;
             }
+            else if (message.Type == MessageType.Chat)
+            {
+                if (message.Data["x", "jabber:x:conference"] != null)
+                {
+                    XmlElement e;
+
+                    String roomId, roomJid, roomName;
+                    String userid, userjid, userdisplayname;
+                    String subject;
+
+                    roomId = roomJid = roomName = "";
+                    userid = userjid = userdisplayname = "";
+                    subject = "";
+
+                    e = message.Data["x", "jabber:x:conference"];
+                    roomId = e.GetAttribute("roomid");
+                    roomJid = e.GetAttribute("jid");
+                    roomName = e.GetAttribute("name");
+
+                    e = message.Data["x", "jabber:x:bubble:conference:owner"];
+                    if(e != null)
+                    {
+                        userid = e.GetAttribute("userid");
+                        userjid = e.GetAttribute("jid");
+                        userdisplayname = e.GetAttribute("displayname");
+                    }
+
+                    e = message.Data["subject"];
+                    if (e != null)
+                    {
+                        subject = e.InnerText;
+                    }
+
+                    // Since it's a room invitation, we prevent next handler to parse it
+                    RoomInvitation.Raise(this, new RoomInvitationEventArgs(roomId, roomJid, roomName, userid, userjid, userdisplayname, subject));
+
+                    return true;
+                }
+            }
+
             // Pass the message on to the next handler.
             return false;
         }

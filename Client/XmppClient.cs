@@ -798,6 +798,38 @@ namespace Sharp.Xmpp.Client
             }
         }
 
+
+        /// <summary>
+        /// The event that is raised when an room has been created / updated / deleted
+        /// </summary>
+        public event EventHandler<RoomManagementEventArgs> RoomManagement
+        {
+            add
+            {
+                configuration.RoomManagement += value;
+            }
+            remove
+            {
+                configuration.RoomManagement -= value;
+            }
+        }
+
+        /// <summary>
+        /// The event that is raised when a user is invited in a room
+        /// </summary>
+        public event EventHandler<RoomInvitationEventArgs> RoomInvitation
+        {
+            add
+            {
+                configuration.RoomInvitation += value;
+            }
+            remove
+            {
+                configuration.RoomInvitation -= value;
+            }
+        }
+
+
         /// <summary>
         /// The event that is raised when the current user password has been updated
         /// </summary>
