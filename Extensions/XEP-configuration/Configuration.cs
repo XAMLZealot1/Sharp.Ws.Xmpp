@@ -167,13 +167,14 @@ namespace Sharp.Xmpp.Extensions
 
                     string userJid = e.GetAttribute("userjid"); // Not empty if user has been accepted / invited / unsubscribed / deleted
                     string status = e.GetAttribute("status"); // Not empty if user has been accepted / invited / unsubscribed / deleted
+                    string privilege = e.GetAttribute("privilege"); // Not empty if user has changed it's role: user / moderator / guest
 
                     string topic = e.GetAttribute("topic"); // Not empty if room updated
                     string name = e.GetAttribute("name"); // Not empty if room updated
 
                     string lastAvatarUpdateDate = e.GetAttribute("lastAvatarUpdateDate"); // Not empty if avatar has been updated. if deleted "null" string
 
-                    RoomManagement.Raise(this, new RoomManagementEventArgs(roomId, roomJid, userJid, status, name, topic, lastAvatarUpdateDate));
+                    RoomManagement.Raise(this, new RoomManagementEventArgs(roomId, roomJid, userJid, status, privilege, name, topic, lastAvatarUpdateDate));
                 }
                 // Since it's a Management message, we prevent next handler to parse it
                 return true;

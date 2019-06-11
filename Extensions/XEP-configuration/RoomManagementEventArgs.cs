@@ -41,6 +41,16 @@ namespace Sharp.Xmpp.Extensions
         }
 
         /// <summary>
+        /// User privilege (if any) user / moderator / guest
+        /// </summary>
+        public String Privilege
+        {
+            get;
+            private set;
+        }
+
+
+        /// <summary>
         /// Room's updated name (if any)
         /// </summary>
         public String Name
@@ -79,12 +89,13 @@ namespace Sharp.Xmpp.Extensions
         /// <param name="topic">the room topic</param>
         /// <param name="lastAvatarUpdateDate">the last avatar romm update date</param>
         /// <summary>
-        public RoomManagementEventArgs(String roomId, String roomJid, String userJid, String status, String name, String topic, String lastAvatarUpdateDate)
+        public RoomManagementEventArgs(String roomId, String roomJid, String userJid, String status, String privilege, String name, String topic, String lastAvatarUpdateDate)
         {
             RoomId = roomId;
             RoomJid = roomJid;
             UserJid = userJid;
             Status = status;
+            Privilege = privilege;
             Name = name;
             Topic = topic;
             LastAvatarUpdateDate = lastAvatarUpdateDate;
