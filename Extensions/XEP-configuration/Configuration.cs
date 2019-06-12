@@ -195,6 +195,9 @@ namespace Sharp.Xmpp.Extensions
 
                     e = message.Data["x", "jabber:x:conference"];
                     roomId = e.GetAttribute("roomid");
+                    if(String.IsNullOrEmpty(roomId))
+                        roomId = e.GetAttribute("thread");
+
                     roomJid = e.GetAttribute("jid");
                     roomName = e.GetAttribute("name");
 
