@@ -19,8 +19,6 @@ namespace Sharp.Xmpp.Core
 {
     internal class WebSocket
     {
-        private const int TIMER_WEBSOCKET_ALIVE = 10000;
-
         private static readonly ILog log = LogManager.GetLogger(typeof(WebSocket));
 
         public event EventHandler WebSocketOpened;
