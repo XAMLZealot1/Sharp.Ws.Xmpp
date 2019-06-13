@@ -39,8 +39,6 @@ namespace Sharp.Xmpp.Core
         private BlockingCollection<Iq> iqMessagesReceived;
         private HashSet<String> iqIdList;
 
-        private Timer reconnectTimer;
-
         private WebSocket4Net.WebSocket webSocket4NetClient = null;
 
         public CultureInfo Language
@@ -69,18 +67,6 @@ namespace Sharp.Xmpp.Core
             Task.Factory.StartNew(CreateAndManageWebSocket, TaskCreationOptions.LongRunning | TaskCreationOptions.DenyChildAttach);
         }
 
-        private void ReconnectTimer_Elapsed(object sender, System.Timers.ElapsedEventArgs e)
-        {
-            if (webSocket4NetClient != null)
-            {
-                if (webSocket4NetClient.State != WebSocketState.Connecting && webSocket4NetClient.State != WebSocketState.Open)
-                {
-                    log.DebugFormat("[ReconnectTimer_Elapsed] no more opened ...");
-                    RaiseWebSocketClosed();
-                }
-            }
-        }
-
         private void CreateAndManageWebSocket()
         {
             if (webSocket4NetClient == null)
@@ -95,14 +81,6 @@ namespace Sharp.Xmpp.Core
                 webSocket4NetClient.Error += new EventHandler<SuperSocket.ClientEngine.ErrorEventArgs>(WebSocket4NetClient_Error);
                 webSocket4NetClient.MessageReceived += new EventHandler<MessageReceivedEventArgs>(WebSocket4NetClient_MessageReceived);
                 webSocket4NetClient.DataReceived += new EventHandler<WebSocket4Net.DataReceivedEventArgs>(WebSocket4NetClient_DataReceived);
-
-                // Use timer to ensure the connection is still alive or not
-                reconnectTimer = new Timer
-                {
-                    Interval = TIMER_WEBSOCKET_ALIVE
-                };
-                reconnectTimer.Elapsed += ReconnectTimer_Elapsed;
-
             }
             webSocket4NetClient.Open();
 
@@ -243,9 +221,6 @@ namespace Sharp.Xmpp.Core
         {
             if (webSocket4NetClient != null)
             {
-                reconnectTimer.Stop();
-                reconnectTimer.Close();
-
                 webSocket4NetClient.Dispose();
                 webSocket4NetClient = null;
             }
