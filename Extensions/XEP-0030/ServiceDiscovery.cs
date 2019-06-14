@@ -274,6 +274,9 @@ namespace Sharp.Xmpp.Extensions
                     log.DebugFormat("Extension used:{0}", ext.Xep.ToString());
                 }
             }
+
+            // Always add MUC:
+            feats.Add(Extension.MultiUserChat);
             return feats;
         }
 

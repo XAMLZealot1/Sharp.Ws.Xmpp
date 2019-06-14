@@ -62,7 +62,6 @@ namespace Sharp.Xmpp.Extensions
 
         public bool Input(Im.Message stanza)
         {
-            return false;
             if (MucError.IsError(stanza))
             {
                 // Unable to send a message... many reasons
