@@ -1121,10 +1121,10 @@ namespace Sharp.Xmpp.Client
         /// </summary>
         /// <param name="jid">the JID who send the message</param>
         /// <param name="messageId">The ID of the message to mark as read</param>
-        public void MarkMessageAsRead(Jid jid, string messageId)
+        public void MarkMessageAsRead(Jid jid, string messageId, MessageType messageType)
         {
             Message message = new Message(jid);
-            message.Type = MessageType.Chat;
+            message.Type = messageType;
 
             XmlElement e = message.Data;
 
@@ -1146,10 +1146,10 @@ namespace Sharp.Xmpp.Client
         /// </summary>
         /// <param name="jid">the JID who send the message</param>
         /// <param name="messageId">The ID of the message to mark as read</param>
-        public void MarkMessageAsReceive(Jid jid, string messageId)
+        public void MarkMessageAsReceive(Jid jid, string messageId, MessageType messageType)
         {
             Message message = new Message(jid);
-            message.Type = MessageType.Chat;
+            message.Type = messageType;
 
             XmlElement e = message.Data;
 
