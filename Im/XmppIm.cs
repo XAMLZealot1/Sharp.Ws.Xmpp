@@ -1670,6 +1670,7 @@ namespace Sharp.Xmpp.Im
         private void SetupEventHandlers()
         {
             core.Iq += (sender, e) => { OnIq(e.Stanza); };
+
             core.Presence += (sender, e) =>
             {
                 try
@@ -1679,7 +1680,7 @@ namespace Sharp.Xmpp.Im
                 }
                 catch (Exception ePresence)
                 {
-                    log.ErrorFormat("[SetupEventHandlers] cannot create new Presence object:\r\n{0}", Util.SerializeException(ePresence));
+                    log.ErrorFormat("[SetupEventHandlers] cannot create new Presence object:\r\nStanza:\r\n{0}\r\nException:\r\n{1}", e.Stanza.ToString(), Util.SerializeException(ePresence));
                 }
                 
             };
@@ -1692,12 +1693,12 @@ namespace Sharp.Xmpp.Im
                 }
                 catch (Exception eMessage)
                 {
-                    log.ErrorFormat("[SetupEventHandlers] cannot create new Message object:\r\n{0}", Util.SerializeException(eMessage));
+                    log.ErrorFormat("[SetupEventHandlers] cannot create new Message object:\r\nStanza:\r\n{0}\r\nException:\r\n{1}", e.Stanza.ToString(), Util.SerializeException(eMessage));
                 }
             };
             core.Error += (sender, e) =>
             {
-                log.ErrorFormat("[SetupEventHandlers] error fired ...");
+                log.ErrorFormat("[SetupEventHandlers] error fired\r\nException[{0}]", Util.SerializeException(e.Exception));
                 Error.Raise(sender, new ErrorEventArgs(e.Exception));
             };
         }
@@ -1770,12 +1771,8 @@ namespace Sharp.Xmpp.Im
                     // Swallow presence stanza?
                     if (filter.Input(presence))
                     {
-                        //log.DebugFormat("[OnPresence] filter used by extension [{0}]", ext.Xep.ToString());
+                        log.DebugFormat("[OnPresence] filter used by extension [{0}]", ext.Xep.ToString());
                         return;
-                    }
-                    else
-                    {
-                        //log.DebugFormat("[OnPresence] filter not usedby extension [{0}]", ext.Xep.ToString());
                     }
                 }
             }
