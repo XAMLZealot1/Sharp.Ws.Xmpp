@@ -74,6 +74,9 @@ namespace Sharp.Xmpp.Core
                 if (uri.ToLower().StartsWith("wss"))
                     webSocket4NetClient.Security.EnabledSslProtocols = System.Security.Authentication.SslProtocols.Tls12;
 
+                webSocket4NetClient.EnableAutoSendPing = true;
+                webSocket4NetClient.AutoSendPingInterval = 1; // in seconds
+
                 webSocket4NetClient.Opened += new EventHandler(WebSocket4NetClient_Opened);
                 webSocket4NetClient.Closed += new EventHandler(WebSocket4NetClient_Closed);
                 webSocket4NetClient.Error += new EventHandler<SuperSocket.ClientEngine.ErrorEventArgs>(WebSocket4NetClient_Error);
