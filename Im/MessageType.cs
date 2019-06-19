@@ -35,6 +35,11 @@
         /// <summary>
         /// The message is sent in the context of a management - Used in Rainbow Context
         /// </summary>
-        Management
+        Management,
+
+        /// <summary>
+        /// The message is sent in the context of a Webrtc - Used in Rainbow Context
+        /// </summary>
+        Webrtc
     }
 }

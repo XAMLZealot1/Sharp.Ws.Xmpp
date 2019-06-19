@@ -179,6 +179,11 @@ namespace Sharp.Xmpp.Client
         private Configuration configuration;
 
         /// <summary>
+        /// Provides the CallLog extension
+        /// </summary>
+        private CallLog callLog;
+
+        /// <summary>
         /// Is web socket used - false by default
         /// </summary>
         public bool UseWebSocket
@@ -780,6 +785,36 @@ namespace Sharp.Xmpp.Client
             remove
             {
                 configuration.ConversationManagement -= value;
+            }
+        }
+
+        /// <summary>
+        /// The event that is raised when an call log item has been retrieved
+        /// </summary>
+        public event EventHandler<CallLogItemEventArgs> CallLogItemRetrieved
+        {
+            add
+            {
+                callLog.CallLogItemRetrieved += value;
+            }
+            remove
+            {
+                callLog.CallLogItemRetrieved -= value;
+            }
+        }
+
+        /// <summary>
+        /// The event that is raised when we reeived the result of call log entries
+        /// </summary>
+        public event EventHandler<CallLogResultEventArgs> CallLogResult
+        {
+            add
+            {
+                callLog.CallLogResult += value;
+            }
+            remove
+            {
+                callLog.CallLogResult -= value;
             }
         }
 
@@ -1459,10 +1494,16 @@ namespace Sharp.Xmpp.Client
                 cusiqextension.RequestCustomIqAsync(jid, str, callback);
         }
 
-        public void RequestArchivedMessages(Jid jid, string queryId, int maxNumber, MessageArchiveManagmentRequestDelegate callback, string before = null, string after = null)
+        public void RequestArchivedMessages(Jid jid, string queryId, int maxNumber, string before = null, string after = null)
         {
             AssertValid();
-            mam.RequestCustomIqAsync(jid, queryId, maxNumber, callback, before, after);
+            mam.RequestCustomIqAsync(jid, queryId, maxNumber, before, after);
+        }
+
+        public void RequestCallLogs(string queryId, int maxNumber, string before = null, string after = null)
+        {
+            AssertValid();
+            callLog.RequestCustomIqAsync(queryId, maxNumber, before, after);
         }
 
         /// <summary>
@@ -2355,6 +2396,7 @@ namespace Sharp.Xmpp.Client
             mam = im.LoadExtension<MessageArchiveManagment>();
 
             configuration = im.LoadExtension<Configuration>();
+            callLog = im.LoadExtension<CallLog>();
             msgDeliveryReceipt = im.LoadExtension<MessageDeliveryReceipts>();
         }
     }

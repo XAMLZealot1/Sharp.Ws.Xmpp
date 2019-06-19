@@ -173,6 +173,11 @@
         /// <summary>
         /// An extension to have message delivery receipts
         /// </summary>
-        MessageDeliveryReceipts
+        MessageDeliveryReceipts,
+
+        /// <summary>
+        /// An extension added by Rainbow Hub to manage call logs
+        /// </summary>
+        CallLog
     }
 }

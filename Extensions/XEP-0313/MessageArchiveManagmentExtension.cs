@@ -57,12 +57,12 @@ namespace Sharp.Xmpp.Extensions
         }
 
         /// <summary>
-        /// The event that is raised when a result is donrecevied after asking list of messages archive
+        /// The event that is raised when a result is recevied after asking list of messages archive
         /// </summary>
         public event EventHandler<MessageArchiveManagementResultEventArgs> MessageArchiveManagementResult;
 
         /// <summary>
-        /// The event that is raised when a message arcchive has been found
+        /// The event that is raised when a message archive has been found
         /// </summary>
         public event EventHandler<MessageArchiveEventArgs> MessageArchiveRetrieved;
 
@@ -93,6 +93,9 @@ namespace Sharp.Xmpp.Extensions
         /// </summary>
         /// <param name="jid">The JID of the XMPP entity to get.</param>
         /// <param name="queryId">The Id related to this query - it will be used to identify this request</param>
+        /// <param name="max">The maximum number of result expected
+        /// <param name="before">..
+        /// <param name="max">..
         /// <exception cref="ArgumentNullException">The jid parameter
         /// is null.</exception>
         /// <exception cref="NotSupportedException">The XMPP entity with
@@ -102,7 +105,7 @@ namespace Sharp.Xmpp.Extensions
         /// error condition.</exception>
         /// <exception cref="XmppException">The server returned invalid data or another
         /// unspecified XMPP error occurred.</exception>
-        public void RequestCustomIqAsync(Jid jid, string queryId, int max, MessageArchiveManagmentRequestDelegate callback, string before = null, string after = null)
+        public void RequestCustomIqAsync(Jid jid, string queryId, int max, string before = null, string after = null)
         {
             jid.ThrowIfNull("jid");
 
