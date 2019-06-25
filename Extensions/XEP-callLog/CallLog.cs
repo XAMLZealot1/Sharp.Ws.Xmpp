@@ -2,7 +2,6 @@ using Sharp.Xmpp.Core;
 using Sharp.Xmpp.Im;
 using System;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.Xml;
 
 using log4net;
@@ -43,9 +42,25 @@ namespace Sharp.Xmpp.Extensions
         }
 
         /// <summary>
+        /// The event that is raised when a call log item has been deleted
+        /// </summary>
+        public event EventHandler<CallLogItemDeletedEventArgs> CallLogItemsDeleted;
+
+        /// <summary>
+        /// The event that is raised when a call log item has been read
+        /// </summary>
+        public event EventHandler<CallLogReadEventArgs> CallLogRead;
+
+        /// <summary>
         /// The event that is raised when a call log entry has been retrieved
         /// </summary>
         public event EventHandler<CallLogItemEventArgs> CallLogItemRetrieved;
+
+        // <summary>
+        /// The event that is raised when a call log entry has been added
+        /// </summary>
+        public event EventHandler<CallLogItemEventArgs> CallLogItemAdded;
+
 
         /// <summary>
         /// The event that is raised when the list of call logs entry has been provided
@@ -63,61 +78,105 @@ namespace Sharp.Xmpp.Extensions
             if (message.Type == MessageType.Webrtc)
             {
                 //TO DO
-                log.DebugFormat("[Input] Input in Webrtc context received - To manage ...");
+                log.WarnFormat("[Input] Input in Webrtc context received - To manage ...");
+                return true;
+            }
+            else if ( (message.Type == MessageType.Chat)
+                    && (message.Data["deleted_call_log"] != null)
+                    && (message.Data["deleted_call_log"].NamespaceURI == "jabber:iq:notification:telephony:call_log"))
+            {
+                String peerId = message.Data["deleted_call_log"].GetAttribute("peer");
+                String callId = message.Data["deleted_call_log"].GetAttribute("call_id");
+                log.DebugFormat("CallLogItemsDeleted raised - peer:[{0}] - callId:[{1}]", peerId, callId);
+                CallLogItemsDeleted.Raise(this, new CallLogItemDeletedEventArgs(peerId, callId));
+                return true;
+            }
+            else if ( (message.Data["read"] != null)
+                    && (message.Data["read"].NamespaceURI == "urn:xmpp:telephony:call_log:receipts"))
+            {
+                String id = message.Data["read"].GetAttribute("call_id");
+                log.DebugFormat("CallLogRead raised - id:[{0}]", id);
+                CallLogRead.Raise(this, new CallLogReadEventArgs(id));
                 return true;
             }
             else if ((message.Data["result"] != null)
                 && (message.Data["result"].NamespaceURI == "jabber:iq:telephony:call_log"))
             {
-                XmlElement e = message.Data["result"];
-                if( (e["forwarded"] != null)
-                    && (e["forwarded"]["call_log"] != null) )
-                {
-                    XmlElement callLog = e["forwarded"]["call_log"];
+                CallLogItemEventArgs evt = GetCallLogItemEventArgs(message.Data["result"]);
+                if (evt != null)
+                    CallLogItemRetrieved.Raise(this, evt);
+                else
+                    log.WarnFormat("Cannot create CallLogItemEventArgs object ... [using jabber:iq:telephony:call_log namespace]");
 
-                    String id = "";
-                    String callId = "";
-                    String callee = "";
-                    String caller = "";
-                    String duration = "";
-                    String state = "";
-                    String media = "";
-                    String timeStamp = "";
+                return true;
+            }
+            else if ((message.Data["updated_call_log"] != null)
+                && (message.Data["updated_call_log"].NamespaceURI == "jabber:iq:notification:telephony:call_log"))
+            {
 
-                    id = e.GetAttribute("id");
-                    
-                    if (callLog["call_id"] != null)
-                        callId = e["forwarded"]["call_log"]["call_id"].InnerText;
-
-                    if (callLog["callee"] != null)
-                        callee = callLog["callee"].InnerText;
-
-                    if (callLog["duration"] != null)
-                        caller = callLog["caller"].InnerText;
-
-                    if (callLog["duration"] != null)
-                        duration = callLog["duration"].InnerText;
-
-                    if (callLog["state"] != null)
-                        state = callLog["state"].InnerText;
-
-                    if (callLog["media"] != null)
-                        media = callLog["media"].InnerText;
-
-                    if (e["forwarded"]["delay"] != null)
-                        timeStamp = e["forwarded"]["delay"].GetAttribute("stamp");
-
-                    //log.DebugFormat("[Input] call log entry received - id:[{0}] - callId:[{1}] - callee:[{2}] - caller:[{3}] - duration:[{4}] - state:[{5}] - media:[{6}] - timeStamp:[{7}]"
-                    //    , id, callId, callee, caller, duration, state, media, timeStamp);
-
-                    CallLogItemRetrieved.Raise(this, new CallLogItemEventArgs(id, callId, state, callee, caller, media, timeStamp));
-                }
+                CallLogItemEventArgs evt = GetCallLogItemEventArgs(message.Data["updated_call_log"]);
+                if (evt != null)
+                    CallLogItemAdded.Raise(this, evt);
+                else
+                    log.WarnFormat("Cannot create CallLogItemEventArgs object ... [using jabber:iq:notification:telephony:call_log]");
 
                 return true;
             }
 
-            // Pass the message on to the next handler.
+            // Pass the message to the next handler.
             return false;
+        }
+
+        private CallLogItemEventArgs GetCallLogItemEventArgs(XmlElement e)
+        {
+            CallLogItemEventArgs result = null;
+
+            if ((e["forwarded"] != null)
+                    && (e["forwarded"]["call_log"] != null))
+            {
+                XmlElement callLog = e["forwarded"]["call_log"];
+
+                String id = "";
+                String callId = "";
+                String callee = "";
+                String caller = "";
+                String duration = "";
+                String state = "";
+                String media = "";
+                String timeStamp = "";
+                String type = "";
+                bool read = false;
+
+                id = e.GetAttribute("id");
+                type = callLog.GetAttribute("type");
+
+                if (callLog["call_id"] != null)
+                    callId = callLog["call_id"].InnerText;
+
+                if (callLog["callee"] != null)
+                    callee = callLog["callee"].InnerText;
+
+                if (callLog["caller"] != null)
+                    caller = callLog["caller"].InnerText;
+
+                if (callLog["duration"] != null)
+                    duration = callLog["duration"].InnerText;
+
+                if (callLog["state"] != null)
+                    state = callLog["state"].InnerText;
+
+                if (callLog["media"] != null)
+                    media = callLog["media"].InnerText;
+
+                if (callLog["ack"] != null)
+                    read = (callLog["ack"].GetAttribute("read") == "true");
+
+                if (e["forwarded"]["delay"] != null)
+                    timeStamp = e["forwarded"]["delay"].GetAttribute("stamp");
+
+                result = new CallLogItemEventArgs(id, callId, state, callee, caller, media, timeStamp, duration, read, type);
+            }
+            return result;
         }
 
         /// <summary>
@@ -199,6 +258,67 @@ namespace Sharp.Xmpp.Extensions
                     CallLogResult.Raise(this, new CallLogResultEventArgs(queryid, Sharp.Xmpp.Extensions.CallLogResult.Error, count, first, last));
                 }
             });
+        }
+
+        /// <summary>
+        /// Delete the specified call log
+        /// </summary>
+        /// <param name="callId">Id of the call log</param>
+        public void DeleteCallLog(String callId)
+        {
+            var xml = Xml.Element("delete", "jabber:iq:telephony:call_log");
+            xml.SetAttribute("call_id", callId);
+
+            string jid = im.Jid.Node + "@" + im.Jid.Domain;
+            im.IqRequestAsync(IqType.Set, jid, jid, xml, null, (id, iq) =>
+            {
+            });
+        }
+        /// <summary>
+        /// Delete all calls log related to the specified contact
+        /// </summary>
+        /// <param name="contactJid">Jid of the contact</param>
+
+        public void DeleteCallsLogForContact(String contactJid)
+        {
+            var xml = Xml.Element("delete", "jabber:iq:telephony:call_log");
+            xml.SetAttribute("peer", contactJid);
+
+            string jid = im.Jid.Node + "@" + im.Jid.Domain;
+            im.IqRequestAsync(IqType.Set, jid, jid, xml, null, (id, iq) =>
+            {
+            });
+        }
+
+        /// <summary>
+        /// Delete all call logs
+        /// </summary>
+        public void DeleteAllCallsLog()
+        {
+            var xml = Xml.Element("delete", "jabber:iq:telephony:call_log");
+
+            string jid = im.Jid.Node + "@" + im.Jid.Domain;
+            im.IqRequestAsync(IqType.Set, jid, jid, xml, null, (id, iq) =>
+            {
+            });
+        }
+
+        /// <summary>
+        /// Mark as read the specified call log
+        /// </summary>
+        /// <param name="callId">Id of the call log</param>
+        public void MarkCallLogAsRead(String callId)
+        {
+            string jid = im.Jid.Node + "@" + im.Jid.Domain;
+            Sharp.Xmpp.Im.Message message = new Sharp.Xmpp.Im.Message(jid);
+
+            XmlElement e = message.Data;
+
+            XmlElement read = e.OwnerDocument.CreateElement("read", "urn:xmpp:telephony:call_log:receipts");
+            read.SetAttribute("call_id", callId);
+            e.AppendChild(read);
+
+            im.SendMessage(message);
         }
 
         /// <summary>

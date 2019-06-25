@@ -28,7 +28,16 @@ namespace Sharp.Xmpp.Extensions
         }
 
         /// <summary>
-        /// State of the call
+        /// Type of the call: webrtc / phone / conference
+        /// </summary>
+        public String Type
+        {
+            get;
+            private set;
+        }
+
+        /// <summary>
+        /// State of the call: missed / answered / failed
         /// </summary>
         public String State
         {
@@ -64,6 +73,24 @@ namespace Sharp.Xmpp.Extensions
         }
 
         /// <summary>
+        /// Duration of the call
+        /// </summary>
+        public Int32 Duration
+        {
+            get;
+            private set;
+        }
+
+        /// <summary>
+        /// True is call og is marked as Read
+        /// </summary>
+        public Boolean Read
+        {
+            get;
+            private set;
+        }
+
+        /// <summary>
         /// The time at which the call was originally started.
         /// </summary>
         public DateTime TimeStamp
@@ -72,7 +99,7 @@ namespace Sharp.Xmpp.Extensions
             private set;
         }
 
-        public CallLogItemEventArgs(String id, String callId, String state, String callee, String caller, String media, String timeStamp)
+        public CallLogItemEventArgs(String id, String callId, String state, String callee, String caller, String media, String timeStamp, String duration, bool read, String type)
         {
             Id = id;
             CallId = callId;
@@ -80,11 +107,18 @@ namespace Sharp.Xmpp.Extensions
             Callee = callee;
             Caller = caller;
             Media = media;
+            Read = read;
+            Type = type;
 
             DateTime result;
             if (!DateTime.TryParse(timeStamp, out result))
                 result = DateTime.Now;
             TimeStamp = result;
+
+            Int32 _duration;
+            if(!Int32.TryParse(duration, out _duration))
+                _duration = 0;
+            Duration = _duration;
         }
 
     }

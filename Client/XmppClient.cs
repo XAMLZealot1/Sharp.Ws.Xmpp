@@ -788,8 +788,54 @@ namespace Sharp.Xmpp.Client
             }
         }
 
+
         /// <summary>
-        /// The event that is raised when an call log item has been retrieved
+        /// The event that is raised when  call log item(s) has been deleted
+        /// </summary>
+        public event EventHandler<CallLogItemDeletedEventArgs> CallLogItemsDeleted
+        {
+            add
+            {
+                callLog.CallLogItemsDeleted += value;
+            }
+            remove
+            {
+                callLog.CallLogItemsDeleted -= value;
+            }
+        }
+
+        /// <summary>
+        /// The event that is raised when an call log item has been read
+        /// </summary>
+        public event EventHandler<CallLogReadEventArgs> CallLogRead
+        {
+            add
+            {
+                callLog.CallLogRead += value;
+            }
+            remove
+            {
+                callLog.CallLogRead -= value;
+            }
+        }
+
+        /// <summary>
+        /// The event that is raised when a call log item has been added
+        /// </summary>
+        public event EventHandler<CallLogItemEventArgs> CallLogItemAdded
+        {
+            add
+            {
+                callLog.CallLogItemAdded += value;
+            }
+            remove
+            {
+                callLog.CallLogItemAdded -= value;
+            }
+        }
+
+        /// <summary>
+        /// The event that is raised when a call log item has been retrieved
         /// </summary>
         public event EventHandler<CallLogItemEventArgs> CallLogItemRetrieved
         {
@@ -1149,6 +1195,26 @@ namespace Sharp.Xmpp.Client
             AssertValid();
             message.ThrowIfNull("message");
             im.SendMessage(message);
+        }
+
+        public void DeleteCallLog(String callId)
+        {
+            callLog?.DeleteCallLog(callId);
+        }
+
+        public void DeleteCallsLogForContact(String contactJid)
+        {
+            callLog?.DeleteCallsLogForContact(contactJid);
+        }
+
+        public void DeleteAllCallsLog()
+        {
+            callLog?.DeleteAllCallsLog();
+        }
+
+        public void MarkCallLogAsRead(String callId)
+        {
+            callLog?.MarkCallLogAsRead(callId);
         }
 
         /// <summary>
