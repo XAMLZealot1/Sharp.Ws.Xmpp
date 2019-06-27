@@ -1795,6 +1795,10 @@ namespace Sharp.Xmpp.Im
                 case PresenceType.Unsubscribed:
                     ProcessSubscriptionResult(presence);
                     break;
+
+                default:
+                    log.WarnFormat("[OnPresence] Presence message not managed: [{0}]", presence.ToString());
+                    break;
             }
         }
 
@@ -1901,7 +1905,16 @@ namespace Sharp.Xmpp.Im
                     l = lang;
                 dict.Add(l, element.InnerText);
             }
-            Status status = new Status(availability, dict, prio);
+
+            // Parse the optional 'until' element.
+            DateTime until = DateTime.MinValue;
+            e = presence.Data["until"];
+            if (e != null && !String.IsNullOrEmpty(e.InnerText))
+            {
+                if (!DateTime.TryParse(e.InnerText, out until))
+                    until = DateTime.Now;
+            }
+            Status status = new Status(availability, dict, prio, until);
             // Raise Status event.
             Status.Raise(this, new StatusEventArgs(presence.From, status));
         }

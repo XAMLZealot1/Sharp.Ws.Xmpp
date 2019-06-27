@@ -59,6 +59,15 @@ namespace Sharp.Xmpp.Im
         }
 
         /// <summary>
+        /// The availability of the status
+        /// </summary>
+        public DateTime Until
+        {
+            get;
+            private set;
+        }
+
+        /// <summary>
         /// Initializes a new instance of the Status class.
         /// </summary>
         /// <param name="availability">The availability state.</param>
@@ -73,6 +82,7 @@ namespace Sharp.Xmpp.Im
             Availability = availability;
             Priority = priority;
             Messages = new Dictionary<string, string>();
+            Until = DateTime.MinValue;
             if (language == null)
                 language = CultureInfo.CurrentCulture;
             if (message != null)
@@ -89,11 +99,12 @@ namespace Sharp.Xmpp.Im
         /// codes.</param>
         /// <param name="priority">Provides a hint for stanza routing.</param>
         public Status(Availability availability, Dictionary<string, string> messages,
-            sbyte priority = 0)
+            sbyte priority, DateTime until)
         {
             Availability = availability;
             Priority = priority;
             Messages = new Dictionary<string, string>();
+            Until = until;
             if (messages != null)
             {
                 foreach (KeyValuePair<string, string> pair in messages)
