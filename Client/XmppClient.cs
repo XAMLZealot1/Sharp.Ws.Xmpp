@@ -184,6 +184,11 @@ namespace Sharp.Xmpp.Client
         private CallLog callLog;
 
         /// <summary>
+        /// Provides the CallService extension
+        /// </summary>
+        private CallService callService;
+
+        /// <summary>
         /// Is web socket used - false by default
         /// </summary>
         public bool UseWebSocket
@@ -850,7 +855,7 @@ namespace Sharp.Xmpp.Client
         }
 
         /// <summary>
-        /// The event that is raised when we reeived the result of call log entries
+        /// The event raised when we received the result of call log entries
         /// </summary>
         public event EventHandler<CallLogResultEventArgs> CallLogResult
         {
@@ -861,6 +866,36 @@ namespace Sharp.Xmpp.Client
             remove
             {
                 callLog.CallLogResult -= value;
+            }
+        }
+
+        /// <summary>
+        /// The event raised when the call forward has been updated
+        /// </summary>
+        public event EventHandler<CallForwardEventArgs> CallForwardUpdated
+        {
+            add
+            {
+                callService.CallForwardUpdated += value;
+            }
+            remove
+            {
+                callService.CallForwardUpdated -= value;
+            }
+        }
+
+        /// <summary>
+        /// The event raised when the nomadic status has been updated
+        /// </summary>
+        public event EventHandler<NomadicEventArgs> NomadicUpdated
+        {
+            add
+            {
+                callService.NomadicUpdated += value;
+            }
+            remove
+            {
+                callService.NomadicUpdated -= value;
             }
         }
 
@@ -2464,6 +2499,7 @@ namespace Sharp.Xmpp.Client
             configuration = im.LoadExtension<Configuration>();
             callLog = im.LoadExtension<CallLog>();
             msgDeliveryReceipt = im.LoadExtension<MessageDeliveryReceipts>();
+            callService = im.LoadExtension<CallService>();
         }
     }
 }

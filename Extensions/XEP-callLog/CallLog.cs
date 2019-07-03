@@ -56,11 +56,10 @@ namespace Sharp.Xmpp.Extensions
         /// </summary>
         public event EventHandler<CallLogItemEventArgs> CallLogItemRetrieved;
 
-        // <summary>
+        /// <summary>
         /// The event that is raised when a call log entry has been added
         /// </summary>
         public event EventHandler<CallLogItemEventArgs> CallLogItemAdded;
-
 
         /// <summary>
         /// The event that is raised when the list of call logs entry has been provided

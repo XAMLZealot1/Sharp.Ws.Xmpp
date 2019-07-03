@@ -178,6 +178,11 @@
         /// <summary>
         /// An extension added by Rainbow Hub to manage call logs
         /// </summary>
-        CallLog
+        CallLog,
+
+        /// <summary>
+        /// An extension added by Rainbow Hub to manage call service
+        /// </summary>
+        CallService
     }
 }
