@@ -900,6 +900,38 @@ namespace Sharp.Xmpp.Client
         }
 
         /// <summary>
+        /// The event raised when the PBX Agent info is updated
+        /// </summary>
+        public event EventHandler<PbxAgentInfoEventArgs> PbxAgentInfoUpdated
+        {
+            add
+            {
+                callService.PbxAgentInfoUpdated += value;
+            }
+            remove
+            {
+                callService.PbxAgentInfoUpdated += value;
+            }
+        }
+
+        /// <summary>
+        /// The event that is raised when voice messages are updated
+        /// </summary>
+        public event EventHandler<VoiceMessagesEventArgs> VoiceMessagesUpdated
+        {
+            add
+            {
+                callService.VoiceMessagesUpdated += value;
+            }
+            remove
+            {
+                callService.VoiceMessagesUpdated += value;
+            }
+        }
+
+        
+
+        /// <summary>
         /// The event that is raised when an conversation has been created / updated / deleted
         /// </summary>
         public event EventHandler<FavoriteManagementEventArgs> FavoriteManagement
@@ -1605,6 +1637,26 @@ namespace Sharp.Xmpp.Client
         {
             AssertValid();
             callLog.RequestCustomIqAsync(queryId, maxNumber, before, after);
+        }
+
+        /// <summary>
+        /// Ask PBX agent Agent info (iq request)
+        /// </summary>
+        /// <param name="to">The JID to send the request</param>
+        public void AskPbxAgentInfo(String to)
+        {
+            AssertValid();
+            callService.AskPbxAgentInfo(to);
+        }
+
+        /// <summary>
+        /// Ask then number of voice messages
+        /// </summary>
+        /// <param name="to">The JID to send the request</param>
+        public void AskVoiceMessagesNumber(String to)
+        {
+            AssertValid();
+            callService.AskVoiceMessagesNumber(to);
         }
 
         /// <summary>
