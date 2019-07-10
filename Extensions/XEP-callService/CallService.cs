@@ -62,6 +62,11 @@ namespace Sharp.Xmpp.Extensions
         public event EventHandler<VoiceMessagesEventArgs> VoiceMessagesUpdated;
 
         /// <summary>
+        /// The event that is raised when a call service message not specifically managed is received
+        /// </summary>
+        public event EventHandler<MessageEventArgs> MessageReceived;
+
+        /// <summary>
         /// Invoked when a message stanza has been received.
         /// </summary>
         /// <param name="stanza">The stanza which has been received.</param>
@@ -118,7 +123,7 @@ namespace Sharp.Xmpp.Extensions
                 }
                 else
                 {
-                    log.WarnFormat("[Input] Input not yet managed ...");
+                    MessageReceived.Raise(this, new MessageEventArgs(message.ToString()));
                     return true;
                 }
             }

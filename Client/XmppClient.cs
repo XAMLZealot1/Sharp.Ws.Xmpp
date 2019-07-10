@@ -549,7 +549,7 @@ namespace Sharp.Xmpp.Client
         /// <summary>
         /// The event that is raised when a chat message is received.
         /// </summary>
-        public event EventHandler<MessageEventArgs> Message
+        public event EventHandler<Im.MessageEventArgs> Message
         {
             add
             {
@@ -564,7 +564,7 @@ namespace Sharp.Xmpp.Client
         /// <summary>
         /// The event that is raised when the subject is changed in a group chat.
         /// </summary>
-        public event EventHandler<MessageEventArgs> GroupChatSubjectChanged
+        public event EventHandler<Im.MessageEventArgs> GroupChatSubjectChanged
         {
             add
             {
@@ -926,6 +926,21 @@ namespace Sharp.Xmpp.Client
             remove
             {
                 callService.VoiceMessagesUpdated += value;
+            }
+        }
+
+        /// <summary>
+        /// The event that is raised when a call service message not specifically managed is received
+        /// </summary>
+        public event EventHandler<Sharp.Xmpp.Extensions.MessageEventArgs> CallServiceMessageReceived
+        {
+            add
+            {
+                callService.MessageReceived += value;
+            }
+            remove
+            {
+                callService.MessageReceived += value;
             }
         }
 
