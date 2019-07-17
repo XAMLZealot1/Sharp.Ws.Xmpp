@@ -1737,7 +1737,10 @@ namespace Sharp.Xmpp.Im
                 {
                     // Swallow IQ stanza?
                     if (filter.Input(iq))
+                    {
+                        log.DebugFormat("[OnIq] filter used by extension [{0}]", ext.Xep.ToString());
                         return;
+                    }
                 }
             }
             var query = iq.Data["query"];
@@ -1817,7 +1820,7 @@ namespace Sharp.Xmpp.Im
                     // Swallow message?
                     if (filter.Input(message))
                     {
-                        log.DebugFormat("OnMessage - extension used:[{0}] - message:[{1}]", ext.Xep.ToString(), message.ToString());
+                        log.DebugFormat("[OnMessage] filter used by extension [{0}]", ext.Xep.ToString());
                         return;
                     }
                 }
