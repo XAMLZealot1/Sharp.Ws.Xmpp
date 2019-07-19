@@ -69,6 +69,11 @@ namespace Sharp.Xmpp.Extensions
         /// </summary>
         public event EventHandler<RoomInvitationEventArgs> RoomInvitation;
 
+        /// <summary>
+        /// The event that is raised when a voice mail has been created / deleted
+        /// </summary>
+        public event EventHandler<VoiceMailManagementEventArgs> VoiceMailManagement;
+
 
         /// <summary>
         /// Invoked when a message stanza has been received.
@@ -176,6 +181,26 @@ namespace Sharp.Xmpp.Extensions
 
                     RoomManagement.Raise(this, new RoomManagementEventArgs(roomId, roomJid, userJid, status, privilege, name, topic, lastAvatarUpdateDate));
                 }
+                else if (message.Data["visualvoicemail"] != null)
+                {
+                    XmlElement e = message.Data["visualvoicemail"];
+
+                    string msgId = e.GetAttribute("msgid");
+                    string action = e.GetAttribute("action");
+
+                    string fileId = e["fileid"]?.InnerText;
+                    string url = e["url"]?.InnerText;
+                    string mimeType = e["mime"]?.InnerText;
+                    string fileName = e["filename"]?.InnerText;
+                    string size = e["size"]?.InnerText;
+                    string md5 = e["md5sum"]?.InnerText;
+                    string duration = e["duration"]?.InnerText;
+
+                    log.DebugFormat("duration:[{0}]", duration);
+                    VoiceMailManagement.Raise(this, new VoiceMailManagementEventArgs(msgId, fileId, action, url, mimeType, fileName, size, md5, duration));
+                }
+                else
+                    log.Debug("[Input] Message not managed");
                 // Since it's a Management message, we prevent next handler to parse it
                 return true;
             }
