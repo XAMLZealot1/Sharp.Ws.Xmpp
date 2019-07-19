@@ -944,7 +944,20 @@ namespace Sharp.Xmpp.Client
             }
         }
 
-        
+        /// <summary>
+        /// The event that is raised when we asked and have PBX calls in progress
+        /// </summary>
+        public event EventHandler<Sharp.Xmpp.Extensions.MessageEventArgs> PBXCallsInProgress
+        {
+            add
+            {
+                callService.PBXCallsInProgress += value;
+            }
+            remove
+            {
+                callService.PBXCallsInProgress += value;
+            }
+        }
 
         /// <summary>
         /// The event that is raised when an conversation has been created / updated / deleted
@@ -1672,6 +1685,17 @@ namespace Sharp.Xmpp.Client
         {
             AssertValid();
             callService.AskVoiceMessagesNumber(to);
+        }
+
+        /// <summary>
+        /// To get PBX calls in progress (if any) of the specified device (MAIN or SECONDARY)
+        /// </summary>
+        /// <param name="to">The JID to send the request</param>
+        /// <param name="onSecondary">To we want info about the SECONDARY device or not</param>
+        public void AskPBXCallsInProgress(String to, Boolean onSecondary)
+        {
+            AssertValid();
+            callService.AskPBXCallsInProgress(to, onSecondary);
         }
 
         /// <summary>

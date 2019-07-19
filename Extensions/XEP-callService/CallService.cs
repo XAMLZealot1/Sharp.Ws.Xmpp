@@ -16,6 +16,8 @@ namespace Sharp.Xmpp.Extensions
     {
         private static readonly ILog log = LogManager.GetLogger(typeof(CallService));
 
+        private static readonly String CALLSERVICE_NS = "urn:xmpp:pbxagent:callservice:1";
+
         /// <summary>
         /// An enumerable collection of XMPP namespaces the extension implements.
         /// </summary>
@@ -25,7 +27,7 @@ namespace Sharp.Xmpp.Extensions
         {
             get
             {
-                return new string[] { "urn:xmpp:pbxagent:callservice:1" };
+                return new string[] { CALLSERVICE_NS };
             }
         }
 
@@ -65,6 +67,11 @@ namespace Sharp.Xmpp.Extensions
         /// The event that is raised when a call service message not specifically managed is received
         /// </summary>
         public event EventHandler<MessageEventArgs> MessageReceived;
+
+        /// <summary>
+        /// The event that is raised when we asked and have PBX calls in progress
+        /// </summary>
+        public event EventHandler<MessageEventArgs> PBXCallsInProgress;
 
         /// <summary>
         /// Invoked when a message stanza has been received.
@@ -133,12 +140,56 @@ namespace Sharp.Xmpp.Extensions
         }
 
         /// <summary>
-        /// Ask then number of voice messages
+        /// To get PBX calls in progress (if any) of the specified device (MAIN or SECONDARY)
+        /// </summary>
+        /// <param name="to">The JID to send the request</param>
+        /// <param name="onSecondary">To we want info about the SECONDARY device or not</param>
+        public void AskPBXCallsInProgress(String to, Boolean onSecondary)
+        {
+            var xml = Xml.Element("callservice", CALLSERVICE_NS);
+            var connections = Xml.Element("connections");
+            if (onSecondary)
+                connections.SetAttribute("deviceType", "SECONDARY");
+            xml.Child(connections);
+
+            //The Request is Async
+            im.IqRequestAsync(IqType.Get, to, im.Jid, xml, null, (id, iq) =>
+            {
+                //For any reply we execute the callback
+                if (iq.Type == IqType.Error)
+                {
+                    log.ErrorFormat("AskPBXCalls - Iq sent not valid - server sent an error as response");
+                    return;
+                }
+
+                if (iq.Type == IqType.Result)
+                {
+                    try
+                    {
+                        if ( (iq.Data["callservice"] != null) && (iq.Data["callservice"]["connections"] != null) )
+                        {
+                            XmlElement connectionsNode = iq.Data["callservice"]["connections"];
+                            if(connectionsNode.HasChildNodes)
+                                PBXCallsInProgress.Raise(this, new MessageEventArgs(connectionsNode.ToXmlString()));
+                            return;
+                        }
+                    }
+                    catch (Exception)
+                    {
+                        log.ErrorFormat("AskPbxAgentInfo - an error occurred ...");
+                    }
+
+                }
+            });
+        }
+
+        /// <summary>
+        /// Ask the number of voice messages
         /// </summary>
         /// <param name="to">The JID to send the request</param>
         public void AskVoiceMessagesNumber(String to)
         {
-            var xml = Xml.Element("callservice", "urn:xmpp:pbxagent:callservice:1");
+            var xml = Xml.Element("callservice", CALLSERVICE_NS);
             xml.Child(Xml.Element("messaging"));
             //The Request is Async
             im.IqRequestAsync(IqType.Get, to, im.Jid, xml, null, (id, iq) =>
@@ -151,12 +202,13 @@ namespace Sharp.Xmpp.Extensions
                 }
 
                 // Nothing to more - we will receive a specific message with voice message counter
-                //if (iq.Type == IqType.Result)
-                //{
-                //}
             });
         }
 
+        /// <summary>
+        /// Ask PBX Agent information
+        /// </summary>
+        /// <param name="to">The JID to send the request</param>
         public void AskPbxAgentInfo(String to)
         {
             var xml = Xml.Element("pbxagentstatus", "urn:xmpp:pbxagent:monitoring:1");
