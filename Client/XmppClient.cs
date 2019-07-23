@@ -1008,15 +1008,30 @@ namespace Sharp.Xmpp.Client
         /// <summary>
         /// The event that is raised when a voice mail has been created / deleted
         /// </summary>
-        public event EventHandler<VoiceMailManagementEventArgs> VoiceMailManagement
+        //public event EventHandler<VoiceMailManagementEventArgs> VoiceMailManagement
+        //{
+        //    add
+        //    {
+        //        configuration.VoiceMailManagement += value;
+        //    }
+        //    remove
+        //    {
+        //        configuration.VoiceMailManagement -= value;
+        //    }
+        //}
+
+        /// <summary>
+        /// The event that is raised when a file has been created / deleted / updated
+        /// </summary>
+        public event EventHandler<FileManagementEventArgs> FileManagement
         {
             add
             {
-                configuration.VoiceMailManagement += value;
+                configuration.FileManagement += value;
             }
             remove
             {
-                configuration.VoiceMailManagement -= value;
+                configuration.FileManagement -= value;
             }
         }
 

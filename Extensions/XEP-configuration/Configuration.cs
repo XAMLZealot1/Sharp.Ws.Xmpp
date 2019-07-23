@@ -72,8 +72,12 @@ namespace Sharp.Xmpp.Extensions
         /// <summary>
         /// The event that is raised when a voice mail has been created / deleted
         /// </summary>
-        public event EventHandler<VoiceMailManagementEventArgs> VoiceMailManagement;
+        //public event EventHandler<VoiceMailManagementEventArgs> VoiceMailManagement;
 
+        /// <summary>
+        /// The event that is raised when a voice mail has been created / deleted / updated
+        /// </summary>
+        public event EventHandler<FileManagementEventArgs> FileManagement;
 
         /// <summary>
         /// Invoked when a message stanza has been received.
@@ -183,21 +187,33 @@ namespace Sharp.Xmpp.Extensions
                 }
                 else if (message.Data["visualvoicemail"] != null)
                 {
-                    XmlElement e = message.Data["visualvoicemail"];
+                    // WE DO NOTHING HERE
+                    // WE USE "file" message and file descrptior to manage voice message
 
-                    string msgId = e.GetAttribute("msgid");
+                    //XmlElement e = message.Data["visualvoicemail"];
+
+                    //string msgId = e.GetAttribute("msgid");
+                    //string action = e.GetAttribute("action");
+
+                    //string fileId = e["fileid"]?.InnerText;
+                    //string url = e["url"]?.InnerText;
+                    //string mimeType = e["mime"]?.InnerText;
+                    //string fileName = e["filename"]?.InnerText;
+                    //string size = e["size"]?.InnerText;
+                    //string md5 = e["md5sum"]?.InnerText;
+                    //string duration = e["duration"]?.InnerText;
+
+                    ////log.DebugFormat("duration:[{0}]", duration);
+                    //VoiceMailManagement.Raise(this, new VoiceMailManagementEventArgs(msgId, fileId, action, url, mimeType, fileName, size, md5, duration));
+                }
+                else if (message.Data["file"] != null)
+                {
+                    XmlElement e = message.Data["file"];
+
                     string action = e.GetAttribute("action");
-
                     string fileId = e["fileid"]?.InnerText;
-                    string url = e["url"]?.InnerText;
-                    string mimeType = e["mime"]?.InnerText;
-                    string fileName = e["filename"]?.InnerText;
-                    string size = e["size"]?.InnerText;
-                    string md5 = e["md5sum"]?.InnerText;
-                    string duration = e["duration"]?.InnerText;
 
-                    log.DebugFormat("duration:[{0}]", duration);
-                    VoiceMailManagement.Raise(this, new VoiceMailManagementEventArgs(msgId, fileId, action, url, mimeType, fileName, size, md5, duration));
+                    FileManagement.Raise(this, new FileManagementEventArgs(fileId, action));
                 }
                 else
                     log.Debug("[Input] Message not managed");
