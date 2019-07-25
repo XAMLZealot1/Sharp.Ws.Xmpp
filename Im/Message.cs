@@ -19,7 +19,7 @@ namespace Sharp.Xmpp.Im
         /// <summary>
         /// The time at which the message was originally sent.
         /// </summary>
-        private DateTime timestamp = DateTime.Now;
+        private DateTime timestamp = DateTime.MinValue;
 
         /// <summary>
         /// The type of the message stanza.
@@ -46,14 +46,40 @@ namespace Sharp.Xmpp.Im
         {
             get
             {
-                // Refer to XEP-0203.
-                var delay = element["delay"];
-                if (delay != null && delay.NamespaceURI == "urn:xmpp:delay")
+                if (timestamp == DateTime.MinValue)
                 {
-                    DateTime result;
-                    if (DateTime.TryParse(delay.GetAttribute("stamp"), out result))
-                        return result;
+                    XmlElement subElement;
+                    XmlNodeList list;
+                    bool found = false;
+
+                    // Unsing MAM.
+                    list = element.GetElementsByTagName("archived", "urn:xmpp:mam:tmp");
+                    foreach (XmlNode node in list)
+                    {
+                        subElement = node as XmlElement;
+                        if (subElement == null)
+                            continue;
+                        found = DateTime.TryParse(subElement.GetAttribute("stamp"), out timestamp);
+                    }
+
+                    if (!found)
+                    {
+                        // Refer to XEP-0203.
+                        list = element.GetElementsByTagName("delay", "urn:xmpp:delay");
+                        foreach (XmlNode node in list)
+                        {
+                            subElement = node as XmlElement;
+                            if (subElement == null)
+                                continue;
+                            found = DateTime.TryParse(subElement.GetAttribute("stamp"), out timestamp);
+                                
+                        }
+                    }
+
+                    if(!found)
+                        timestamp = DateTime.UtcNow;
                 }
+
                 return timestamp;
             }
         }
@@ -244,7 +270,7 @@ namespace Sharp.Xmpp.Im
         /// <exception cref="ArgumentNullException">The message parameter is null.</exception>
         /// <exception cref="ArgumentException">The 'type' attribute of
         /// the specified message stanza is invalid.</exception>
-        internal Message(Core.Message message)
+        public Message(Core.Message message)
         {
             message.ThrowIfNull("message");
             type = ParseType(message.Data.GetAttribute("type"));
