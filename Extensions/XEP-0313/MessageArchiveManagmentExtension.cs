@@ -86,16 +86,14 @@ namespace Sharp.Xmpp.Extensions
             return false;
         }
 
+
         /// <summary>
-        /// Requests the XMPP entity with the specified JID a GET command.
-        /// When the Result is received and it not not an error
-        /// if fires the callback function
+        /// Requests archived messages according options specified
         /// </summary>
         /// <param name="jid">The JID of the XMPP entity to get.</param>
         /// <param name="queryId">The Id related to this query - it will be used to identify this request</param>
-        /// <param name="max">The maximum number of result expected
-        /// <param name="before">..
-        /// <param name="max">..
+        /// <param name="start">Start date
+        /// <param name="end">Edn date
         /// <exception cref="ArgumentNullException">The jid parameter
         /// is null.</exception>
         /// <exception cref="NotSupportedException">The XMPP entity with
@@ -105,7 +103,133 @@ namespace Sharp.Xmpp.Extensions
         /// error condition.</exception>
         /// <exception cref="XmppException">The server returned invalid data or another
         /// unspecified XMPP error occurred.</exception>
-        public void RequestCustomIqAsync(Jid jid, string queryId, int max, string before = null, string after = null)
+        public void RequestArchivedMessagesByDate(Jid jid, string queryId, DateTime start, DateTime end)
+        {
+            /*
+             * 
+               <query xmlns='urn:xmpp:mam:1'>
+                <x xmlns='jabber:x:data' type='submit'>
+                  <field var='FORM_TYPE' type='hidden'>
+                    <value>urn:xmpp:mam:1</value>
+                  </field>
+                  <field var='start'>
+                    <value>2010-06-07T00:00:00Z</value>
+                  </field>
+                  <field var='end'>
+                    <value>2010-07-07T13:23:54Z</value>
+                  </field>
+                </x>
+              </query>
+             */
+
+            jid.ThrowIfNull("jid");
+
+            XmlElement rootElement;
+            XmlElement subElement;
+            XmlElement fieldElement;
+            XmlElement valueElement;
+
+            rootElement = Xml.Element("query", "urn:xmpp:mam:1");
+            rootElement.SetAttribute("queryid", queryId);
+
+            subElement = Xml.Element("x", "jabber:x:data");
+            subElement.SetAttribute("type", "submit");
+
+            fieldElement = Xml.Element("field");
+            fieldElement.SetAttribute("var", "FORM_TYPE");
+            fieldElement.SetAttribute("type", "hidden");
+
+            valueElement = Xml.Element("value");
+            valueElement.InnerText = "urn:xmpp:mam:1";
+            fieldElement.Child(valueElement);
+            subElement.Child(fieldElement);
+
+            fieldElement = Xml.Element("field");
+            fieldElement.SetAttribute("var", "start");
+
+            valueElement = Xml.Element("value");
+            valueElement.InnerText = start.ToUniversalTime().ToString("yyyy-MM-ddTHH:mm:ssZ"); ;
+            fieldElement.Child(valueElement);
+            subElement.Child(fieldElement);
+
+            fieldElement = Xml.Element("field");
+            fieldElement.SetAttribute("var", "end");
+
+            valueElement = Xml.Element("value");
+            valueElement.InnerText = end.ToUniversalTime().ToString("yyyy-MM-ddTHH:mm:ssZ"); ;
+            fieldElement.Child(valueElement);
+            subElement.Child(fieldElement);
+
+            rootElement.Child(subElement);
+
+            //The Request is Async
+            im.IqRequestAsync(IqType.Set, jid, im.Jid, rootElement, null, (id, iq) =>
+            {
+                //For any reply we execute the callback
+                if (iq.Type == IqType.Error)
+                {
+                    MessageArchiveManagementResult.Raise(this, new MessageArchiveManagementResultEventArgs());
+                    return;
+                }
+
+                if (iq.Type == IqType.Result)
+                {
+                    string queryid = "";
+                    MamResult complete = MamResult.Error;
+                    int count = 0;
+                    string first = "";
+                    string last = "";
+                    try
+                    {
+                        if ((iq.Data["fin"] != null) && (iq.Data["fin"]["set"] != null))
+                        {
+                            XmlElement e = iq.Data["fin"];
+
+                            queryid = e.GetAttribute("queryid");
+                            complete = (e.GetAttribute("complete") == "false") ? MamResult.InProgress : MamResult.Complete;
+
+                            if (e["set"]["count"] != null)
+                                count = Int16.Parse(e["set"]["count"].InnerText);
+
+                            if (e["set"]["first"] != null)
+                                first = e["set"]["first"].InnerText;
+
+                            if (e["set"]["last"] != null)
+                                last = e["set"]["last"].InnerText;
+
+                            MessageArchiveManagementResult.Raise(this, new MessageArchiveManagementResultEventArgs(queryid, complete, count, first, last));
+                            return;
+                        }
+                    }
+                    catch (Exception)
+                    {
+                        log.ErrorFormat("RequestCustomIqAsync - an error occurred ...");
+                    }
+
+                    MessageArchiveManagementResult.Raise(this, new MessageArchiveManagementResultEventArgs(queryid, MamResult.Error, count, first, last));
+                }
+            });
+        }
+
+
+        /// <summary>
+        /// Requests archived messages according options specified
+        /// </summary>
+        /// <param name="jid">The JID of the XMPP entity to get.</param>
+        /// <param name="queryId">The Id related to this query - it will be used to identify this request</param>
+        /// <param name="max">The maximum number of result expected
+        /// <param name="before">Stanza ID - if not null search message before it
+        /// <param name="max">Stanza ID - if not null search message before it
+        /// <exception cref="ArgumentNullException">The jid parameter
+        /// is null.</exception>
+        /// <exception cref="NotSupportedException">The XMPP entity with
+        /// the specified JID does not support the 'Ping' XMPP extension.</exception>
+        /// <exception cref="XmppErrorException">The server returned an XMPP error code.
+        /// Use the Error property of the XmppErrorException to obtain the specific
+        /// error condition.</exception>
+        /// <exception cref="XmppException">The server returned invalid data or another
+        /// unspecified XMPP error occurred.</exception>
+        public void RequestArchivedMessages(Jid jid, string queryId, int max, string before = null, string after = null)
         {
             jid.ThrowIfNull("jid");
 
