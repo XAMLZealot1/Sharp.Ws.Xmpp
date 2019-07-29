@@ -1690,10 +1690,10 @@ namespace Sharp.Xmpp.Client
             mam.RequestArchivedMessagesByDate(jid, queryId, startDate, endDate);
         }
 
-        public void RequestArchivedMessages(Jid jid, string queryId, int maxNumber, string before = null, string after = null)
+        public void RequestArchivedMessages(Jid jid, string queryId, int maxNumber, bool isRoom, string before = null, string after = null)
         {
             AssertValid();
-            mam.RequestArchivedMessages(jid, queryId, maxNumber, before, after);
+            mam.RequestArchivedMessages(jid, queryId, maxNumber, isRoom, before, after);
         }
 
         public void RequestCallLogs(string queryId, int maxNumber, string before = null, string after = null)

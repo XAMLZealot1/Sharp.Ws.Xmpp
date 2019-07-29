@@ -218,6 +218,7 @@ namespace Sharp.Xmpp.Extensions
         /// <param name="jid">The JID of the XMPP entity to get.</param>
         /// <param name="queryId">The Id related to this query - it will be used to identify this request</param>
         /// <param name="max">The maximum number of result expected
+        /// <param name="isRoom">To know if we request archive from room
         /// <param name="before">Stanza ID - if not null search message before it
         /// <param name="max">Stanza ID - if not null search message before it
         /// <exception cref="ArgumentNullException">The jid parameter
@@ -229,24 +230,59 @@ namespace Sharp.Xmpp.Extensions
         /// error condition.</exception>
         /// <exception cref="XmppException">The server returned invalid data or another
         /// unspecified XMPP error occurred.</exception>
-        public void RequestArchivedMessages(Jid jid, string queryId, int max, string before = null, string after = null)
+        public void RequestArchivedMessages(Jid jid, string queryId, int max, bool isRoom, string before = null, string after = null)
         {
             jid.ThrowIfNull("jid");
 
-            var xml = Xml.Element("query", "urn:xmpp:mam:1");
-            xml.SetAttribute("queryid", queryId);
-            var xmlParam = Xml.Element("set", "http://jabber.org/protocol/rsm");
-            if ( max > 0 ) xmlParam.Child(Xml.Element("max").Text(max.ToString()));
+
+            XmlElement rootElement;
+            XmlElement subElement;
+            XmlElement fieldElement;
+            XmlElement valueElement;
+
+            rootElement = Xml.Element("query", "urn:xmpp:mam:1");
+            rootElement.SetAttribute("queryid", queryId);
+
+
+            if(isRoom)
+            {
+                subElement = Xml.Element("x", "jabber:x:data");
+                subElement.SetAttribute("type", "submit");
+
+                fieldElement = Xml.Element("field");
+                fieldElement.SetAttribute("var", "FORM_TYPE");
+                fieldElement.SetAttribute("type", "hidden");
+
+                valueElement = Xml.Element("value");
+                valueElement.InnerText = "urn:xmpp:mam:1";
+                fieldElement.Child(valueElement);
+                subElement.Child(fieldElement);
+
+                fieldElement = Xml.Element("field");
+                fieldElement.SetAttribute("var", "with");
+
+                valueElement = Xml.Element("value");
+                valueElement.InnerText = im.Jid.GetBareJid().ToString();
+                fieldElement.Child(valueElement);
+                subElement.Child(fieldElement);
+
+                rootElement.Child(subElement);
+            }
+
+
+            subElement = Xml.Element("set", "http://jabber.org/protocol/rsm");
+            if ( max > 0 ) subElement.Child(Xml.Element("max").Text(max.ToString()));
             if (before == null)
-                xmlParam.Child(Xml.Element("before"));
+                subElement.Child(Xml.Element("before"));
             else
-                xmlParam.Child(Xml.Element("before").Text(before));
+                subElement.Child(Xml.Element("before").Text(before));
             if (after != null)
-                xmlParam.Child(Xml.Element("after").Text(after));
-            xml.Child(xmlParam);
+                subElement.Child(Xml.Element("after").Text(after));
+
+            rootElement.Child(subElement);
 
             //The Request is Async
-            im.IqRequestAsync(IqType.Set, jid, im.Jid, xml, null, (id, iq) =>
+            im.IqRequestAsync(IqType.Set, jid, im.Jid, rootElement, null, (id, iq) =>
             {
                 //For any reply we execute the callback
                 if (iq.Type == IqType.Error)
