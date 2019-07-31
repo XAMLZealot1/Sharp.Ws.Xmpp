@@ -198,6 +198,26 @@ namespace Sharp.Xmpp.Im
             private set;
         }
 
+
+        protected void SetOobInfo(Dictionary<String, String> oobInfo)
+        {
+            if(oobInfo != null)
+            {
+                XmlElement e = Data;
+
+                XmlElement oob = e.OwnerDocument.CreateElement("x", "jabber:x:oob");
+
+                XmlElement subElement;
+                foreach (String key in oobInfo.Keys)
+                {
+                    subElement = e.OwnerDocument.CreateElement(key);
+                    subElement.InnerText = oobInfo[key];
+                    oob.AppendChild(subElement);
+                }
+                e.AppendChild(oob);
+            }
+        }
+
         /// <summary>
         /// Initializes a new instance of the Message class.
         /// </summary>
@@ -212,7 +232,7 @@ namespace Sharp.Xmpp.Im
         /// <exception cref="ArgumentNullException">The to parameter is null.</exception>
         /// <exception cref="ArgumentException">The body parameter is the empty string.</exception>
         public Message(Jid to, string body = null, string subject = null, string thread = null,
-            MessageType type = MessageType.Normal, CultureInfo language = null)
+            MessageType type = MessageType.Normal, CultureInfo language = null, Dictionary<String, String> oobInfo = null)
             : base(to, null, null, null, language)
         {
             to.ThrowIfNull("to");
@@ -222,6 +242,7 @@ namespace Sharp.Xmpp.Im
             Body = body;
             Subject = subject;
             Thread = thread;
+            SetOobInfo(oobInfo);
         }
 
         /// <summary>
@@ -243,7 +264,7 @@ namespace Sharp.Xmpp.Im
         /// parameter is null.</exception>
         public Message(Jid to, IDictionary<string, string> bodies,
             IDictionary<string, string> subjects = null, string thread = null,
-            MessageType type = MessageType.Normal, CultureInfo language = null)
+            MessageType type = MessageType.Normal, CultureInfo language = null, Dictionary<String, String> oobInfo = null)
             : base(to, null, null, null, language)
         {
             to.ThrowIfNull("to");
@@ -259,6 +280,7 @@ namespace Sharp.Xmpp.Im
                     AlternateSubjects.Add(pair.Key, pair.Value);
             }
             Thread = thread;
+            SetOobInfo(oobInfo);
         }
 
         /// <summary>

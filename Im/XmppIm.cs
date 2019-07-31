@@ -574,13 +574,14 @@ namespace Sharp.Xmpp.Im
         /// disposed.</exception>
         public void SendMessage(string id, Jid to, string body, string subject = null,
             string thread = null, MessageType type = MessageType.Normal,
-            CultureInfo language = null)
+            CultureInfo language = null, Dictionary<String, String> oobInfo = null)
         {
             AssertValid();
             to.ThrowIfNull("to");
-            body.ThrowIfNullOrEmpty("body");
-            Message m = new Message(to, body, subject, thread, type, language);
+            body.ThrowIfNull("body");
+            Message m = new Message(to, body, subject, thread, type, language, oobInfo);
             m.Id = id;
+
             SendMessage(m);
         }
 
@@ -610,12 +611,12 @@ namespace Sharp.Xmpp.Im
         /// disposed.</exception>
         public void SendMessage(Jid to, IDictionary<string, string> bodies,
             IDictionary<string, string> subjects = null, string thread = null,
-            MessageType type = MessageType.Normal, CultureInfo language = null)
+            MessageType type = MessageType.Normal, CultureInfo language = null, Dictionary<String, String> oobInfo = null)
         {
             AssertValid();
             to.ThrowIfNull("to");
             bodies.ThrowIfNull("bodies");
-            Message m = new Message(to, bodies, subjects, thread, type, language);
+            Message m = new Message(to, bodies, subjects, thread, type, language, oobInfo);
             SendMessage(m);
         }
 

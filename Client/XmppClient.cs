@@ -1254,12 +1254,12 @@ namespace Sharp.Xmpp.Client
         /// <include file='Examples.xml' path='S22/Xmpp/Client/XmppClient[@name="SendMessage-1"]/*'/>
         public void SendMessage(string id, Jid to, string body, string subject = null,
             string thread = null, MessageType type = MessageType.Normal,
-            CultureInfo language = null)
+            CultureInfo language = null, Dictionary<String, String> oobInfo = null)
         {
             AssertValid();
             to.ThrowIfNull("to");
-            body.ThrowIfNullOrEmpty("body");
-            im.SendMessage(id, to, body, subject, thread, type, language);
+            body.ThrowIfNull("body");
+            im.SendMessage(id, to, body, subject, thread, type, language, oobInfo);
         }
 
         /// <summary>
@@ -1294,12 +1294,12 @@ namespace Sharp.Xmpp.Client
         /// <include file='Examples.xml' path='S22/Xmpp/Client/XmppClient[@name="SendMessage-2"]/*'/>
         public void SendMessage(Jid to, IDictionary<string, string> bodies,
             IDictionary<string, string> subjects = null, string thread = null,
-            MessageType type = MessageType.Normal, CultureInfo language = null)
+            MessageType type = MessageType.Normal, CultureInfo language = null, Dictionary<String, String> oobInfo = null)
         {
             AssertValid();
             to.ThrowIfNull("to");
             bodies.ThrowIfNull("bodies");
-            im.SendMessage(to, bodies, subjects, thread, type, language);
+            im.SendMessage(to, bodies, subjects, thread, type, language, oobInfo);
         }
 
         /// <summary>
