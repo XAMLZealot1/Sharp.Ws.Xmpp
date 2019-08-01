@@ -72,11 +72,11 @@ namespace Sharp.Xmpp.Extensions
         /// <param name="state">The new chat-state.</param>
         /// <exception cref="ArgumentNullException">The jid parameter is
         /// null.</exception>
-        public void SetChatState(Jid jid, ChatState state)
+        public void SetChatState(Jid jid, MessageType type, ChatState state)
         {
             jid.ThrowIfNull("jid");
             Message m = new Message(jid);
-            m.Type = MessageType.Chat;
+            m.Type = type;
             m.Data.Child(Xml.Element(state.ToString().ToLowerInvariant(),
                 "http://jabber.org/protocol/chatstates"));
             im.SendMessage(m);

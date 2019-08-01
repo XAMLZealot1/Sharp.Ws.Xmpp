@@ -215,6 +215,9 @@ namespace Sharp.Xmpp.Im
                     oob.AppendChild(subElement);
                 }
                 e.AppendChild(oob);
+
+                subElement = e.OwnerDocument.CreateElement("store", "urn:xmpp:hints");
+                e.AppendChild(subElement);
             }
         }
 

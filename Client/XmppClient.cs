@@ -1401,9 +1401,9 @@ namespace Sharp.Xmpp.Client
         /// <param name="state">The new chat-state.</param>
         /// <exception cref="ArgumentNullException">The jid parameter is
         /// null.</exception>
-        public void SetChatState(Jid jid, ChatState state)
+        public void SetChatState(Jid jid, MessageType type, ChatState state)
         {
-            chatStateNotifications.SetChatState(jid, state);
+            chatStateNotifications.SetChatState(jid, type, state);
         }
 
         /// <summary>
