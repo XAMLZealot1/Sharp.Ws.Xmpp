@@ -7,7 +7,7 @@ namespace Sharp.Xmpp.Extensions
     /// </summary>
     public class MessageDeliveryReceivedEventArgs : EventArgs
     {
-         /// <summary>
+        /// <summary>
         /// The Id of the message which has been delivered
         /// </summary>
         public string MessageId
@@ -25,15 +25,24 @@ namespace Sharp.Xmpp.Extensions
             private set;
         }
 
+        /// <summary>
+        /// The timestamp of the delivery
+        /// </summary>
+        public DateTime Timestamp
+        {
+            get;
+            private set;
+        }
 
         /// <summary>
         /// Initializes a new instance of the VCardChangedEventArgs class.
         /// </summary>
         /// <exception cref="ArgumentNullException">The jid parameter is null.</exception>
-        public MessageDeliveryReceivedEventArgs(string messageId, ReceiptType receiptType)
+        public MessageDeliveryReceivedEventArgs(string messageId, ReceiptType receiptType, DateTime timestamp)
         {
             MessageId = messageId;
             ReceiptType = receiptType;
+            Timestamp = timestamp;
         }
     }
 }

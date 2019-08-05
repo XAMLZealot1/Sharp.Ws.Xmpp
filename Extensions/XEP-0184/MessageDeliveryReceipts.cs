@@ -71,7 +71,7 @@ namespace Sharp.Xmpp.Extensions
         {
             if (message.Type == MessageType.Chat)
             {
-                var received = message.Data["received"];
+                var received = message.Data["received", "urn:xmpp:receipts"];
                 if (received != null)
                 {
                     string messageId = received.GetAttribute("id");
@@ -87,7 +87,17 @@ namespace Sharp.Xmpp.Extensions
                     else
                         receiptType = ReceiptType.ClientRead;
 
-                    MessageDeliveryReceived.Raise(this, new MessageDeliveryReceivedEventArgs(messageId, receiptType));
+
+                    DateTime dateTime = DateTime.MinValue;
+                    var timestamp = message.Data["timestamp"];
+                    if (timestamp != null)
+                    {
+                        String value = timestamp.GetAttribute("value");
+                        if (!String.IsNullOrEmpty(value))
+                            DateTime.TryParse(value, out dateTime);
+                    }
+
+                    MessageDeliveryReceived.Raise(this, new MessageDeliveryReceivedEventArgs(messageId, receiptType, dateTime));
 
                     return true;
                 }
