@@ -201,7 +201,7 @@ namespace Sharp.Xmpp.Im
 
         protected void SetOobInfo(Dictionary<String, String> oobInfo)
         {
-            if(oobInfo != null)
+            if (oobInfo != null)
             {
                 XmlElement e = Data;
 
@@ -215,9 +215,6 @@ namespace Sharp.Xmpp.Im
                     oob.AppendChild(subElement);
                 }
                 e.AppendChild(oob);
-
-                subElement = e.OwnerDocument.CreateElement("store", "urn:xmpp:hints");
-                e.AppendChild(subElement);
             }
         }
 
