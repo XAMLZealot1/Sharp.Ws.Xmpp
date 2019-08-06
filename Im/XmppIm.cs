@@ -1831,6 +1831,7 @@ namespace Sharp.Xmpp.Im
             // a body.
             if (message.Data["body"] != null)
                 Message.Raise(this, new MessageEventArgs(message.From, message));
+
             // Also raise when the messages comes from an archive
             // Due to the different format the inner message is sent forward with the external timestamp included
             if (message.Data["result"] != null && message.Data["result"]["forwarded"] != null)
@@ -1846,7 +1847,7 @@ namespace Sharp.Xmpp.Im
             {
                 var realMessageNode = message.Data["event"]["items"]["item"]["message"];
                 var realMessage = new Message(new Core.Message(realMessageNode));
-                Console.WriteLine(realMessageNode);
+                
                 Message.Raise(this, new MessageEventArgs(realMessage.From, realMessage));
             }
 
@@ -1855,11 +1856,6 @@ namespace Sharp.Xmpp.Im
             {
                 var realMessageNode = message.Data["sent"]["forwarded"]["message"];
                 var realMessage = new Message(new Core.Message(realMessageNode));
-
-                // need to switch To and From
-                Jid temp = realMessage.To;
-                realMessage.To = realMessage.From;
-                realMessage.From = temp;
 
                 Message.Raise(this, new MessageEventArgs(realMessage.From, realMessage, true));
             }
