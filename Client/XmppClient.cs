@@ -1036,6 +1036,21 @@ namespace Sharp.Xmpp.Client
         }
 
         /// <summary>
+        /// The event that is raised when we have ingo about image file
+        /// </summary>
+        public event EventHandler<ThumbnailEventArgs> ThumbnailManagement
+        {
+            add
+            {
+                configuration.ThumbnailManagement += value;
+            }
+            remove
+            {
+                configuration.ThumbnailManagement -= value;
+            }
+        }
+
+        /// <summary>
         /// The event that is raised when the current user password has been updated
         /// </summary>
         public event EventHandler<EventArgs> PasswordUpdated
@@ -1049,7 +1064,6 @@ namespace Sharp.Xmpp.Client
                 configuration.PasswordUpdated -= value;
             }
         }
-
 
         /// <summary>
         /// The event that is raised when an user invatation occurs

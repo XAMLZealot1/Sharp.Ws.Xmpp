@@ -80,6 +80,11 @@ namespace Sharp.Xmpp.Extensions
         public event EventHandler<FileManagementEventArgs> FileManagement;
 
         /// <summary>
+        /// The event that is raised when we have ingo about image file
+        /// </summary>
+        public event EventHandler<ThumbnailEventArgs> ThumbnailManagement;
+
+        /// <summary>
         /// Invoked when a message stanza has been received.
         /// </summary>
         /// <param name="stanza">The stanza which has been received.</param>
@@ -185,6 +190,7 @@ namespace Sharp.Xmpp.Extensions
 
                     RoomManagement.Raise(this, new RoomManagementEventArgs(roomId, roomJid, userJid, status, privilege, name, topic, lastAvatarUpdateDate));
                 }
+                // Do we receive message about visualvoicemail
                 else if (message.Data["visualvoicemail"] != null)
                 {
                     // WE DO NOTHING HERE
@@ -206,6 +212,7 @@ namespace Sharp.Xmpp.Extensions
                     ////log.DebugFormat("duration:[{0}]", duration);
                     //VoiceMailManagement.Raise(this, new VoiceMailManagementEventArgs(msgId, fileId, action, url, mimeType, fileName, size, md5, duration));
                 }
+                // Do we receive message about file
                 else if (message.Data["file"] != null)
                 {
                     XmlElement e = message.Data["file"];
@@ -215,8 +222,32 @@ namespace Sharp.Xmpp.Extensions
 
                     FileManagement.Raise(this, new FileManagementEventArgs(fileId, action));
                 }
+                // Do we receive message about thumbnail
+                else if (message.Data["thumbnail"] != null)
+                {
+                    XmlElement e = message.Data["thumbnail"];
+
+                    string fileId = e["fileid"]?.InnerText;
+                    string widthStr = e["originalwidth"]?.InnerText;
+                    string heightStr = e["originalheight"]?.InnerText;
+
+                    int width = 0;
+                    int height = 0;
+
+                    try
+                    {
+                        int.TryParse(widthStr, out width);
+                        int.TryParse(heightStr, out height);
+                    }
+                    catch(Exception exc)
+                    {
+                        log.WarnFormat("[Input] Exception occurred for thumbnail: [{0}]", Util.SerializeException(exc));
+                    }
+
+                    ThumbnailManagement.Raise(this, new ThumbnailEventArgs(fileId, width, height));
+                }
                 else
-                    log.Debug("[Input] Message not managed");
+                    log.Info("[Input] Message not managed");
                 // Since it's a Management message, we prevent next handler to parse it
                 return true;
             }
