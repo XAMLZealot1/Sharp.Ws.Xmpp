@@ -4,6 +4,7 @@ using System;
 using System.Collections.Generic;
 using System.Globalization;
 using System.IO;
+using System.Net;
 using System.Net.Security;
 using System.Xml;
 
@@ -187,6 +188,32 @@ namespace Sharp.Xmpp.Client
         /// Provides the CallService extension
         /// </summary>
         private CallService callService;
+
+        public IPEndPoint IPEndPoint
+        {
+            get
+            {
+                return im.IPEndPoint;
+            }
+
+            set
+            {
+                im.IPEndPoint = value;
+            }
+        }
+
+        public Uri Proxy
+        {
+            get
+            {
+                return im.Proxy;
+            }
+
+            set
+            {
+                im.Proxy = value;
+            }
+        }
 
         /// <summary>
         /// Is web socket used - false by default

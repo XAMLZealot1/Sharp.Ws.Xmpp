@@ -1,19 +1,16 @@
 ﻿using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
-using System.Timers;
-using System.Diagnostics;
-using System.IO;
-using System.Linq;
+using System.Globalization;
+using System.Net;
 using System.Text;
 using System.Threading.Tasks;
+using System.Xml;
 
 using WebSocket4Net;
-using SuperSocket.ClientEngine;
-using System.Collections.Concurrent;
-using System.Xml;
-using System.Globalization;
 
 using log4net;
+using SuperSocket.ClientEngine.Proxy;
 
 namespace Sharp.Xmpp.Core
 {
@@ -37,6 +34,9 @@ namespace Sharp.Xmpp.Core
         private BlockingCollection<Iq> iqMessagesReceived;
         private HashSet<String> iqIdList;
 
+        private IPEndPoint ipEndPoint = null;
+        private Uri proxy = null;
+
         private WebSocket4Net.WebSocket webSocket4NetClient = null;
 
         public CultureInfo Language
@@ -45,11 +45,14 @@ namespace Sharp.Xmpp.Core
             private set;
         }
 
-        public WebSocket(String uri)
+        public WebSocket(String uri, IPEndPoint ipEndPoint, Uri proxy)
         {
             log.Debug("Create Web socket");
             this.uri = uri;
             rootElement = false;
+
+            this.ipEndPoint = ipEndPoint;
+            this.proxy = proxy;
 
             sb = new StringBuilder();
 
@@ -70,6 +73,16 @@ namespace Sharp.Xmpp.Core
             if (webSocket4NetClient == null)
             {
                 webSocket4NetClient = new WebSocket4Net.WebSocket(uri);
+
+                // Set Ip End point
+                log.DebugFormat("[CreateAndManageWebSocket] IpEndPoint:[{0}] - Proxy:[{1}]", ipEndPoint?.ToString(), proxy?.ToString());
+
+                HttpConnectProxy proxyWS = null;
+                if (proxy != null)
+                    proxyWS = new HttpConnectProxy(new IPEndPoint(IPAddress.Parse(proxy.Host), proxy.Port));
+
+                webSocket4NetClient.Proxy = (SuperSocket.ClientEngine.IProxyConnector)proxyWS;
+                webSocket4NetClient.LocalEndPoint = ipEndPoint;
 
                 if (uri.ToLower().StartsWith("wss"))
                     webSocket4NetClient.Security.EnabledSslProtocols = System.Security.Authentication.SslProtocols.Tls12;

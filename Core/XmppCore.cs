@@ -1,10 +1,12 @@
 ﻿using Sharp.Xmpp.Core.Sasl;
+
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Globalization;
 using System.IO;
 using System.Linq;
+using System.Net;
 using System.Net.Security;
 using System.Net.Sockets;
 using System.Security.Authentication;
@@ -58,6 +60,16 @@ namespace Sharp.Xmpp.Core
         /// True if the instance has been disposed of.
         /// </summary>
         private bool disposed;
+
+        /// <summary>
+        /// The Ip End Point use for the connexion
+        /// </summary>
+        public IPEndPoint IPEndPoint = null;
+
+        /// <summary>
+        /// The URI to use for the proxy
+        /// </summary>
+        public Uri Proxy = null;
 
         /// <summary>
         /// True if web socket is used
@@ -482,7 +494,7 @@ namespace Sharp.Xmpp.Core
         /// disposed.</exception>
         /// <remarks>If a username has been supplied, this method automatically performs
         /// authentication.</remarks>
-        public void Connect(string resource = null)
+        public void Connect(string resource)
         {
             if (disposed)
                 throw new ObjectDisposedException(GetType().FullName);
@@ -494,7 +506,7 @@ namespace Sharp.Xmpp.Core
                     if(String.IsNullOrEmpty(WebSocketUri))
                         throw new XmppException("URI not provided for WebSocket connection");
 
-                    webSocketClient = new WebSocket(WebSocketUri);
+                    webSocketClient = new WebSocket(WebSocketUri, IPEndPoint, Proxy);
                     webSocketClient.WebSocketOpened += new EventHandler(WebSocketClient_WebSocketOpened);
                     webSocketClient.WebSocketClosed += new EventHandler(WebSocketClient_WebSocketClosed);
                     webSocketClient.WebSocketError += new EventHandler<ExceptionEventArgs>(WebSocketClient_WebSocketError);
@@ -503,8 +515,10 @@ namespace Sharp.Xmpp.Core
                 }
                 else
                 {
-                    tcpClient = new TcpClient(Address, Port);
+                    tcpClient = new TcpClient(IPEndPoint);
+                    tcpClient.Connect(Address, Port);
                     stream = tcpClient.GetStream();
+                    
 
                     // Sets up the connection which includes TLS and possibly SASL negotiation.
                     SetupConnection(this.resource);
@@ -534,6 +548,7 @@ namespace Sharp.Xmpp.Core
             log.DebugFormat("[WebSocketClient_WebSocketClosed]");
             Connected = false;
             RaiseConnectionStatus(false);
+            webSocketClient = null;
         }
 
         private void RaiseConnectionStatus(bool connected)

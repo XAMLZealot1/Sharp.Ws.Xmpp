@@ -1,10 +1,12 @@
 ﻿using Sharp.Xmpp.Core;
 using Sharp.Xmpp.Extensions;
+
 using System;
 using System.Collections.Generic;
 using System.Globalization;
 using System.IO;
 using System.Linq;
+using System.Net;
 using System.Net.Security;
 using System.Net.Sockets;
 using System.Security.Authentication;
@@ -36,6 +38,32 @@ namespace Sharp.Xmpp.Im
         /// The set of loaded extensions.
         /// </summary>
         private ISet<XmppExtension> extensions = new HashSet<XmppExtension>();
+
+        public IPEndPoint IPEndPoint
+        {
+            get
+            {
+                return core.IPEndPoint;
+            }
+
+            set
+            {
+                core.IPEndPoint = value;
+            }
+        }
+
+        public Uri Proxy
+        {
+            get
+            {
+                return core.Proxy;
+            }
+
+            set
+            {
+                core.Proxy = value;
+            }
+        }
 
         /// <summary>
         /// Is web socket used - false by default
