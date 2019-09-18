@@ -183,6 +183,11 @@
         /// <summary>
         /// An extension added by Rainbow Hub to manage call service
         /// </summary>
-        CallService
+        CallService,
+
+        /// <summary>
+        /// An extension added by Rainbow Hub to manage conference
+        /// </summary>
+        Conference
     }
 }

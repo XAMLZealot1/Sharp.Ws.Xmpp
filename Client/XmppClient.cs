@@ -180,6 +180,11 @@ namespace Sharp.Xmpp.Client
         private Configuration configuration;
 
         /// <summary>
+        /// Provides the Conference extension
+        /// </summary>
+        private Conference conference;
+
+        /// <summary>
         /// Provides the CallLog extension
         /// </summary>
         private CallLog callLog;
@@ -1061,6 +1066,22 @@ namespace Sharp.Xmpp.Client
                 configuration.FileManagement -= value;
             }
         }
+
+        /// <summary>
+        /// The event that is raised when conference information has been updated
+        /// </summary>
+        public event EventHandler<ConferenceInformationEventArgs> ConferenceInformationUpdated
+        {
+            add
+            {
+                conference.ConferenceInformationUpdated += value;
+            }
+            remove
+            {
+                conference.ConferenceInformationUpdated -= value;
+            }
+        }
+
 
         /// <summary>
         /// The event that is raised when we have ingo about image file
@@ -2664,6 +2685,7 @@ namespace Sharp.Xmpp.Client
             mam = im.LoadExtension<MessageArchiveManagment>();
 
             configuration = im.LoadExtension<Configuration>();
+            conference = im.LoadExtension<Conference>();
             callLog = im.LoadExtension<CallLog>();
             msgDeliveryReceipt = im.LoadExtension<MessageDeliveryReceipts>();
             callService = im.LoadExtension<CallService>();
