@@ -1068,17 +1068,17 @@ namespace Sharp.Xmpp.Client
         }
 
         /// <summary>
-        /// The event that is raised when conference information has been updated
+        /// The event that is raised when a conference has been updated
         /// </summary>
-        public event EventHandler<ConferenceInformationEventArgs> ConferenceInformationUpdated
+        public event EventHandler<Sharp.Xmpp.Extensions.MessageEventArgs> ConferenceUpdated
         {
             add
             {
-                conference.ConferenceInformationUpdated += value;
+                conference.ConferenceUpdated += value;
             }
             remove
             {
-                conference.ConferenceInformationUpdated -= value;
+                conference.ConferenceUpdated -= value;
             }
         }
 

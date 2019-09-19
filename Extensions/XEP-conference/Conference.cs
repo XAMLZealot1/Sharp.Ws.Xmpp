@@ -40,9 +40,9 @@ namespace Sharp.Xmpp.Extensions
         }
 
         /// <summary>
-        /// The event that is raised when conference information has been updated
+        /// The event that is raised when a conference has been updated
         /// </summary>
-         public event EventHandler<ConferenceInformationEventArgs> ConferenceInformationUpdated;
+         public event EventHandler<Sharp.Xmpp.Extensions.MessageEventArgs> ConferenceUpdated;
 
         /// <summary>
         /// Invoked when a message stanza has been received.
@@ -57,8 +57,7 @@ namespace Sharp.Xmpp.Extensions
                 // Do we receive a conference-info message ?
                 if (message.Data["conference-info"] != null)
                 {
-                    XmlElement e = message.Data["conference-info"];
-                    ConferenceInformationUpdated.Raise(this, new ConferenceInformationEventArgs(e.ToXmlString()));
+                    ConferenceUpdated.Raise(this, new Sharp.Xmpp.Extensions.MessageEventArgs(message.Data["conference-info"].ToXmlString()));
                     return true;
                 }
             }
