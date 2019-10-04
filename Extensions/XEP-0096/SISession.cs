@@ -113,7 +113,7 @@ namespace Sharp.Xmpp.Extensions
         {
             sid.ThrowIfNull("sid");
             stream.ThrowIfNull("stream");
-            size.ThrowIfOutOfRange(0, Int64.MaxValue);
+            size.ThrowIfOutOfRange(0, long.MaxValue);
             from.ThrowIfNull("from");
             to.ThrowIfNull("to");
             extension.ThrowIfNull("extension");

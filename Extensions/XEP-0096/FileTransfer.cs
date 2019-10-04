@@ -96,7 +96,7 @@ namespace Sharp.Xmpp.Extensions
             from.ThrowIfNull("from");
             to.ThrowIfNull("to");
             name.ThrowIfNull("name");
-            size.ThrowIfOutOfRange("size", 0, Int64.MaxValue);
+            size.ThrowIfOutOfRange("size", 0, long.MaxValue);
             transferred.ThrowIfOutOfRange("transferred", 0, size);
             From = from;
             To = to;

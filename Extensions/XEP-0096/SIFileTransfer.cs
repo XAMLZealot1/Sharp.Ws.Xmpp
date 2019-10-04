@@ -255,7 +255,7 @@ namespace Sharp.Xmpp.Extensions
             to.ThrowIfNull("to");
             stream.ThrowIfNull("stream");
             name.ThrowIfNull("name");
-            size.ThrowIfOutOfRange(0, Int64.MaxValue);
+            size.ThrowIfOutOfRange(0, long.MaxValue);
             //FIXME FIXME
             //if (!ecapa.Supports(to, Extension.SIFileTransfer)) {
             //    throw new NotSupportedException("The XMPP entity does not support the " +
