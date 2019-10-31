@@ -22,7 +22,7 @@ namespace Sharp.Xmpp.Im
     /// <remarks>For implementation details, refer to RFC 3921.</remarks>
     public class XmppIm : IDisposable
     {
-        private static readonly ILog log = LogManager.GetLogger(typeof(XmppIm));
+        private static readonly ILog log = LogConfigurator.GetLogger(typeof(XmppIm));
 
         /// <summary>
         /// Provides access to the core facilities of XMPP.

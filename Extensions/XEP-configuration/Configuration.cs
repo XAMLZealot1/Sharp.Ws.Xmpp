@@ -12,7 +12,7 @@ namespace Sharp.Xmpp.Extensions
     /// </summary>
     internal class Configuration : XmppExtension, IInputFilter<Message>
     {
-        private static readonly ILog log = LogManager.GetLogger(typeof(Configuration));
+        private static readonly ILog log = LogConfigurator.GetLogger(typeof(Configuration));
 
         /// <summary>
         /// An enumerable collection of XMPP namespaces the extension implements.

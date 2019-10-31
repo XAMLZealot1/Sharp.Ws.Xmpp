@@ -15,7 +15,7 @@ namespace Sharp.Xmpp.Extensions
     /// </summary>
     internal class ServiceDiscovery : XmppExtension, IInputFilter<Iq>
     {
-        private static readonly ILog log = LogManager.GetLogger(typeof(ServiceDiscovery));
+        private static readonly ILog log = LogConfigurator.GetLogger(typeof(ServiceDiscovery));
 
         /// <summary>
         /// A dictionary for caching supported services of XMPP entities.

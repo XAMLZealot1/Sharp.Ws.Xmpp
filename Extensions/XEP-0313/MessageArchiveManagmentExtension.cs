@@ -14,7 +14,7 @@ namespace Sharp.Xmpp.Extensions
     /// </summary>
     internal class MessageArchiveManagment : XmppExtension, IInputFilter<Sharp.Xmpp.Im.Message>
     {
-        private static readonly ILog log = LogManager.GetLogger(typeof(MessageArchiveManagment));
+        private static readonly ILog log = LogConfigurator.GetLogger(typeof(MessageArchiveManagment));
 
         /// <summary>
         /// A reference to the 'Entity Capabilities' extension instance.

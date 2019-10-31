@@ -16,7 +16,7 @@ namespace Sharp.Xmpp.Core
 {
     internal class WebSocket
     {
-        private static readonly ILog log = LogManager.GetLogger(typeof(WebSocket));
+        private static readonly ILog log = LogConfigurator.GetLogger(typeof(WebSocket));
 
         public event EventHandler WebSocketOpened;
         public event EventHandler WebSocketClosed;

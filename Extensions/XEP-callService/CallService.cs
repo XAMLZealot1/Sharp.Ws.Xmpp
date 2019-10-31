@@ -14,7 +14,7 @@ namespace Sharp.Xmpp.Extensions
     /// </summary>
     internal class CallService : XmppExtension, IInputFilter<Sharp.Xmpp.Im.Message>
     {
-        private static readonly ILog log = LogManager.GetLogger(typeof(CallService));
+        private static readonly ILog log = LogConfigurator.GetLogger(typeof(CallService));
 
         private static readonly String CALLSERVICE_NS = "urn:xmpp:pbxagent:callservice:1";
 

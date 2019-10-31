@@ -25,7 +25,7 @@ namespace Sharp.Xmpp.Core
     /// <remarks>For implementation details, refer to RFC 3920.</remarks>
     public class XmppCore : IDisposable
     {
-        private static readonly ILog log = LogManager.GetLogger(typeof(XmppCore));
+        private static readonly ILog log = LogConfigurator.GetLogger(typeof(XmppCore));
 
         private const String BIND_ID = "bind-0";
 
