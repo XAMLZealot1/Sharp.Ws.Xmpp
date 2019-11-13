@@ -244,30 +244,32 @@ namespace Sharp.Xmpp.Extensions
             rootElement.SetAttribute("queryid", queryId);
 
 
-            if(isRoom)
-            {
-                subElement = Xml.Element("x", "jabber:x:data");
-                subElement.SetAttribute("type", "submit");
+            subElement = Xml.Element("x", "jabber:x:data");
+            subElement.SetAttribute("type", "submit");
 
-                fieldElement = Xml.Element("field");
-                fieldElement.SetAttribute("var", "FORM_TYPE");
-                fieldElement.SetAttribute("type", "hidden");
+            fieldElement = Xml.Element("field");
+            fieldElement.SetAttribute("var", "FORM_TYPE");
+            fieldElement.SetAttribute("type", "hidden");
 
-                valueElement = Xml.Element("value");
-                valueElement.InnerText = "urn:xmpp:mam:1";
-                fieldElement.Child(valueElement);
-                subElement.Child(fieldElement);
+            valueElement = Xml.Element("value");
+            valueElement.InnerText = "urn:xmpp:mam:1";
+            fieldElement.Child(valueElement);
+            subElement.Child(fieldElement);
 
-                fieldElement = Xml.Element("field");
-                fieldElement.SetAttribute("var", "with");
+            fieldElement = Xml.Element("field");
+            fieldElement.SetAttribute("var", "with");
 
-                valueElement = Xml.Element("value");
+            valueElement = Xml.Element("value");
+
+            if (isRoom)
                 valueElement.InnerText = im.Jid.GetBareJid().ToString();
-                fieldElement.Child(valueElement);
-                subElement.Child(fieldElement);
+            else
+                valueElement.InnerText = jid.GetBareJid().ToString();
 
-                rootElement.Child(subElement);
-            }
+            fieldElement.Child(valueElement);
+            subElement.Child(fieldElement);
+
+            rootElement.Child(subElement);
 
 
             subElement = Xml.Element("set", "http://jabber.org/protocol/rsm");
@@ -281,8 +283,12 @@ namespace Sharp.Xmpp.Extensions
 
             rootElement.Child(subElement);
 
+            Jid to = null;
+            if (isRoom)
+                to = jid;
+
             //The Request is Async
-            im.IqRequestAsync(IqType.Set, jid, im.Jid, rootElement, null, (id, iq) =>
+            im.IqRequestAsync(IqType.Set, to, null, rootElement, null, (id, iq) =>
             {
                 //For any reply we execute the callback
                 if (iq.Type == IqType.Error)
