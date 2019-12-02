@@ -1746,10 +1746,10 @@ namespace Sharp.Xmpp.Client
                 cusiqextension.RequestCustomIqAsync(jid, str, callback);
         }
 
-        public void RequestArchivedMessagesByDate(Jid jid, string queryId, DateTime startDate, DateTime endDate)
+        public void RequestArchivedMessagesByDate(Jid toJid, Jid fromJid, Jid withJid, string queryId, DateTime startDate, DateTime endDate)
         {
             AssertValid();
-            mam.RequestArchivedMessagesByDate(jid, queryId, startDate, endDate);
+            mam.RequestArchivedMessagesByDate(toJid, fromJid, withJid, queryId, startDate, endDate);
         }
 
         public void RequestArchivedMessages(Jid jid, string queryId, int maxNumber, bool isRoom, string before = null, string after = null)

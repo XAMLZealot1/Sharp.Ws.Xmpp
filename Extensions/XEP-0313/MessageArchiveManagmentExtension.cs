@@ -90,7 +90,8 @@ namespace Sharp.Xmpp.Extensions
         /// <summary>
         /// Requests archived messages according options specified
         /// </summary>
-        /// <param name="jid">The JID of the XMPP entity to get.</param>
+        /// <param name="toJid">The JID of the XMPP entity to get.</param>
+        /// <param name="withJid">Filtering result with this JID</param>
         /// <param name="queryId">The Id related to this query - it will be used to identify this request</param>
         /// <param name="start">Start date
         /// <param name="end">Edn date
@@ -103,7 +104,7 @@ namespace Sharp.Xmpp.Extensions
         /// error condition.</exception>
         /// <exception cref="XmppException">The server returned invalid data or another
         /// unspecified XMPP error occurred.</exception>
-        public void RequestArchivedMessagesByDate(Jid jid, string queryId, DateTime start, DateTime end)
+        public void RequestArchivedMessagesByDate(Jid toJid, Jid fromJid, Jid withJid, string queryId, DateTime start, DateTime end)
         {
             /*
              * 
@@ -122,7 +123,7 @@ namespace Sharp.Xmpp.Extensions
               </query>
              */
 
-            jid.ThrowIfNull("jid");
+            //jid.ThrowIfNull("jid");
 
             XmlElement rootElement;
             XmlElement subElement;
@@ -144,17 +145,26 @@ namespace Sharp.Xmpp.Extensions
             fieldElement.Child(valueElement);
             subElement.Child(fieldElement);
 
+            if (withJid != null)
+            {
+                fieldElement = Xml.Element("field");
+                fieldElement.SetAttribute("var", "with");
+                valueElement = Xml.Element("value");
+                valueElement.InnerText = withJid.ToString();
+                fieldElement.Child(valueElement);
+                subElement.Child(fieldElement);
+            }
+
             fieldElement = Xml.Element("field");
             fieldElement.SetAttribute("var", "start");
-
             valueElement = Xml.Element("value");
             valueElement.InnerText = start.ToUniversalTime().ToString("yyyy-MM-ddTHH:mm:ssZ"); ;
             fieldElement.Child(valueElement);
             subElement.Child(fieldElement);
 
+
             fieldElement = Xml.Element("field");
             fieldElement.SetAttribute("var", "end");
-
             valueElement = Xml.Element("value");
             valueElement.InnerText = end.ToUniversalTime().ToString("yyyy-MM-ddTHH:mm:ssZ"); ;
             fieldElement.Child(valueElement);
@@ -163,7 +173,7 @@ namespace Sharp.Xmpp.Extensions
             rootElement.Child(subElement);
 
             //The Request is Async
-            im.IqRequestAsync(IqType.Set, jid, im.Jid, rootElement, null, (id, iq) =>
+            im.IqRequestAsync(IqType.Set, toJid, fromJid, rootElement, null, (id, iq) =>
             {
                 //For any reply we execute the callback
                 if (iq.Type == IqType.Error)
