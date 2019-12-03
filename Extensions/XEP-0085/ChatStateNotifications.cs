@@ -57,7 +57,8 @@ namespace Sharp.Xmpp.Extensions
                 {
                     ChatStateChanged.Raise(this,
                         new ChatStateChangedEventArgs(stanza.From, state));
-                    return true;
+                    
+                    // Even if we have manage the ChatStateChnage event we MUST pass this message to next handler !
                 }
             }
             // Pass the message on to the next handler.
