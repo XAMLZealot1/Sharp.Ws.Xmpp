@@ -22,6 +22,7 @@ namespace Sharp.Xmpp.Extensions
 		/// </summary>
 		public event EventHandler<MessageDeliveryReceivedEventArgs> MessageDeliveryReceived;
 
+        public event EventHandler<JidEventArgs> MessagesAllRead;
 
         /// <summary>
         /// A reference to the 'Entity Capabilities' extension instance.
@@ -71,7 +72,9 @@ namespace Sharp.Xmpp.Extensions
         {
             if (message.Type == MessageType.Chat)
             {
-                var received = message.Data["received", "urn:xmpp:receipts"];
+                XmlElement received;
+                
+                received= message.Data["received", "urn:xmpp:receipts"];
                 if (received != null)
                 {
                     string messageId = received.GetAttribute("id");
@@ -100,6 +103,19 @@ namespace Sharp.Xmpp.Extensions
                     MessageDeliveryReceived.Raise(this, new MessageDeliveryReceivedEventArgs(messageId, receiptType, dateTime));
 
                     return true;
+                }
+
+                // Do we receive a "mark as read" for all messages ?
+                received = message.Data["mark_as_read", "jabber:iq:notification"];
+                if(received != null)
+                {
+                    string id = received.GetAttribute("id");
+                    if(id == "all-received")
+                    {
+                        String jid = received.GetAttribute("with");
+                        MessagesAllRead.Raise(this, new JidEventArgs(jid));
+                        return true;
+                    }
                 }
             }
             return false;

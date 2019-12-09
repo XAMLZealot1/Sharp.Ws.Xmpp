@@ -1114,7 +1114,7 @@ namespace Sharp.Xmpp.Client
         }
 
         /// <summary>
-        /// The event that is raised when an user invatation occurs
+        /// The event that is raised when a message delivery is received
         /// </summary>
         public event EventHandler<MessageDeliveryReceivedEventArgs> MessageDeliveryReceived
         {
@@ -1125,6 +1125,21 @@ namespace Sharp.Xmpp.Client
             remove
             {
                 msgDeliveryReceipt.MessageDeliveryReceived -= value;
+            }
+        }
+
+        /// <summary>
+        /// The event that is raised when all messages for a JID is read
+        /// </summary>
+        public event EventHandler<JidEventArgs> MessagesAllRead
+        {
+            add
+            {
+                msgDeliveryReceipt.MessagesAllRead += value;
+            }
+            remove
+            {
+                msgDeliveryReceipt.MessagesAllRead -= value;
             }
         }
 
