@@ -110,7 +110,7 @@ namespace Sharp.Xmpp.Extensions
                 if(received != null)
                 {
                     string id = received.GetAttribute("id");
-                    if(id == "all-received")
+                    //if(id == "all-received")
                     {
                         String jid = received.GetAttribute("with");
                         MessagesAllRead.Raise(this, new JidEventArgs(jid));
