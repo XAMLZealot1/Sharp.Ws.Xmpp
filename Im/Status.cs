@@ -59,6 +59,15 @@ namespace Sharp.Xmpp.Im
         }
 
         /// <summary>
+        /// The date of the status
+        /// </summary>
+        public DateTime Date
+        {
+            get;
+            private set;
+        }
+
+        /// <summary>
         /// The availability of the status
         /// </summary>
         public DateTime Until
@@ -99,12 +108,13 @@ namespace Sharp.Xmpp.Im
         /// codes.</param>
         /// <param name="priority">Provides a hint for stanza routing.</param>
         public Status(Availability availability, Dictionary<string, string> messages,
-            sbyte priority, DateTime until)
+            sbyte priority, DateTime until, DateTime date)
         {
             Availability = availability;
             Priority = priority;
             Messages = new Dictionary<string, string>();
             Until = until;
+            Date = date;
             if (messages != null)
             {
                 foreach (KeyValuePair<string, string> pair in messages)

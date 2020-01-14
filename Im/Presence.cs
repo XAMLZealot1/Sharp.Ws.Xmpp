@@ -9,6 +9,21 @@ namespace Sharp.Xmpp.Im
     /// </summary>
     internal class Presence : Core.Presence
     {
+
+        public DateTime Date
+        {
+            get
+            {
+                return date;
+            }
+        }
+
+        /// <summary>
+        /// The type of the presence stanza.
+        /// </summary>
+        private DateTime date;
+
+
         /// <summary>
         /// The type of the presence stanza.
         /// </summary>
@@ -52,6 +67,21 @@ namespace Sharp.Xmpp.Im
             presence.ThrowIfNull("presence");
             type = ParseType(presence.Data.GetAttribute("type"));
             element = presence.Data;
+            date = ParseDate();
+        }
+
+        public DateTime ParseDate()
+        {
+            DateTime result = DateTime.UtcNow;
+            if(element["delay"] != null)
+            {
+                String stamp = element["delay"].GetAttribute("stamp");
+                if(!String.IsNullOrEmpty(stamp))
+                {
+                    DateTime.TryParse(stamp, out result);
+                }
+            }
+            return result;
         }
 
         /// <summary>

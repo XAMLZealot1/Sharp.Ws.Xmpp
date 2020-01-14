@@ -1934,6 +1934,7 @@ namespace Sharp.Xmpp.Im
                 dict.Add(l, element.InnerText);
             }
 
+
             // Parse the optional 'until' element.
             DateTime until = DateTime.MinValue;
             e = presence.Data["until"];
@@ -1942,7 +1943,8 @@ namespace Sharp.Xmpp.Im
                 if (!DateTime.TryParse(e.InnerText, out until))
                     until = DateTime.Now;
             }
-            Status status = new Status(availability, dict, prio, until);
+
+            Status status = new Status(availability, dict, prio, until, presence.Date);
             // Raise Status event.
             Status.Raise(this, new StatusEventArgs(presence.From, status));
         }
