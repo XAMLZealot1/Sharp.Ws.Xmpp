@@ -65,6 +65,8 @@ namespace Sharp.Xmpp.Im
             }
         }
 
+        public Availability defaultStatus = Availability.Online;
+
         /// <summary>
         /// Is web socket used - false by default
         /// </summary>
@@ -529,7 +531,7 @@ namespace Sharp.Xmpp.Im
                     break;
 
                 case XmppCore.ACTION_SET_DEFAULT_STATUS:
-                    SetStatus(Availability.Online, "", 5);
+                    SetStatus(defaultStatus, "", 5);
 
                     core.QueueActionToPerform(XmppCore.ACTION_FULLY_CONNECTED);
                     break;
@@ -646,6 +648,11 @@ namespace Sharp.Xmpp.Im
             bodies.ThrowIfNull("bodies");
             Message m = new Message(to, bodies, subjects, thread, type, language, oobInfo);
             SendMessage(m);
+        }
+
+        public void SetDefaultStatus(Availability availability)
+        {
+            defaultStatus = availability;
         }
 
         /// <summary>

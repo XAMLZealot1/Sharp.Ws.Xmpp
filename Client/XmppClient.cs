@@ -1484,6 +1484,19 @@ namespace Sharp.Xmpp.Client
         }
 
         /// <summary>
+        /// Sets the default availability status.
+        /// </summary>
+        /// <param name="availability">The availability state. Can be one of the
+        /// values from the Availability enumeration, however not
+        /// Availability.Offline.</param>
+        /// <exception cref="ObjectDisposedException">The XmppClient object has been
+        /// disposed.</exception>
+        public void SetDefaultStatus(Availability availability)
+        {
+            im.SetDefaultStatus(availability);
+        }
+
+        /// <summary>
         /// Sets the availability status.
         /// </summary>
         /// <param name="availability">The availability state. Can be one of the
