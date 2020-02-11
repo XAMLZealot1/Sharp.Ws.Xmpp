@@ -528,10 +528,12 @@ namespace Sharp.Xmpp.Im
                     GetRoster();
 
                     core.QueueActionToPerform(XmppCore.ACTION_SET_DEFAULT_STATUS);
+                    //core.QueueActionToPerform(XmppCore.ACTION_FULLY_CONNECTED);
                     break;
 
                 case XmppCore.ACTION_SET_DEFAULT_STATUS:
-                    SetStatus(defaultStatus, "", 5);
+                    // No more set default status here - it must be done in application itself
+                    //SetStatus(defaultStatus, "", 5);
 
                     core.QueueActionToPerform(XmppCore.ACTION_FULLY_CONNECTED);
                     break;
