@@ -1158,6 +1158,20 @@ namespace Sharp.Xmpp.Client
             }
         }
 
+        public event EventHandler<JidEventArgs> MessagesAllDeleted
+        {
+            add
+            {
+                mam.MessagesAllDeleted += value;
+            }
+            remove
+            {
+                mam.MessagesAllDeleted -= value;
+            }
+        }
+        
+
+
         /// <summary>
         /// The event that is raised when a result is donrecevied after asking list of messages archive
         /// </summary>
@@ -1785,6 +1799,13 @@ namespace Sharp.Xmpp.Client
             AssertValid();
             mam.RequestArchivedMessages(jid, queryId, maxNumber, isRoom, before, after);
         }
+
+        public void DeleteAllArchivedMessages(Jid jid, string queryId, bool isRoom)
+        {
+            AssertValid();
+            mam.DeleteAllArchivedMessages(jid, queryId, isRoom);
+        }
+
 
         public void RequestCallLogs(string queryId, int maxNumber, string before = null, string after = null)
         {

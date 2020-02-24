@@ -66,6 +66,13 @@ namespace Sharp.Xmpp.Extensions
         /// </summary>
         public event EventHandler<MessageArchiveEventArgs> MessageArchiveRetrieved;
 
+
+        /// <summary>
+        /// Event raised when all messages in conversations is deleted
+        /// </summary>
+        public event EventHandler<JidEventArgs> MessagesAllDeleted;
+
+
         /// <summary>
         /// Invoked when a message stanza has been received.
         /// </summary>
@@ -83,6 +90,20 @@ namespace Sharp.Xmpp.Extensions
                 MessageArchiveRetrieved.Raise(this, new MessageArchiveEventArgs(queryId, resultId, message));
                 return true;
             }
+
+            // Check if we received a message related to "all messages deleted"
+            XmlElement deleted = message.Data["deleted", "jabber:iq:notification"];
+            if (deleted != null)
+            {
+                String xmlId = deleted.GetAttribute("id");
+                String jid = deleted.GetAttribute("with");
+                if ((xmlId == "all") && (!String.IsNullOrEmpty(jid)))
+                {
+                    MessagesAllDeleted.Raise(this, new JidEventArgs(jid));
+                    return true;
+                }
+            }
+
             return false;
         }
 
@@ -346,6 +367,83 @@ namespace Sharp.Xmpp.Extensions
             });
         }
 
+
+        public void DeleteAllArchivedMessages(Jid jid, string queryId, bool isRoom)
+        {
+            /*
+             * 
+              <delete queryid="dd008366-ad0f-4197-a61c-0c34fbc0e75a" xmlns="urn:xmpp:mam:1">
+                <x type="submit" xmlns="jabber:x:data">
+                  <field type="hidden" var="FORM_TYPE">
+                    <value>urn:xmpp:mam:1
+                    </value>
+                  </field>
+                  <field var="with">
+                    <value>7ebaaacfa0634f46a903bcdd83ae793b@openrainbow.net
+                    </value>
+                  </field>
+                </x>
+                <set xmlns="http://jabber.org/protocol/rsm"/>
+              </delete>
+             */
+
+            XmlElement rootElement;
+            XmlElement subElement;
+            XmlElement fieldElement;
+            XmlElement valueElement;
+
+            rootElement = Xml.Element("delete", "urn:xmpp:mam:1");
+            rootElement.SetAttribute("queryid", queryId);
+
+            subElement = Xml.Element("x", "jabber:x:data");
+            subElement.SetAttribute("type", "submit");
+
+            fieldElement = Xml.Element("field");
+            fieldElement.SetAttribute("var", "FORM_TYPE");
+            fieldElement.SetAttribute("type", "hidden");
+
+            valueElement = Xml.Element("value");
+            valueElement.InnerText = "urn:xmpp:mam:1";
+            fieldElement.Child(valueElement);
+            subElement.Child(fieldElement);
+
+            if (jid != null)
+            {
+                fieldElement = Xml.Element("field");
+                fieldElement.SetAttribute("var", "with");
+                valueElement = Xml.Element("value");
+                valueElement.InnerText = jid.ToString();
+                fieldElement.Child(valueElement);
+                subElement.Child(fieldElement);
+            }
+
+            rootElement.Child(subElement);
+
+            //The Request is Async
+            im.IqRequestAsync(IqType.Set, null, null, rootElement, null, (id, iq) =>
+            {
+                //For any reply we execute the callback
+                if (iq.Type == IqType.Error)
+                {
+                    // TODO
+                    return;
+                }
+
+                if (iq.Type == IqType.Result)
+                {
+                    try
+                    {
+                        return;
+                    }
+                    catch (Exception)
+                    {
+                        log.ErrorFormat("RequestCustomIqAsync - an error occurred ...");
+                    }
+
+                }
+            });
+
+        }
 
 
         /// <summary>
