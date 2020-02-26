@@ -1099,6 +1099,21 @@ namespace Sharp.Xmpp.Client
         }
 
         /// <summary>
+        /// The event raised about user role/type updates in channel: subscribe / unsubscribe / add / remove / update
+        /// </summary>
+        public event EventHandler<ChannelManagementEventArgs> ChannelManagement
+        {
+            add
+            {
+                configuration.ChannelManagement += value;
+            }
+            remove
+            {
+                configuration.ChannelManagement -= value;
+            }
+        }
+
+        /// <summary>
         /// The event that is raised when the current user password has been updated
         /// </summary>
         public event EventHandler<EventArgs> PasswordUpdated

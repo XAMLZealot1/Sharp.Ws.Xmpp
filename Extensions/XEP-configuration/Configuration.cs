@@ -80,9 +80,14 @@ namespace Sharp.Xmpp.Extensions
         public event EventHandler<FileManagementEventArgs> FileManagement;
 
         /// <summary>
-        /// The event that is raised when we have ingo about image file
+        /// The event that is raised when we have info about image file
         /// </summary>
         public event EventHandler<ThumbnailEventArgs> ThumbnailManagement;
+
+        /// <summary>
+        /// The event raised about user role/type updates in channel: subscribe / unsubscribe / add / remove / update
+        /// </summary>
+        public event EventHandler<ChannelManagementEventArgs> ChannelManagement;
 
         /// <summary>
         /// Invoked when a message stanza has been received.
@@ -246,6 +251,33 @@ namespace Sharp.Xmpp.Extensions
 
                     ThumbnailManagement.Raise(this, new ThumbnailEventArgs(fileId, width, height));
                 }
+                else if (message.Data["channel"] != null)
+                {
+                    XmlElement e = message.Data["channel"];
+
+                    string jid = message.To.GetBareJid().ToString();
+
+                    string channelId = e.GetAttribute("channelid");
+                    string action = e.GetAttribute("action");
+
+                    string type = "";
+                    if(e["type"] != null)
+                        type = e["type"].InnerText;
+
+                    ChannelManagement.Raise(this, new ChannelManagementEventArgs(jid, channelId, action, type));
+                }
+                else if (message.Data["channel-subscription"] != null)
+                {
+                    XmlElement e = message.Data["channel-subscription"];
+
+                    string jid = e.GetAttribute("jid");
+
+                    string channelId = e.GetAttribute("channelid");
+                    string action = e.GetAttribute("action");
+                    string type = ""; // Never Type info receive in this case
+
+                    ChannelManagement.Raise(this, new ChannelManagementEventArgs(jid, channelId, action, type));
+                }
                 else
                     log.Info("[Input] Message not managed");
                 // Since it's a Management message, we prevent next handler to parse it
@@ -261,7 +293,6 @@ namespace Sharp.Xmpp.Extensions
                     String userid, userjid, userdisplayname;
                     String subject;
 
-                    roomId = roomJid = roomName = "";
                     userid = userjid = userdisplayname = "";
                     subject = "";
 
