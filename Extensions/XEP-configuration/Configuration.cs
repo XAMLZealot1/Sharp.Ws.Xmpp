@@ -256,13 +256,23 @@ namespace Sharp.Xmpp.Extensions
                     XmlElement e = message.Data["channel"];
 
                     string jid = message.To.GetBareJid().ToString();
-
                     string channelId = e.GetAttribute("channelid");
-                    string action = e.GetAttribute("action");
 
+                    string action = "";
                     string type = "";
-                    if(e["type"] != null)
-                        type = e["type"].InnerText;
+
+                    // Check avatar node
+                    if (e["avatar"] != null)
+                    {
+                        type = "avatar";
+                        action = e["avatar"].GetAttribute("action");
+                    }
+                    else
+                    {
+                        action = e.GetAttribute("action");
+                        if (e["type"] != null)
+                            type = e["type"].InnerText;
+                    }
 
                     ChannelManagement.Raise(this, new ChannelManagementEventArgs(jid, channelId, action, type));
                 }
