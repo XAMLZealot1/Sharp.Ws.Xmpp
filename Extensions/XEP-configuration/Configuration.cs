@@ -90,6 +90,11 @@ namespace Sharp.Xmpp.Extensions
         public event EventHandler<ChannelManagementEventArgs> ChannelManagement;
 
         /// <summary>
+        /// The event raised when a ChannelItem is created, updated, deleted
+        /// </summary>
+        public event EventHandler<MessageEventArgs> ChanneItemManagement;
+
+        /// <summary>
         /// Invoked when a message stanza has been received.
         /// </summary>
         /// <param name="stanza">The stanza which has been received.</param>
@@ -332,6 +337,19 @@ namespace Sharp.Xmpp.Extensions
                     RoomInvitation.Raise(this, new RoomInvitationEventArgs(roomId, roomJid, roomName, userid, userjid, userdisplayname, subject));
 
                     return true;
+                }
+            }
+            else if (message.Type == MessageType.Headline)
+            {
+                // Do we receive an event of pubsub type ?
+                if (message.Data["event", "http://jabber.org/protocol/pubsub#event"] != null)
+                {
+                    XmlElement e = message.Data["event", "http://jabber.org/protocol/pubsub#event"];
+                    if( e["items"] != null)
+                    {
+                        ChanneItemManagement.Raise(this, new MessageEventArgs(e["items"].ToString()));
+                        return true;
+                    }
                 }
             }
 

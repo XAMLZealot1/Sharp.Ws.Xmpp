@@ -1114,6 +1114,21 @@ namespace Sharp.Xmpp.Client
         }
 
         /// <summary>
+        /// The event raised when a ChannelItem is created, updated, deleted
+        /// </summary>
+        public event EventHandler<Sharp.Xmpp.Extensions.MessageEventArgs> ChanneItemManagement
+        {
+            add
+            {
+                configuration.ChanneItemManagement += value;
+            }
+            remove
+            {
+                configuration.ChanneItemManagement -= value;
+            }
+        }
+
+        /// <summary>
         /// The event that is raised when the current user password has been updated
         /// </summary>
         public event EventHandler<EventArgs> PasswordUpdated
