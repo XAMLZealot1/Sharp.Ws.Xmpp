@@ -1129,6 +1129,22 @@ namespace Sharp.Xmpp.Client
         }
 
         /// <summary>
+        /// The event raised when a Group is created, updated, deleted but alos when a member is added / remove in a group
+        /// </summary>
+        public event EventHandler<Sharp.Xmpp.Extensions.MessageEventArgs> GroupManagement
+        {
+            add
+            {
+                configuration.GroupManagement += value;
+            }
+            remove
+            {
+                configuration.GroupManagement -= value;
+            }
+        }
+        
+
+        /// <summary>
         /// The event that is raised when the current user password has been updated
         /// </summary>
         public event EventHandler<EventArgs> PasswordUpdated

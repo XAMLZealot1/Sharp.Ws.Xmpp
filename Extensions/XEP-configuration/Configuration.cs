@@ -95,6 +95,11 @@ namespace Sharp.Xmpp.Extensions
         public event EventHandler<MessageEventArgs> ChanneItemManagement;
 
         /// <summary>
+        /// The event raised when a Group is created, updated, deleted but alos when a member is added / remove in a group
+        /// </summary>
+        public event EventHandler<MessageEventArgs> GroupManagement;
+
+        /// <summary>
         /// Invoked when a message stanza has been received.
         /// </summary>
         /// <param name="stanza">The stanza which has been received.</param>
@@ -292,6 +297,11 @@ namespace Sharp.Xmpp.Extensions
                     string type = ""; // Never Type info receive in this case
 
                     ChannelManagement.Raise(this, new ChannelManagementEventArgs(jid, channelId, action, type));
+                }
+                else if (message.Data["group"] != null)
+                {
+                    XmlElement e = message.Data["group"];
+                    GroupManagement.Raise(this, new MessageEventArgs(e.ToXmlString()));
                 }
                 else
                     log.Info("[Input] Message not managed");
