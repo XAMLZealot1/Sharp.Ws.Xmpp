@@ -355,9 +355,14 @@ namespace Sharp.Xmpp.Extensions
                 if (message.Data["event", "http://jabber.org/protocol/pubsub#event"] != null)
                 {
                     XmlElement e = message.Data["event", "http://jabber.org/protocol/pubsub#event"];
-                    if( e["items"] != null)
+                    if(e["items"] != null)
                     {
                         ChanneItemManagement.Raise(this, new MessageEventArgs(e["items"].ToXmlString()));
+                        return true;
+                    }
+                    else if(e["update"] != null)
+                    {
+                        ChanneItemManagement.Raise(this, new MessageEventArgs(e["update"].ToXmlString()));
                         return true;
                     }
                 }
