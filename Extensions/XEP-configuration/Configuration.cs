@@ -203,7 +203,11 @@ namespace Sharp.Xmpp.Extensions
 
                     string lastAvatarUpdateDate = e.GetAttribute("lastAvatarUpdateDate"); // Not empty if avatar has been updated. if deleted "null" string
 
-                    RoomManagement.Raise(this, new RoomManagementEventArgs(roomId, roomJid, userJid, status, privilege, name, topic, lastAvatarUpdateDate));
+                    string avatarAction = "";
+                    if (e["avatar"] != null)
+                        avatarAction = e["avatar"].GetAttribute("action");
+
+                    RoomManagement.Raise(this, new RoomManagementEventArgs(roomId, roomJid, userJid, status, privilege, name, topic, lastAvatarUpdateDate, avatarAction));
                 }
                 // Do we receive message about visualvoicemail
                 else if (message.Data["visualvoicemail"] != null)

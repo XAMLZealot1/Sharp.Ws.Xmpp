@@ -69,6 +69,15 @@ namespace Sharp.Xmpp.Extensions
         }
 
         /// <summary>
+        /// Avatar action (if any: delete / update)
+        /// </summary>
+        public String AvatarAction
+        {
+            get;
+            private set;
+        }
+
+        /// <summary>
         /// Last avatar update date (if any)
         /// </summary>
         public String LastAvatarUpdateDate
@@ -89,7 +98,7 @@ namespace Sharp.Xmpp.Extensions
         /// <param name="topic">the room topic</param>
         /// <param name="lastAvatarUpdateDate">the last avatar romm update date</param>
         /// <summary>
-        public RoomManagementEventArgs(String roomId, String roomJid, String userJid, String status, String privilege, String name, String topic, String lastAvatarUpdateDate)
+        public RoomManagementEventArgs(String roomId, String roomJid, String userJid, String status, String privilege, String name, String topic, String lastAvatarUpdateDate, String avatarAction)
         {
             RoomId = roomId;
             RoomJid = roomJid;
@@ -99,6 +108,7 @@ namespace Sharp.Xmpp.Extensions
             Name = name;
             Topic = topic;
             LastAvatarUpdateDate = lastAvatarUpdateDate;
+            AvatarAction = avatarAction;
         }
     }
 }
