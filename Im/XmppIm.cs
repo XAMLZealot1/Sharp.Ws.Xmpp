@@ -812,12 +812,16 @@ namespace Sharp.Xmpp.Im
         /// <exception cref="ObjectDisposedException">The XmppIm object has been
         /// disposed.</exception>
         public void SetStatus(Availability availability, string message = null,
-            sbyte priority = 0, CultureInfo language = null)
+            sbyte priority = 0, XmlElement elementToAdd = null, CultureInfo language = null)
         {
             AssertValid();
             if (availability == Availability.Offline)
                 throw new ArgumentException("Invalid availability state.");
             List<XmlElement> elems = new List<XmlElement>();
+
+            if (elementToAdd != null)
+                elems.Add(elementToAdd);
+
             if (availability != Availability.Online)
             {
                 var states = new Dictionary<Availability, string>() {

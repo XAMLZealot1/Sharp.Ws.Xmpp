@@ -1577,10 +1577,10 @@ namespace Sharp.Xmpp.Client
         /// <exception cref="ObjectDisposedException">The XmppClient object has been
         /// disposed.</exception>
         public void SetStatus(Availability availability, string message = null,
-            sbyte priority = 0, CultureInfo language = null)
+            sbyte priority = 0, XmlElement elementToAdd = null, CultureInfo language = null)
         {
             AssertValid();
-            im.SetStatus(availability, message, priority, language);
+            im.SetStatus(availability, message, priority, elementToAdd, language);
         }
 
         /// <summary>
