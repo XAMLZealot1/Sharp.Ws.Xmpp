@@ -190,6 +190,11 @@ namespace Sharp.Xmpp.Client
         private CallLog callLog;
 
         /// <summary>
+        /// Provides the Cap extension (Common Alert Protocol)
+        /// </summary>
+        private Cap cap;
+
+        /// <summary>
         /// Provides the CallService extension
         /// </summary>
         private CallService callService;
@@ -825,6 +830,20 @@ namespace Sharp.Xmpp.Client
             }
         }
 
+        /// <summary>
+        /// The event that is raised when an alert message is received
+        /// </summary>
+        public event EventHandler<Sharp.Xmpp.Im.MessageEventArgs> AlertMessage
+        {
+            add
+            {
+                cap.AlertMessage += value;
+            }
+            remove
+            {
+                cap.AlertMessage -= value;
+            }
+        }
 
         /// <summary>
         /// The event that is raised when  call log item(s) has been deleted
@@ -2782,6 +2801,7 @@ namespace Sharp.Xmpp.Client
             configuration = im.LoadExtension<Configuration>();
             conference = im.LoadExtension<Conference>();
             callLog = im.LoadExtension<CallLog>();
+            cap = im.LoadExtension<Cap>();
             msgDeliveryReceipt = im.LoadExtension<MessageDeliveryReceipts>();
             callService = im.LoadExtension<CallService>();
         }

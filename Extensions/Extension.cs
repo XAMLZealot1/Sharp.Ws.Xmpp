@@ -181,6 +181,11 @@
         CallLog,
 
         /// <summary>
+        /// An extension added by Rainbow Hub to manage Cap (Common Alert Protocol)
+        /// </summary>
+        Cap,
+
+        /// <summary>
         /// An extension added by Rainbow Hub to manage call service
         /// </summary>
         CallService,
