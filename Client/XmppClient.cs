@@ -1179,7 +1179,7 @@ namespace Sharp.Xmpp.Client
         }
 
         /// <summary>
-        /// The event that is raised when a message delivery is received
+        /// event raised when an message delivery is received
         /// </summary>
         public event EventHandler<MessageDeliveryReceivedEventArgs> MessageDeliveryReceived
         {
@@ -1190,6 +1190,21 @@ namespace Sharp.Xmpp.Client
             remove
             {
                 msgDeliveryReceipt.MessageDeliveryReceived -= value;
+            }
+        }
+
+        /// <summary>
+        /// event raised when an alert message delivery is received
+        /// </summary>
+        public event EventHandler<MessageDeliveryReceivedEventArgs> AlertMessageDeliveryReceived
+        {
+            add
+            {
+                msgDeliveryReceipt.AlertMessageDeliveryReceived += value;
+            }
+            remove
+            {
+                msgDeliveryReceipt.AlertMessageDeliveryReceived -= value;
             }
         }
 

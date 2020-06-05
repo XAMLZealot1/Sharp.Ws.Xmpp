@@ -18,10 +18,18 @@ namespace Sharp.Xmpp.Extensions
     internal class MessageDeliveryReceipts : XmppExtension, IOutputFilter<Message>, IInputFilter<Message>
     {
         /// <summary>
-		/// The event that is raised when a message delivery is received
+		/// event raised when a message delivery is received
 		/// </summary>
 		public event EventHandler<MessageDeliveryReceivedEventArgs> MessageDeliveryReceived;
 
+        /// <summary>
+		/// event raised when a alert message delivery is received
+		/// </summary>
+		public event EventHandler<MessageDeliveryReceivedEventArgs> AlertMessageDeliveryReceived;
+
+        /// <summary>
+		/// event raised when all message are set read
+		/// </summary>
         public event EventHandler<JidEventArgs> MessagesAllRead;
 
         /// <summary>
@@ -70,7 +78,8 @@ namespace Sharp.Xmpp.Extensions
         /// on to the next handler.</returns>
         public bool Input(Message message)
         {
-            if (message.Type == MessageType.Chat)
+            if ( (message.Type == MessageType.Chat)
+                || (message.Type == MessageType.Headline) )
             {
                 XmlElement received;
                 
@@ -99,9 +108,11 @@ namespace Sharp.Xmpp.Extensions
                         if (!String.IsNullOrEmpty(value))
                             DateTime.TryParse(value, out dateTime);
                     }
-
-                    MessageDeliveryReceived.Raise(this, new MessageDeliveryReceivedEventArgs(messageId, receiptType, dateTime));
-
+                    
+                    if (message.Type == MessageType.Chat)
+                        MessageDeliveryReceived.Raise(this, new MessageDeliveryReceivedEventArgs(messageId, receiptType, dateTime));
+                    else
+                        AlertMessageDeliveryReceived.Raise(this, new MessageDeliveryReceivedEventArgs(messageId, receiptType, dateTime));
                     return true;
                 }
 
