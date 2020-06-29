@@ -63,70 +63,70 @@ namespace Sharp.Xmpp.Extensions
         public bool Input(Im.Message stanza)
         {
             return false;
-            if (MucError.IsError(stanza))
-            {
-                // Unable to send a message... many reasons
-                var error = new MucError(stanza);
-                MucErrorResponse?.Raise(this, new GroupErrorEventArgs(error));
-                return true;
-            }
+            //if (MucError.IsError(stanza))
+            //{
+            //    // Unable to send a message... many reasons
+            //    var error = new MucError(stanza);
+            //    MucErrorResponse?.Raise(this, new GroupErrorEventArgs(error));
+            //    return true;
+            //}
 
-            if (Invite.IsElement(stanza))
-            {
-                // Incoming chat room invite
-                var invite = new Invite(stanza);
-                InviteReceived.Raise(this, new GroupInviteEventArgs(invite));
-                return true;
-            }
+            //if (Invite.IsElement(stanza))
+            //{
+            //    // Incoming chat room invite
+            //    var invite = new Invite(stanza);
+            //    InviteReceived.Raise(this, new GroupInviteEventArgs(invite));
+            //    return true;
+            //}
 
-            if (InviteDeclined.IsElement(stanza))
-            {
-                // Chat room invite was declined
-                var invite = new InviteDeclined(stanza);
-                InviteWasDeclined.Raise(this, new GroupInviteDeclinedEventArgs(invite));
-                return true;
-            }
+            //if (InviteDeclined.IsElement(stanza))
+            //{
+            //    // Chat room invite was declined
+            //    var invite = new InviteDeclined(stanza);
+            //    InviteWasDeclined.Raise(this, new GroupInviteDeclinedEventArgs(invite));
+            //    return true;
+            //}
             
-            if (stanza.Subject != null)
-            {
-                // Subject change
-                SubjectChanged.Raise(this, new Im.MessageEventArgs(stanza.From, stanza));
-                return true;
-            }
+            //if (stanza.Subject != null)
+            //{
+            //    // Subject change
+            //    SubjectChanged.Raise(this, new Im.MessageEventArgs(stanza.From, stanza));
+            //    return true;
+            //}
 
-            // Things that could happen here:
-            // Receive Registration Request
-            // Receive Voice Request
-            XmlElement xElement = stanza.Data["x"];
-            if (xElement != null && xElement.NamespaceURI == MucNs.NsXData)
-            {
-                switch (xElement.FirstChild.Value)
-                {
-                    default:
-                        break;
-                    case MucNs.NsRequest:
-                        // Invoke Voice Request Submission callback/event.
-                        // 8.6 Approving Voice Requests
-                        if (VoiceRequested != null)
-                        {
-                            SubmitForm form = VoiceRequested.Invoke(new RequestForm(xElement));
-                            var message = new Core.Message(stanza.From, im.Jid, form.ToXmlElement());
-                            SendMessage(message);
-                            return true;
-                        }
-                        break;
-                    case MucNs.NsRegister:
-                        // Invoke Registration Request Submission callback/event.
-                        // 9.9 Approving Registration Requests
-                        // I'm unsure on how to implement this.
-                        // return true;
-                        break;                       
-                }
-            }
+            //// Things that could happen here:
+            //// Receive Registration Request
+            //// Receive Voice Request
+            //XmlElement xElement = stanza.Data["x"];
+            //if (xElement != null && xElement.NamespaceURI == MucNs.NsXData)
+            //{
+            //    switch (xElement.FirstChild.Value)
+            //    {
+            //        default:
+            //            break;
+            //        case MucNs.NsRequest:
+            //            // Invoke Voice Request Submission callback/event.
+            //            // 8.6 Approving Voice Requests
+            //            if (VoiceRequested != null)
+            //            {
+            //                SubmitForm form = VoiceRequested.Invoke(new RequestForm(xElement));
+            //                var message = new Core.Message(stanza.From, im.Jid, form.ToXmlElement());
+            //                SendMessage(message);
+            //                return true;
+            //            }
+            //            break;
+            //        case MucNs.NsRegister:
+            //            // Invoke Registration Request Submission callback/event.
+            //            // 9.9 Approving Registration Requests
+            //            // I'm unsure on how to implement this.
+            //            // return true;
+            //            break;                       
+            //    }
+            //}
 
-            // Any message with a body can be managed by the IM extension
-            // Such as Group Chat Message & Group Chat History
-            return false;
+            //// Any message with a body can be managed by the IM extension
+            //// Such as Group Chat Message & Group Chat History
+            //return false;
         }
 
         public bool Input (Im.Presence stanza)
