@@ -15,7 +15,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using System.Xml;
 
-using log4net;
+using NLog;
 
 namespace Sharp.Xmpp.Core
 {
@@ -25,7 +25,7 @@ namespace Sharp.Xmpp.Core
     /// <remarks>For implementation details, refer to RFC 3920.</remarks>
     public class XmppCore : IDisposable
     {
-        private static readonly ILog log = LogConfigurator.GetLogger(typeof(XmppCore));
+        private static readonly Logger log = LogConfigurator.GetLogger(typeof(XmppCore));
 
         private const String BIND_ID = "bind-0";
 
@@ -539,13 +539,13 @@ namespace Sharp.Xmpp.Core
 
         private void WebSocketClient_WebSocketError(object sender, ExceptionEventArgs e)
         {
-            log.DebugFormat("[WebSocketClient_WebSocketError] Exception:[{0}]", e.Exception.ToString());
+            log.Debug("[WebSocketClient_WebSocketError] Exception:[{0}]", e.Exception.ToString());
             RaiseConnectionStatus(false);
         }
 
         private void WebSocketClient_WebSocketClosed(object sender, EventArgs e)
         {
-            log.DebugFormat("[WebSocketClient_WebSocketClosed]");
+            log.Debug("[WebSocketClient_WebSocketClosed]");
             Connected = false;
             RaiseConnectionStatus(false);
             webSocketClient = null;
@@ -553,13 +553,13 @@ namespace Sharp.Xmpp.Core
 
         private void RaiseConnectionStatus(bool connected)
         {
-            log.DebugFormat("[RaiseConnectionStatus] connected:{0}", connected);
+            log.Debug("[RaiseConnectionStatus] connected:{0}", connected);
             ConnectionStatus.Raise(this, new ConnectionStatusEventArgs(connected));
         }
 
         private void WebSocketClient_WebSocketOpened(object sender, EventArgs e)
         {
-            log.DebugFormat("[WebSocketClient_WebSocketOpened]");
+            log.Debug("[WebSocketClient_WebSocketOpened]");
 
             // We are connected.
             Connected = true;
@@ -774,7 +774,7 @@ namespace Sharp.Xmpp.Core
 
             if (useWebSocket)
             {
-                //log.DebugFormat("before to send IqRequest:", request.Id);
+                //log.Debug("before to send IqRequest:", request.Id);
                 webSocketClient.AddExpectedIqId(request.Id);
                 Send(request);
                 Iq response = webSocketClient.DequeueExpectedIqMessage();
@@ -1348,7 +1348,7 @@ namespace Sharp.Xmpp.Core
             while (true)
             {
                 string action = webSocketClient.DequeueActionToPerform();
-                //log.DebugFormat("Action dequeued:{0}", action);
+                //log.Debug("Action dequeued:{0}", action);
 
                 if (ActionToPerform != null)
                 {
@@ -1481,29 +1481,29 @@ namespace Sharp.Xmpp.Core
                                 }
                                 //else
                                 //{
-                                //    log.DebugFormat("Not an expected Iq Message:{0}", iq.Id);
+                                //    log.Debug("Not an expected Iq Message:{0}", iq.Id);
                                 //}
 
 
                                 if (iq.IsRequest)
                                 {
-                                    //log.DebugFormat("Iq is request:{0}", iq.Id);
+                                    //log.Debug("Iq is request:{0}", iq.Id);
                                     stanzaQueue.Add(iq);
                                 }
                                 else
                                 {
-                                    //log.DebugFormat("Handle Id response:{0}", iq.Id);
+                                    //log.Debug("Handle Id response:{0}", iq.Id);
                                     HandleIqResponse(iq);
                                 }
                                 break;
 
                             case "message":
-                                //log.DebugFormat("message received");
+                                //log.Debug("message received");
                                 stanzaQueue.Add(new Message(elem));
                                 break;
 
                             case "presence":
-                                //log.DebugFormat("presence received");
+                                //log.Debug("presence received");
                                 stanzaQueue.Add(new Presence(elem));
                                 break;
                         }
@@ -1511,13 +1511,13 @@ namespace Sharp.Xmpp.Core
                     }
                     catch (Exception)
                     {
-                        log.ErrorFormat("ReadXmlWebSocketMessage - ERROR");
+                        log.Error("ReadXmlWebSocketMessage - ERROR");
                     }
                 }
             }
             catch (Exception e)
             {
-                log.ErrorFormat("ReadXmlWebSocketMessage - SUB_ERROR");
+                log.Error("ReadXmlWebSocketMessage - SUB_ERROR");
 
                 // Shut down the dispatcher task.
                 cancelDispatch.Cancel();
@@ -1573,7 +1573,7 @@ namespace Sharp.Xmpp.Core
             }
             catch (Exception e)
             {
-                log.ErrorFormat("ReadXmlStream - SUB_ERROR");
+                log.Error("ReadXmlStream - SUB_ERROR");
 
                 // Shut down the dispatcher task.
                 cancelDispatch.Cancel();
@@ -1607,7 +1607,7 @@ namespace Sharp.Xmpp.Core
                 try
                 {
                     Stanza stanza = stanzaQueue.Take(cancelDispatch.Token);
-                    //log.DebugFormat("DispatchEvents - message:[{0}]", stanza.ToString());
+                    //log.Debug("DispatchEvents - message:[{0}]", stanza.ToString());
                     if (stanza is Iq)
                         Iq.Raise(this, new IqEventArgs(stanza as Iq));
                     else if (stanza is Message)
@@ -1615,19 +1615,19 @@ namespace Sharp.Xmpp.Core
                     else if (stanza is Presence)
                         Presence.Raise(this, new PresenceEventArgs(stanza as Presence));
                     else
-                        log.ErrorFormat("DispatchEvents - not a valide stanza ....");
+                        log.Error("DispatchEvents - not a valide stanza ....");
                 }
                 catch (OperationCanceledException)
                 {
                     // Quit the task if it's been cancelled.
-                    log.ErrorFormat("DispatchEvents - OperationCanceledException - ERROR");
+                    log.Error("DispatchEvents - OperationCanceledException - ERROR");
                     return;
                 }
                 catch (Exception e)
                 {
                     // FIXME: What should we do if an exception is thrown in one of the
                     // event handlers?
-                    log.ErrorFormat("DispatchEvents - global exception - ERROR");
+                    log.Error("DispatchEvents - global exception - ERROR");
                     System.Diagnostics.Debug.WriteLine("Error in XMPP Core: " + e.StackTrace + e.ToString());
                     //throw e;
                 }

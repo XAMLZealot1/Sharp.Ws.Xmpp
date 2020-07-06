@@ -5,7 +5,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Xml;
 
-using log4net;
+using NLog;
 
 namespace Sharp.Xmpp.Extensions
 {
@@ -14,7 +14,7 @@ namespace Sharp.Xmpp.Extensions
     /// </summary>
     internal class MessageArchiveManagment : XmppExtension, IInputFilter<Sharp.Xmpp.Im.Message>
     {
-        private static readonly ILog log = LogConfigurator.GetLogger(typeof(MessageArchiveManagment));
+        private static readonly Logger log = LogConfigurator.GetLogger(typeof(MessageArchiveManagment));
 
         /// <summary>
         /// A reference to the 'Entity Capabilities' extension instance.
@@ -234,7 +234,7 @@ namespace Sharp.Xmpp.Extensions
                     }
                     catch (Exception)
                     {
-                        log.ErrorFormat("RequestCustomIqAsync - an error occurred ...");
+                        log.Error("RequestCustomIqAsync - an error occurred ...");
                     }
 
                     MessageArchiveManagementResult.Raise(this, new MessageArchiveManagementResultEventArgs(queryid, MamResult.Error, count, first, last));
@@ -359,7 +359,7 @@ namespace Sharp.Xmpp.Extensions
                     }
                     catch (Exception )
                     {
-                        log.ErrorFormat("RequestCustomIqAsync - an error occurred ...");
+                        log.Error("RequestCustomIqAsync - an error occurred ...");
                     }
 
                     MessageArchiveManagementResult.Raise(this, new MessageArchiveManagementResultEventArgs(queryid, MamResult.Error, count, first, last));
@@ -437,7 +437,7 @@ namespace Sharp.Xmpp.Extensions
                     }
                     catch (Exception)
                     {
-                        log.ErrorFormat("RequestCustomIqAsync - an error occurred ...");
+                        log.Error("RequestCustomIqAsync - an error occurred ...");
                     }
 
                 }

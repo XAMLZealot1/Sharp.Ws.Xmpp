@@ -16,7 +16,7 @@ Several extensions have been added to support Rainbow features (https://openrain
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="log4net" Version="2.0.8" />
+    <PackageReference Include="NLog" Version="4.7.2" />
     <PackageReference Include="WebSocket4Net" Version="0.15.2" />
   </ItemGroup>
 

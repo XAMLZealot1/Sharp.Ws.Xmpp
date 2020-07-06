@@ -1,21 +1,29 @@
 using System;
 using System.Collections.Generic;
-using System.Text;
-
-using log4net;
+using NLog;
+using NLog.Config;
+using NLog.Targets;
 
 namespace Sharp.Xmpp
 {
     /// <summary>
-    /// Class used to manage logger objects / information
+    /// Class used to manage logger object / information
+    /// 
+    /// It's mandatory to configure first the logger object before to use the Sharp.Ws.Xmpp library.
+    /// 
+    /// The configuration is based on a valid XML String which provide all information necessary.
+    /// 
+    /// Cf: https://github.com/NLog/NLog/wiki
+    /// 
+    /// GetRepositoryName / SetRepositoryName allow to use a specific name for the log target and use the same one in you own project
+    /// 
     /// </summary>
     public static class LogConfigurator
     {
-        static private Boolean repositoryCreated = false;
-        static private String repositoryName = "RAINBOW_REPOSITORY_LOGGER";
+        static private String repositoryName = "Sharp.Ws.Xmpp";
 
         /// <summary>
-        /// To set the name of the repositoru used for logging purpose
+        /// To set the name of the repository used for logging purpose.
         /// </summary>
         /// <param name="name">Repository's name</param>
         static public void SetRepositoryName(String name)
@@ -24,7 +32,9 @@ namespace Sharp.Xmpp
         }
 
         /// <summary>
-        /// To get the name of the repositoru used for logging purpose
+        /// To get the name of the repository used for logging purpose
+        /// 
+        /// By default this name is "Sharp.Ws.Xmpp"
         /// </summary>
         /// <returns><see cref="String"/>Repository's name</returns>
         static public String GetRepositoryName()
@@ -33,39 +43,55 @@ namespace Sharp.Xmpp
         }
 
         /// <summary>
-        /// To centralize the way to get ILog object in all the SDK
-        /// Useful too if you want to use the same repository to log information from your own application
+        /// Configure log configuration.
+        /// 
+        /// This XML String must be a valid configuration like the one you could define in NLog.config - Cf: https://github.com/NLog/NLog/wiki/Tutorial
+        /// 
+        /// This configuration must define at least on **target** with a name equals to the repository name specify using "SetRepositoryName" method
         /// </summary>
-        static public log4net.Repository.ILoggerRepository GetRepository()
+        /// <param name="xmlString">XML String use to configure logs</param>
+        /// <returns><see cref="Boolean"/> - True if the configuration has been well taken into account</returns>
+        static public Boolean Configure(String xmlString)
         {
-            log4net.Repository.ILoggerRepository repository = null;
-
-            // Try to get our repository
             try
             {
-                repository = log4net.LogManager.GetRepository(repositoryName);
-            }
-            catch { }
+                XmlLoggingConfiguration config = XmlLoggingConfiguration.CreateFromXmlString(xmlString);
+                if (config.InitializeSucceeded == true)
+                {
+                    // Set configuration
+                    NLog.LogManager.Configuration = config;
 
-            // If not found, we need to create it
-            if (repository == null)
-            {
-                repository = log4net.LogManager.CreateRepository(repositoryName);
-                repositoryCreated = true;
+                    // Ensure to have on Tager with a valid configuration AND wiht a name equals to "repositoryName"
+                    IReadOnlyList<Target> targets = NLog.LogManager.Configuration.ConfiguredNamedTargets;
+                    if ((targets != null) && (targets.Count > 0))
+                    {
+                        foreach (Target target in targets)
+                        {
+                            if (target.Name == repositoryName)
+                                return true;
+                        }
+                    }
+                }
             }
-            return repository;
+            catch
+            {
+                // Nothing to do more ...   
+            }
+
+            return false;
         }
 
         /// <summary>
-        /// To centralize the way to get ILog object in all the SDK
-        /// Useful too if you want to use the same repository to log information from your own application
+        /// Get Logger object (based on the class name type specified)
+        /// 
+        /// Used this only after configured this obcjet using Configure method
         /// </summary>
-        static public ILog GetLogger(Type className)
+        /// <param name="className">Type declaration</param>
+        /// <returns><see cref="Logger"/> object</returns>
+        static public Logger GetLogger(Type className)
         {
-            if (!repositoryCreated)
-                GetRepository();
-
-            return LogManager.GetLogger(repositoryName, className);
+            Logger log = NLog.LogManager.GetLogger(repositoryName);
+            return log;
         }
     }
 }

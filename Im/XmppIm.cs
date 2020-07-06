@@ -12,7 +12,7 @@ using System.Net.Sockets;
 using System.Security.Authentication;
 using System.Xml;
 
-using log4net;
+using NLog;
 
 namespace Sharp.Xmpp.Im
 {
@@ -22,7 +22,7 @@ namespace Sharp.Xmpp.Im
     /// <remarks>For implementation details, refer to RFC 3921.</remarks>
     public class XmppIm : IDisposable
     {
-        private static readonly ILog log = LogConfigurator.GetLogger(typeof(XmppIm));
+        private static readonly Logger log = LogConfigurator.GetLogger(typeof(XmppIm));
 
         /// <summary>
         /// Provides access to the core facilities of XMPP.
@@ -495,7 +495,7 @@ namespace Sharp.Xmpp.Im
 
         private void Core_ConnectionStatus(object sender, ConnectionStatusEventArgs e)
         {
-            log.DebugFormat("[Core_ConnectionStatus] - connected:{0}", e.Connected);
+            log.Debug("[Core_ConnectionStatus] - connected:{0}", e.Connected);
             RaiseConnectionStatus(e.Connected);
         }
 
@@ -543,7 +543,7 @@ namespace Sharp.Xmpp.Im
                     break;
 
                 default:
-                    log.DebugFormat("Unknown action: {0}", action);
+                    log.Debug("Unknown action: {0}", action);
                     break;
             }
         }
@@ -1722,7 +1722,7 @@ namespace Sharp.Xmpp.Im
                 }
                 catch (Exception ePresence)
                 {
-                    log.ErrorFormat("[SetupEventHandlers] cannot create new Presence object:\r\nStanza:\r\n{0}\r\nException:\r\n{1}", e.Stanza.ToString(), Util.SerializeException(ePresence));
+                    log.Error("[SetupEventHandlers] cannot create new Presence object:\r\nStanza:\r\n{0}\r\nException:\r\n{1}", e.Stanza.ToString(), Util.SerializeException(ePresence));
                 }
                 
             };
@@ -1735,12 +1735,12 @@ namespace Sharp.Xmpp.Im
                 }
                 catch (Exception eMessage)
                 {
-                    log.ErrorFormat("[SetupEventHandlers] cannot create new Message object:\r\nStanza:\r\n{0}\r\nException:\r\n{1}", e.Stanza.ToString(), Util.SerializeException(eMessage));
+                    log.Error("[SetupEventHandlers] cannot create new Message object:\r\nStanza:\r\n{0}\r\nException:\r\n{1}", e.Stanza.ToString(), Util.SerializeException(eMessage));
                 }
             };
             core.Error += (sender, e) =>
             {
-                log.ErrorFormat("[SetupEventHandlers] error fired\r\nException[{0}]", Util.SerializeException(e.Exception));
+                log.Error("[SetupEventHandlers] error fired\r\nException[{0}]", Util.SerializeException(e.Exception));
                 Error.Raise(sender, new ErrorEventArgs(e.Exception));
             };
         }
@@ -1780,7 +1780,7 @@ namespace Sharp.Xmpp.Im
                     // Swallow IQ stanza?
                     if (filter.Input(iq))
                     {
-                        log.DebugFormat("[OnIq] filter used by extension [{0}]", ext.Xep.ToString());
+                        log.Debug("[OnIq] filter used by extension [{0}]", ext.Xep.ToString());
                         return;
                     }
                 }
@@ -1816,7 +1816,7 @@ namespace Sharp.Xmpp.Im
                     // Swallow presence stanza?
                     if (filter.Input(presence))
                     {
-                        log.DebugFormat("[OnPresence] filter used by extension [{0}]", ext.Xep.ToString());
+                        log.Debug("[OnPresence] filter used by extension [{0}]", ext.Xep.ToString());
                         return;
                     }
                 }
@@ -1842,7 +1842,7 @@ namespace Sharp.Xmpp.Im
                     break;
 
                 default:
-                    log.WarnFormat("[OnPresence] Presence message not managed: [{0}]", presence.ToString());
+                    log.Warn("[OnPresence] Presence message not managed: [{0}]", presence.ToString());
                     break;
             }
         }
@@ -1862,7 +1862,7 @@ namespace Sharp.Xmpp.Im
                     // Swallow message?
                     if (filter.Input(message))
                     {
-                        log.DebugFormat("[OnMessage] filter used by extension [{0}]", ext.Xep.ToString());
+                        log.Debug("[OnMessage] filter used by extension [{0}]", ext.Xep.ToString());
                         return;
                     }
                 }
@@ -2150,7 +2150,7 @@ namespace Sharp.Xmpp.Im
 
         private void RaiseConnectionStatus(bool connected)
         {
-            log.DebugFormat("[RaiseConnectionStatus] connected:{0}", connected);
+            log.Debug("[RaiseConnectionStatus] connected:{0}", connected);
             EventHandler<ConnectionStatusEventArgs> h = this.ConnectionStatus;
             if (h != null)
             {

@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using System.Text;
 
-using log4net;
+using NLog;
 using Sharp.Xmpp.Im;
 
 namespace Sharp.Xmpp.Extensions
@@ -12,7 +12,7 @@ namespace Sharp.Xmpp.Extensions
     /// </summary>
     internal class Cap : XmppExtension, IInputFilter<Sharp.Xmpp.Im.Message>
     {
-        private static readonly ILog log = LogConfigurator.GetLogger(typeof(Cap));
+        private static readonly Logger log = LogConfigurator.GetLogger(typeof(Cap));
 
         /// <summary>
         /// An enumerable collection of XMPP namespaces the extension implements.
@@ -57,7 +57,7 @@ namespace Sharp.Xmpp.Extensions
                 if (message.Data["alert", "http://www.incident.com/cap/1.0"] != null)
                 {
                     //TO DO
-                    log.DebugFormat("[Input] Alert message received");
+                    log.Debug("[Input] Alert message received");
                     AlertMessage.Raise(this, new Sharp.Xmpp.Im.MessageEventArgs(message.From, message));
                     return true;
                 }

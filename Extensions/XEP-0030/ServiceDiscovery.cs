@@ -6,7 +6,7 @@ using System.Linq;
 using System.Reflection;
 using System.Xml;
 
-using log4net;
+using NLog;
 
 namespace Sharp.Xmpp.Extensions
 {
@@ -15,7 +15,7 @@ namespace Sharp.Xmpp.Extensions
     /// </summary>
     internal class ServiceDiscovery : XmppExtension, IInputFilter<Iq>
     {
-        private static readonly ILog log = LogConfigurator.GetLogger(typeof(ServiceDiscovery));
+        private static readonly Logger log = LogConfigurator.GetLogger(typeof(ServiceDiscovery));
 
         /// <summary>
         /// A dictionary for caching supported services of XMPP entities.
@@ -271,7 +271,7 @@ namespace Sharp.Xmpp.Extensions
                 if (ns.IsSupersetOf(ext.Namespaces))
                 {
                     feats.Add(ext.Xep);
-                    log.DebugFormat("Extension used:{0}", ext.Xep.ToString());
+                    log.Debug("Extension used:{0}", ext.Xep.ToString());
                 }
             }
 

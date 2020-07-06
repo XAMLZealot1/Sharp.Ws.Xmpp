@@ -4,7 +4,7 @@ using System;
 using System.Collections.Generic;
 using System.Xml;
 
-using log4net;
+using NLog;
 
 
 namespace Sharp.Xmpp.Extensions
@@ -14,7 +14,7 @@ namespace Sharp.Xmpp.Extensions
     /// </summary>
     internal class CallLog : XmppExtension, IInputFilter<Sharp.Xmpp.Im.Message>
     {
-        private static readonly ILog log = LogConfigurator.GetLogger(typeof(CallLog));
+        private static readonly Logger log = LogConfigurator.GetLogger(typeof(CallLog));
 
         /// <summary>
         /// An enumerable collection of XMPP namespaces the extension implements.
@@ -77,7 +77,7 @@ namespace Sharp.Xmpp.Extensions
             if (message.Type == MessageType.Webrtc)
             {
                 //TO DO
-                log.WarnFormat("[Input] Input in Webrtc context received - To manage ...");
+                log.Warn("[Input] Input in Webrtc context received - To manage ...");
                 return true;
             }
             else if ( (message.Type == MessageType.Chat)
@@ -86,7 +86,7 @@ namespace Sharp.Xmpp.Extensions
             {
                 String peerId = message.Data["deleted_call_log"].GetAttribute("peer");
                 String callId = message.Data["deleted_call_log"].GetAttribute("call_id");
-                log.DebugFormat("CallLogItemsDeleted raised - peer:[{0}] - callId:[{1}]", peerId, callId);
+                log.Debug("CallLogItemsDeleted raised - peer:[{0}] - callId:[{1}]", peerId, callId);
                 CallLogItemsDeleted.Raise(this, new CallLogItemDeletedEventArgs(peerId, callId));
                 return true;
             }
@@ -94,7 +94,7 @@ namespace Sharp.Xmpp.Extensions
                     && (message.Data["read"].NamespaceURI == "urn:xmpp:telephony:call_log:receipts"))
             {
                 String id = message.Data["read"].GetAttribute("call_id");
-                log.DebugFormat("CallLogRead raised - id:[{0}]", id);
+                log.Debug("CallLogRead raised - id:[{0}]", id);
                 CallLogRead.Raise(this, new CallLogReadEventArgs(id));
                 return true;
             }
@@ -105,7 +105,7 @@ namespace Sharp.Xmpp.Extensions
                 if (evt != null)
                     CallLogItemRetrieved.Raise(this, evt);
                 else
-                    log.WarnFormat("Cannot create CallLogItemEventArgs object ... [using jabber:iq:telephony:call_log namespace]");
+                    log.Warn("Cannot create CallLogItemEventArgs object ... [using jabber:iq:telephony:call_log namespace]");
 
                 return true;
             }
@@ -117,7 +117,7 @@ namespace Sharp.Xmpp.Extensions
                 if (evt != null)
                     CallLogItemAdded.Raise(this, evt);
                 else
-                    log.WarnFormat("Cannot create CallLogItemEventArgs object ... [using jabber:iq:notification:telephony:call_log]");
+                    log.Warn("Cannot create CallLogItemEventArgs object ... [using jabber:iq:notification:telephony:call_log]");
 
                 return true;
             }
@@ -243,7 +243,7 @@ namespace Sharp.Xmpp.Extensions
                             if (e["set"]["last"] != null)
                                 last = e["set"]["last"].InnerText;
 
-                            //log.DebugFormat("[Input] call log result received - queryid:[{0}] - complete:[{1}] - count:[{2}] - first:[{3}] - last:[{4}]"
+                            //log.Debug("[Input] call log result received - queryid:[{0}] - complete:[{1}] - count:[{2}] - first:[{3}] - last:[{4}]"
                             //                , queryid, complete, count, first, last);
                             CallLogResult.Raise(this, new CallLogResultEventArgs(queryid, complete, count, first, last));
                             return;
@@ -251,7 +251,7 @@ namespace Sharp.Xmpp.Extensions
                     }
                     catch (Exception)
                     {
-                        log.ErrorFormat("RequestCustomIqAsync - an error occurred ...");
+                        log.Error("RequestCustomIqAsync - an error occurred ...");
                     }
 
                     CallLogResult.Raise(this, new CallLogResultEventArgs(queryid, Sharp.Xmpp.Extensions.CallLogResult.Error, count, first, last));
