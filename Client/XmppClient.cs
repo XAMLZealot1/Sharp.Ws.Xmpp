@@ -199,29 +199,16 @@ namespace Sharp.Xmpp.Client
         /// </summary>
         private CallService callService;
 
-        public IPEndPoint IPEndPoint
+        public Tuple<String, String, String> WebProxyInfo
         {
             get
             {
-                return im.IPEndPoint;
+                return im.WebProxyInfo;
             }
 
             set
             {
-                im.IPEndPoint = value;
-            }
-        }
-
-        public Uri Proxy
-        {
-            get
-            {
-                return im.Proxy;
-            }
-
-            set
-            {
-                im.Proxy = value;
+                im.WebProxyInfo = value;
             }
         }
 

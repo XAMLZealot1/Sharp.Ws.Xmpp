@@ -7,20 +7,22 @@ using System.Text;
 using System.Threading.Tasks;
 using System.Xml;
 
-using WebSocket4Net;
+using WebSocketSharp;
 
 using NLog;
-using SuperSocket.ClientEngine.Proxy;
+using System.Security.Authentication;
 
 namespace Sharp.Xmpp.Core
 {
     internal class WebSocket
     {
-        private static readonly Logger log = LogConfigurator.GetLogger(typeof(WebSocket));
+        private static readonly NLog.Logger log = LogConfigurator.GetLogger(typeof(WebSocket));
 
         public event EventHandler WebSocketOpened;
         public event EventHandler WebSocketClosed;
         public event EventHandler<ExceptionEventArgs> WebSocketError;
+
+        private bool webSocketOpened = false;
 
         private bool rootElement;
         private string uri;
@@ -34,10 +36,9 @@ namespace Sharp.Xmpp.Core
         private BlockingCollection<Iq> iqMessagesReceived;
         private HashSet<String> iqIdList;
 
-        private IPEndPoint ipEndPoint = null;
-        private Uri proxy = null;
+        private Tuple<String, String, String> webProxyInfo = null;
 
-        private WebSocket4Net.WebSocket webSocket4NetClient = null;
+        private WebSocketSharp.WebSocket webSocketSharp = null;
 
         public CultureInfo Language
         {
@@ -45,14 +46,13 @@ namespace Sharp.Xmpp.Core
             private set;
         }
 
-        public WebSocket(String uri, IPEndPoint ipEndPoint, Uri proxy)
+        public WebSocket(String uri, Tuple<String, String, String> webProxyInfo)
         {
             log.Debug("Create Web socket");
             this.uri = uri;
             rootElement = false;
 
-            this.ipEndPoint = ipEndPoint;
-            this.proxy = proxy;
+            this.webProxyInfo = webProxyInfo;
 
             sb = new StringBuilder();
 
@@ -70,61 +70,78 @@ namespace Sharp.Xmpp.Core
 
         private void CreateAndManageWebSocket()
         {
-            if (webSocket4NetClient == null)
+            if (webSocketSharp == null)
             {
-                webSocket4NetClient = new WebSocket4Net.WebSocket(uri);
+                webSocketSharp = new WebSocketSharp.WebSocket(uri);
 
-                // Set Ip End point
-                log.Debug("[CreateAndManageWebSocket] IpEndPoint:[{0}] - Proxy:[{1}]", ipEndPoint?.ToString(), proxy?.ToString());
+                webSocketSharp.SslConfiguration.EnabledSslProtocols = SslProtocols.Default | SslProtocols.Tls12 ;
+                webSocketSharp.SslConfiguration.ServerCertificateValidationCallback =  (sender, certificate, chain, sslPolicyErrors) => {
+                    return true; // If the server certificate is valid.
+                };
 
-                HttpConnectProxy proxyWS = null;
-                if (proxy != null)
-                    proxyWS = new HttpConnectProxy(new IPEndPoint(IPAddress.Parse(proxy.Host), proxy.Port));
+                webSocketSharp.EmitOnPing = true;
+                webSocketSharp.EnableRedirection = true;
+                webSocketSharp.WaitTime = TimeSpan.FromSeconds(2);
 
-                webSocket4NetClient.Proxy = (SuperSocket.ClientEngine.IProxyConnector)proxyWS;
-                webSocket4NetClient.LocalEndPoint = ipEndPoint;
-
-                if (uri.ToLower().StartsWith("wss"))
-                    webSocket4NetClient.Security.EnabledSslProtocols = System.Security.Authentication.SslProtocols.Tls12;
-
-                webSocket4NetClient.EnableAutoSendPing = true;
-                webSocket4NetClient.AutoSendPingInterval = 1; // in seconds
-
-                webSocket4NetClient.Opened += new EventHandler(WebSocket4NetClient_Opened);
-                webSocket4NetClient.Closed += new EventHandler(WebSocket4NetClient_Closed);
-                webSocket4NetClient.Error += new EventHandler<SuperSocket.ClientEngine.ErrorEventArgs>(WebSocket4NetClient_Error);
-                webSocket4NetClient.MessageReceived += new EventHandler<MessageReceivedEventArgs>(WebSocket4NetClient_MessageReceived);
-                webSocket4NetClient.DataReceived += new EventHandler<WebSocket4Net.DataReceivedEventArgs>(WebSocket4NetClient_DataReceived);
+                webSocketSharp.OnOpen += WebSocketSharp_Opened;
+                webSocketSharp.OnClose += WebSocketSharp_OnClose;
+                webSocketSharp.OnError += WebSocketSharp_OnError;
+                webSocketSharp.OnMessage += WebSocketSharp_OnMessage;
             }
-            webSocket4NetClient.Open();
+
+            // Set proxy info
+            if (webProxyInfo == null)
+                webSocketSharp.SetProxy(null, null, null);
+            else
+            {
+                // Set Ip End point
+                log.Debug("[CreateAndManageWebSocket] Web Proxy Info:[{0}]", webProxyInfo?.Item1);
+                webSocketSharp.SetProxy(webProxyInfo.Item1, webProxyInfo.Item2, webProxyInfo.Item3);
+            }
+
+            webSocketSharp.Connect();
 
             string message;
 
-            while(true)
+            while (true)
             {
-                if (webSocket4NetClient != null)
+                if (webSocketSharp != null)
                 {
-                    switch (webSocket4NetClient.State)
+                    if(!webSocketSharp.IsAlive)
                     {
-                        case WebSocketState.Connecting:
-                        case WebSocketState.Open:
-                            if (messagesToSend.TryTake(out message, 100))
+                        if (webSocketOpened)
+                        {
+                            webSocketOpened = false;
+                            log.Debug("[webSocketSharp] Web Socket is not alive ...");
+                            WebSocketError?.Invoke(this, new ExceptionEventArgs(new Exception("Web Socket is not alive")));
+                            return;
+                        }
+                    }
+
+                    switch (webSocketSharp.ReadyState)
+                    {
+                        case WebSocketSharp.WebSocketState.Connecting:
+                        case WebSocketSharp.WebSocketState.Open:
+                            if (messagesToSend.TryTake(out message, 200))
                             {
-                                log.Debug("[Message_Send]{0}", message);
-                                if (webSocket4NetClient != null)
-                                    webSocket4NetClient.Send(message);
+                                log.Debug("[Message_Send]: {0}", message);
+                                if (webSocketSharp != null)
+                                    webSocketSharp.SendAsync(message, null);
+                            }
+                            else
+                            {
+                                //log.Debug("[Message_Send] TryTake failed ...");
                             }
                             break;
 
-                        case WebSocketState.Closed:
-                        case WebSocketState.Closing:
-                        case WebSocketState.None:
+                        case WebSocketSharp.WebSocketState.Closed:
+                        case WebSocketSharp.WebSocketState.Closing:
                             return;
                     }
                 }
                 else
                     return;
-            }                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                   
+            }
         }
 
         #region Iq stuff
@@ -233,25 +250,20 @@ namespace Sharp.Xmpp.Core
 
         public void Dispose()
         {
-            if (webSocket4NetClient != null)
-            {
-                webSocket4NetClient.Dispose();
-                webSocket4NetClient = null;
-            }
+            if (webSocketSharp != null)
+                webSocketSharp = null;
         }
 
         public void Close()
         {
-            if (webSocket4NetClient != null)
-                webSocket4NetClient.Close();
-
-            webSocket4NetClient.Dispose();
+            if (webSocketSharp != null)
+                webSocketSharp.Close();
         }
 
         private bool IsConnected()
         {
-            if (webSocket4NetClient != null)
-                return webSocket4NetClient.State == WebSocketState.Open;
+            if (webSocketSharp != null)
+                return webSocketSharp.ReadyState == WebSocketSharp.WebSocketState.Open;
             return false;
         }
 
@@ -260,50 +272,10 @@ namespace Sharp.Xmpp.Core
             QueueMessageToSend(xml);
         }
 
-        private void WebSocket4NetClient_DataReceived(object sender, WebSocket4Net.DataReceivedEventArgs e)
-        {
-            log.Debug("[WebSocket4NetClient_DataReceived] Not handled yet ...");
-        }
-
-        private void WebSocket4NetClient_MessageReceived(object sender, MessageReceivedEventArgs e)
-        {
-            lock (writeLock)
-            {
-                string xmlMessage;
-
-                sb.Append(e.Message);
-
-                log.Debug("[Message_Received]: {0}", e.Message);
-
-                XmlDocument xmlDocument = new XmlDocument();
-                try
-                {
-                    xmlMessage = sb.ToString();
-
-                    // Check if we have a valid XML message - if not an exception is raised
-                    xmlDocument.LoadXml(sb.ToString());
-
-                    //Clear string builder
-                    sb.Clear();
-
-                    if (rootElement)
-                    {
-                        // Add XML message in the queue
-                        QueueMessageReceived(xmlMessage);
-                    }
-                    else
-                        ReadRootElement(xmlDocument);
-                }
-                catch (Exception)
-                {
-                    log.Error("WebSocket4NetClient_MessageReceived - ERROR");
-                }
-            }
-        }
-
-        private void WebSocket4NetClient_Opened(object sender, EventArgs e)
+        private void WebSocketSharp_Opened(object sender, EventArgs e)
         {
             log.Debug("Web socket opened");
+            webSocketOpened = true;
             EventHandler h = this.WebSocketOpened;
 
             if (h != null)
@@ -314,16 +286,92 @@ namespace Sharp.Xmpp.Core
                 }
                 catch (Exception)
                 {
-                    log.Error("WebSocket4NetClient_Opened - ERROR");
+                    log.Error("WebSocketSharp_Opened - ERROR");
                 }
             }
         }
 
-        private void WebSocket4NetClient_Closed(object sender, EventArgs e)
+        private void WebSocketSharp_OnMessage(object sender, WebSocketSharp.MessageEventArgs e)
         {
-            log.Debug("[WebSocket4NetClient_Closed]");
+            lock (writeLock)
+            {
+                if (e.IsText)
+                {
+                    string xmlMessage;
+                    sb.Append(e.Data);
+
+                    log.Debug("[Message_Received]: {0}", e.Data);
+
+                    XmlDocument xmlDocument = new XmlDocument();
+                    try
+                    {
+                        xmlMessage = sb.ToString();
+
+                        // Check if we have a valid XML message - if not an exception is raised
+                        xmlDocument.LoadXml(sb.ToString());
+
+                        //Clear string builder
+                        sb.Clear();
+
+                        if (rootElement)
+                        {
+                            // Add XML message in the queue
+                            QueueMessageReceived(xmlMessage);
+                        }
+                        else
+                            ReadRootElement(xmlDocument);
+                    }
+                    catch (Exception)
+                    {
+                        log.Error("WebSocket4NetClient_MessageReceived - ERROR");
+                    }
+                }
+                else if (e.IsPing)
+                {
+                    log.Debug("[Message_Received]: Ping received");
+                }
+                else 
+                {
+                    log.Debug("[Message_Received]: message type not managed");
+                }
+            }
+        }
+
+        private void WebSocketSharp_OnError(object sender, WebSocketSharp.ErrorEventArgs e)
+        {
+            if (webSocketOpened)
+            {
+                webSocketOpened = false;
+
+                if (!String.IsNullOrEmpty(e.Message))
+                    log.Debug("[WebSocketSharp_OnError] Message:[{0}]", e.Message);
+
+                if (e.Exception != null)
+                    log.Debug("[WebSocketSharp_OnError] Exception:[{0}]", Util.SerializeException(e.Exception));
+
+                EventHandler<ExceptionEventArgs> h = this.WebSocketError;
+
+                if (h != null)
+                {
+                    try
+                    {
+                        h(this, new ExceptionEventArgs(e.Exception));
+                    }
+                    catch (Exception)
+                    {
+                        log.Error("WebSocket4NetClient_Error - ERROR");
+                    }
+                }
+            }
+        }
+
+        private void WebSocketSharp_OnClose(object sender, CloseEventArgs e)
+        {
+            webSocketOpened = false;
+            log.Debug("[WebSocketSharp_OnClose]");
             RaiseWebSocketClosed();
         }
+
 
         private void RaiseWebSocketClosed()
         {
@@ -339,25 +387,6 @@ namespace Sharp.Xmpp.Core
                 catch (Exception)
                 {
                     log.Error("RaiseWebSocketClosed - ERROR");
-                }
-            }
-        }
-
-        private void WebSocket4NetClient_Error(object sender, SuperSocket.ClientEngine.ErrorEventArgs e)
-        {
-            //TODO: enhance error log
-            log.Debug("[WebSocket4NetClient_Error] exception message:", e.Exception.Message);
-            EventHandler <ExceptionEventArgs> h = this.WebSocketError;
-            
-            if (h != null)
-            {
-                try
-                {
-                    h(this, new ExceptionEventArgs(e.Exception));
-                }
-                catch (Exception)
-                {
-                    log.Error("WebSocket4NetClient_Error - ERROR");
                 }
             }
         }

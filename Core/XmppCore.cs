@@ -62,14 +62,9 @@ namespace Sharp.Xmpp.Core
         private bool disposed;
 
         /// <summary>
-        /// The Ip End Point use for the connexion
-        /// </summary>
-        public IPEndPoint IPEndPoint = null;
-
-        /// <summary>
         /// The URI to use for the proxy
         /// </summary>
-        public Uri Proxy = null;
+        public Tuple<String, String, String> WebProxyInfo = null;
 
         /// <summary>
         /// True if web socket is used
@@ -506,7 +501,7 @@ namespace Sharp.Xmpp.Core
                     if(String.IsNullOrEmpty(WebSocketUri))
                         throw new XmppException("URI not provided for WebSocket connection");
 
-                    webSocketClient = new WebSocket(WebSocketUri, IPEndPoint, Proxy);
+                    webSocketClient = new WebSocket(WebSocketUri, WebProxyInfo);
                     webSocketClient.WebSocketOpened += new EventHandler(WebSocketClient_WebSocketOpened);
                     webSocketClient.WebSocketClosed += new EventHandler(WebSocketClient_WebSocketClosed);
                     webSocketClient.WebSocketError += new EventHandler<ExceptionEventArgs>(WebSocketClient_WebSocketError);
@@ -515,7 +510,15 @@ namespace Sharp.Xmpp.Core
                 }
                 else
                 {
-                    tcpClient = new TcpClient(IPEndPoint);
+                    Uri proxyUri = null;
+                    if (WebProxyInfo != null)
+                        proxyUri = new Uri(WebProxyInfo.Item1);
+
+                    if(proxyUri != null)
+                        tcpClient = new TcpClient(proxyUri.DnsSafeHost, proxyUri.Port);
+                    else
+                        tcpClient = new TcpClient();
+
                     tcpClient.Connect(Address, Port);
                     stream = tcpClient.GetStream();
                     

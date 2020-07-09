@@ -39,29 +39,16 @@ namespace Sharp.Xmpp.Im
         /// </summary>
         private ISet<XmppExtension> extensions = new HashSet<XmppExtension>();
 
-        public IPEndPoint IPEndPoint
+        public Tuple<String, String, String> WebProxyInfo
         {
             get
             {
-                return core.IPEndPoint;
+                return core.WebProxyInfo;
             }
 
             set
             {
-                core.IPEndPoint = value;
-            }
-        }
-
-        public Uri Proxy
-        {
-            get
-            {
-                return core.Proxy;
-            }
-
-            set
-            {
-                core.Proxy = value;
+                core.WebProxyInfo = value;
             }
         }
 
