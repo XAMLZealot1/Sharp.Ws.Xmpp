@@ -122,11 +122,11 @@ namespace Sharp.Xmpp.Core
                     {
                         case WebSocketSharp.WebSocketState.Connecting:
                         case WebSocketSharp.WebSocketState.Open:
-                            if (messagesToSend.TryTake(out message, 200))
+                            if (messagesToSend.TryTake(out message, 50))
                             {
                                 log.Debug("[Message_Send]: {0}", message);
                                 if (webSocketSharp != null)
-                                    webSocketSharp.SendAsync(message, null);
+                                    webSocketSharp.Send(message);
                             }
                             else
                             {
