@@ -511,7 +511,7 @@ namespace Sharp.Xmpp.Core
                 else
                 {
                     Uri proxyUri = null;
-                    if (WebProxyInfo != null)
+                    if ( (WebProxyInfo != null) && (!String.IsNullOrEmpty(WebProxyInfo.Item1)) )
                         proxyUri = new Uri(WebProxyInfo.Item1);
 
                     if(proxyUri != null)
