@@ -144,10 +144,14 @@ namespace Sharp.Xmpp.Extensions
                 String media = "";
                 String timeStamp = "";
                 String type = "";
+                String service = "";
                 bool read = false;
 
                 id = e.GetAttribute("id");
                 type = callLog.GetAttribute("type");
+                service = callLog.GetAttribute("service");
+                if (service == "conference")
+                    type = service;
 
                 if (callLog["call_id"] != null)
                     callId = callLog["call_id"].InnerText;
