@@ -528,6 +528,7 @@ namespace Sharp.Xmpp.Core
 
                     // We are connected.
                     Connected = true;
+                    RaiseConnectionStatus(true);
 
                     // Set up the listener and dispatcher tasks.
                     Task.Factory.StartNew(ReadXmlStream, TaskCreationOptions.LongRunning);
@@ -806,6 +807,7 @@ namespace Sharp.Xmpp.Core
                     if (request.To.Domain == Jid.Domain && (request.To.Node == null || request.To.Node == "") && (ping != null && ping.NamespaceURI == "urn:xmpp:ping"))
                     {
                         Connected = false;
+                        RaiseConnectionStatus(false);
                         var e = new XmppDisconnectionException("Timeout Disconnection happened at IqRequest");
                         if (!disposed)
                             Error.Raise(this, new ErrorEventArgs(e));
@@ -1298,6 +1300,7 @@ namespace Sharp.Xmpp.Core
                 catch (IOException e)
                 {
                     Connected = false;
+                    RaiseConnectionStatus(false);
                     throw new XmppDisconnectionException(e.Message, e);
                 }
                 //FIXME
@@ -1342,6 +1345,7 @@ namespace Sharp.Xmpp.Core
             catch (XmppDisconnectionException e)
             {
                 Connected = false;
+                RaiseConnectionStatus(false);
                 throw e;
             }
         }
@@ -1532,6 +1536,7 @@ namespace Sharp.Xmpp.Core
                 if ((e is IOException) || (e is XmppDisconnectionException))
                 {
                     Connected = false;
+                    RaiseConnectionStatus(false);
                     var ex = new XmppDisconnectionException(e.ToString());
                     e = ex;
                 }
@@ -1553,6 +1558,7 @@ namespace Sharp.Xmpp.Core
                 while (true)
                 {
                     XmlElement elem = parser.NextElement("iq", "message", "presence");
+                    log.Debug("[ReadXmlStream] elem:[{0}]", elem.ToXmlString());
                     // Parse element and dispatch.
                     switch (elem.Name)
                     {
@@ -1588,6 +1594,7 @@ namespace Sharp.Xmpp.Core
                 if ((e is IOException) || (e is XmppDisconnectionException))
                 {
                     Connected = false;
+                    RaiseConnectionStatus(false);
                     var ex = new XmppDisconnectionException(e.ToString());
                     e = ex;
                 }

@@ -450,14 +450,16 @@ namespace Sharp.Xmpp.Im
             }
             try
             {
-                core.Connect(resource);
+                core.ConnectionStatus += Core_ConnectionStatus;
+
                 if (UseWebSocket)
                 {
                     core.ActionToPerform += Core_ActionToPerform;
-                    core.ConnectionStatus += Core_ConnectionStatus;
+                    core.Connect(resource);
                 }
                 else
                 {
+                    core.Connect(resource);
 
                     // If no username has been providd, don't establish a session.
                     if (Username == null)
