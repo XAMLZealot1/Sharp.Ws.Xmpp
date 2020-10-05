@@ -153,10 +153,11 @@ namespace Sharp.Xmpp.Extensions
 					var itemRole = item.GetAttribute ("role");
 					if (!String.IsNullOrWhiteSpace (itemJid) && !String.IsNullOrWhiteSpace (itemAffiliation) &&
 							!String.IsNullOrWhiteSpace (itemRole)) {
-						person = new Occupant (
-						   item.GetAttribute ("jid"),
-						   item.GetAttribute ("affiliation"),
-						   item.GetAttribute ("role"));
+                        person = new Occupant(
+                           stanza.From,
+                           item.GetAttribute("affiliation"),
+                           item.GetAttribute("role"));
+                        person.RealJid = item.GetAttribute("jid");
 					}
 				}
 
@@ -169,7 +170,6 @@ namespace Sharp.Xmpp.Extensions
 						statusCodeList.Add (code);
 					}
 				}
-
 
 				if (person != null) {
 					PrescenceChanged.Raise (this, new GroupPresenceEventArgs (person, statusCodeList));
