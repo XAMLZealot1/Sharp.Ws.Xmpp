@@ -45,7 +45,7 @@ namespace Sharp.Xmpp.Extensions
                 const bool ignoreCase = true;
 
                 // It should always parse, otherwise the message doesn't meet the protocol.
-                if (!string.IsNullOrEmpty(errorTypeString) || !Enum.TryParse(errorTypeString, ignoreCase, out error))
+                if (string.IsNullOrEmpty(errorTypeString) || !Enum.TryParse(errorTypeString, ignoreCase, out error))
                     error = ErrorType.Cancel;
 
                 return error;
