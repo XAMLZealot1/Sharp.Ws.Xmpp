@@ -175,6 +175,11 @@ namespace Sharp.Xmpp.Client
         private MessageArchiveManagment mam;
 
         /// <summary>
+        /// Provides the JingleMessageInitiation extension
+        /// </summary>
+        private JingleMessageInitiation jingleMessageInitiation;
+
+        /// <summary>
         /// Provides the Configuration extension
         /// </summary>
         private Configuration configuration;
@@ -833,6 +838,22 @@ namespace Sharp.Xmpp.Client
         }
 
         /// <summary>
+        /// /// Raised when an Jingle Message Initiation has beend received
+        /// </summary>
+        public event EventHandler<JingleMessageEventArgs> JingleMessageInitiationReceived
+        {
+            add
+            {
+                jingleMessageInitiation.JingleMessageInitiationReceived += value;
+            }
+            remove
+            {
+                jingleMessageInitiation.JingleMessageInitiationReceived -= value;
+            }
+        }
+
+        
+        /// <summary>
         /// The event that is raised when  call log item(s) has been deleted
         /// </summary>
         public event EventHandler<CallLogItemDeletedEventArgs> CallLogItemsDeleted
@@ -1477,6 +1498,11 @@ namespace Sharp.Xmpp.Client
             AssertValid();
             message.ThrowIfNull("message");
             im.SendMessage(message);
+        }
+
+        public void SendJingleMessage(JingleMessage jingleMessage)
+        {
+            jingleMessageInitiation?.Send(jingleMessage);
         }
 
         public void DeleteCallLog(String callId)
@@ -2800,6 +2826,7 @@ namespace Sharp.Xmpp.Client
             groupChat = im.LoadExtension<MultiUserChat>();
             mam = im.LoadExtension<MessageArchiveManagment>();
 
+            jingleMessageInitiation = im.LoadExtension<JingleMessageInitiation>();
             configuration = im.LoadExtension<Configuration>();
             conference = im.LoadExtension<Conference>();
             callLog = im.LoadExtension<CallLog>();

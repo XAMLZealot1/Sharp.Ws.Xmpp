@@ -176,6 +176,11 @@
         MessageDeliveryReceipts,
 
         /// <summary>
+        /// An extension to have Jingle Message Initiation (XEP-0353)
+        /// </summary>
+        JingleMessageInitiation,
+
+        /// <summary>
         /// An extension added by Rainbow Hub to manage call logs
         /// </summary>
         CallLog,
