@@ -838,7 +838,7 @@ namespace Sharp.Xmpp.Client
         }
 
         /// <summary>
-        /// /// Raised when an Jingle Message Initiation has beend received
+        /// Raised when an Jingle Message Initiation has beend received
         /// </summary>
         public event EventHandler<JingleMessageEventArgs> JingleMessageInitiationReceived
         {
@@ -852,7 +852,21 @@ namespace Sharp.Xmpp.Client
             }
         }
 
-        
+        /// <summary>
+        /// Raised when an Jingle Iq has beend received
+        /// </summary>
+        public event EventHandler<Extensions.MessageEventArgs> JingleIqReceived
+        {
+            add
+            {
+                jingleMessageInitiation.JingleIqReceived += value;
+            }
+            remove
+            {
+                jingleMessageInitiation.JingleIqReceived -= value;
+            }
+        }
+
         /// <summary>
         /// The event that is raised when  call log item(s) has been deleted
         /// </summary>

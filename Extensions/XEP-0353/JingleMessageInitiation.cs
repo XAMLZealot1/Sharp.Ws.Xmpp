@@ -1,24 +1,30 @@
-﻿using Sharp.Xmpp.Im;
-using System;
+﻿using System;
 using System.Collections.Generic;
-using System.Text;
 using System.Xml;
+
+using Sharp.Xmpp.Core;
+using Sharp.Xmpp.Im;
 
 using NLog;
 
-
 namespace Sharp.Xmpp.Extensions
 {
-    internal class JingleMessageInitiation : XmppExtension, IInputFilter<Sharp.Xmpp.Im.Message>
+    internal class JingleMessageInitiation : XmppExtension, IInputFilter<Sharp.Xmpp.Im.Message>, IInputFilter<Iq>
     {
         private static readonly Logger log = LogConfigurator.GetLogger(typeof(CallLog));
 
-        private static readonly String Namespace = "urn:xmpp:jingle-message:0";
+        private static readonly String NamespaceJingleMessage = "urn:xmpp:jingle-message:0";
+        private static readonly String NamespaceJingleIq = "urn:xmpp:jingle:1";
 
         /// <summary>
         /// Raised when an Jingle Message Initiation has beend received
         /// </summary>
         public event EventHandler<JingleMessageEventArgs> JingleMessageInitiationReceived;
+
+        /// <summary>
+        /// Raised when an Jingle Iq has beend received
+        /// </summary>
+        public event EventHandler<MessageEventArgs> JingleIqReceived;
 
         /// <summary>
         /// An enumerable collection of XMPP namespaces the extension implements.
@@ -29,7 +35,18 @@ namespace Sharp.Xmpp.Extensions
         {
             get
             {
-                return new string[] { "urn:xmpp:jingle-message" };
+                return new string[] { "urn:xmpp:jingle:1"                           // XEP-0166: Jingle
+                                        , "urn:xmpp:jingle:apps:rtp:1"              // XEP-0167: Jingle RTP Sessions
+                                        , "urn:xmpp:jingle:apps:rtp:audio"          // XEP-0167: Jingle RTP Sessions
+                                        , "urn:xmpp:jingle:apps:rtp:video"          // XEP-0167: Jingle RTP Sessions
+                                        , "urn:xmpp:jingle:transports:ice-udp:1"    // XEP-0176: Jingle ICE-UDP Transport Method
+                                        , "urn:xmpp:jingle:apps:rtp:rtcp-fb:0"      // XEP-0293: Jingle RTP Feedback Negotiation
+                                        , "urn:xmpp:jingle:apps:rtp:rtp-hdrext:0"   // XEP-0294: Jingle RTP Header Extensions Negotiation
+                                        , "urn:xmpp:jingle:apps:dtls:0"             // XEP-0320: Use of DTLS-SRTP in Jingle Sessions
+                                        , "urn:ietf:rfc:5888"                       // XEP-0338: Jingle Grouping Framework
+                                        , "urn:ietf:rfc:5576"                       // XEP-0339: Source-Specific Media Attributes in Jingle
+                                        , "urn:ietf:rfc:5761"                       // RTCP MUX (RFC 5761)
+                                    };
             }
         }
 
@@ -65,9 +82,9 @@ namespace Sharp.Xmpp.Extensions
             else if (message.Data["proceed"] != null)
                 action = "proceed";
 
-            if(!String.IsNullOrEmpty(action))
+            if (!String.IsNullOrEmpty(action))
             {
-                if (message.Data[action].NamespaceURI == Namespace)
+                if (message.Data[action].NamespaceURI == NamespaceJingleMessage)
                 {
                     XmlElement element = message.Data[action];
 
@@ -98,12 +115,45 @@ namespace Sharp.Xmpp.Extensions
                     }
                     JingleMessageInitiationReceived.Raise(this, jingleMessageEventArgs);
 
+                    // We have wll managed this message
                     return true;
                 }
             }
 
             // Pass the message to the next handler.
             return false;
+        }
+
+        /// <summary>
+        /// Invoked when an IQ stanza is being received.
+        /// If the Iq is correctly received a Result response is included
+        /// with extension specific metadata included.
+        /// If the Iq is not correctly received an error is returned
+        /// Semantics of error on the response refer only to the XMPP level
+        /// and not the application specific level
+        /// </summary>
+        /// <param name="stanza">The stanza which is being received.</param>
+        /// <returns>true to intercept the stanza or false to pass the stanza
+        /// on to the next handler.</returns>
+        public bool Input(Iq stanza)
+        {
+            if (stanza.Type != IqType.Set)
+                return false;
+
+            var jingle = stanza.Data["jingle"];
+            if (jingle == null || jingle.NamespaceURI != NamespaceJingleIq)
+                return false;
+
+            // Directly send "result" for this Iq
+            im.IqResult(stanza);
+
+            // TODO - potentially send "error" (bad SDP for example)
+
+            JingleIqReceived.Raise(this, new MessageEventArgs(jingle.ToXmlString()));
+
+            // We took care of this IQ request, so intercept it and don't pass it
+            // on to other handlers.
+            return true;
         }
 
         /// <summary>
@@ -115,7 +165,7 @@ namespace Sharp.Xmpp.Extensions
             Sharp.Xmpp.Im.Message message = new Sharp.Xmpp.Im.Message(jingleMessage.ToJid);
             XmlElement e = message.Data;
 
-            XmlElement actionElement = e.OwnerDocument.CreateElement(jingleMessage.Action, Namespace);
+            XmlElement actionElement = e.OwnerDocument.CreateElement(jingleMessage.Action, NamespaceJingleMessage);
             e.AppendChild(actionElement);
 
             // Id
