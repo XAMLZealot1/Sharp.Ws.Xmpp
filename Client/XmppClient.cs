@@ -855,7 +855,7 @@ namespace Sharp.Xmpp.Client
         /// <summary>
         /// Raised when an Jingle Iq has been received
         /// </summary>
-        public event EventHandler<Extensions.MessageEventArgs> JingleIqReceived
+        public event EventHandler<Extensions.XmlElementEventArgs> JingleIqReceived
         {
             add
             {
@@ -1495,6 +1495,7 @@ namespace Sharp.Xmpp.Client
             im.SendMessage(to, bodies, subjects, thread, type, language, oobInfo);
         }
 
+
         /// <summary>
         /// Sends the specified chat message.
         /// </summary>
@@ -1517,6 +1518,35 @@ namespace Sharp.Xmpp.Client
         public void SendJingleMessage(JingleMessage jingleMessage)
         {
             jingleMessageInitiation?.Send(jingleMessage);
+        }
+
+        /// <summary>
+        /// Performs an IQ set/get request asynchronously and optionally invokes a
+        /// callback method when the IQ response comes in.
+        /// </summary>
+        /// <param name="type">The type of the request. This must be either
+        /// IqType.Set or IqType.Get.</param>
+        /// <param name="to">The JID of the intended recipient for the stanza.</param>
+        /// <param name="from">The JID of the sender.</param>
+        /// <param name="data">he content of the stanza.</param>
+        /// <param name="language">The language of the XML character data of
+        /// the stanza.</param>
+        /// <param name="callback">A callback method which is invoked once the
+        /// IQ response from the server comes in.</param>
+        /// <returns>The ID value of the pending IQ stanza request.</returns>
+        /// <exception cref="ArgumentException">The type parameter is not IqType.Set
+        /// or IqType.Get.</exception>
+        /// <exception cref="ObjectDisposedException">The XmppCore object has been
+        /// disposed.</exception>
+        /// <exception cref="InvalidOperationException">The XmppCore instance is not
+        /// connected to a remote host.</exception>
+        /// <exception cref="IOException">There was a failure while writing to the
+        /// network.</exception>
+        public void IqRequestAsync(Core.IqType type, Jid to = null, Jid from = null,
+            XmlElement data = null, CultureInfo language = null,
+            Action<string, Core.Iq> callback = null)
+        {
+            im.IqRequestAsync(type, to, from, data, language, callback);
         }
 
         public void DeleteCallLog(String callId)

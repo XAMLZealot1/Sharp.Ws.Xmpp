@@ -24,7 +24,7 @@ namespace Sharp.Xmpp.Extensions
         /// <summary>
         /// Raised when an Jingle Iq has beend received
         /// </summary>
-        public event EventHandler<MessageEventArgs> JingleIqReceived;
+        public event EventHandler<XmlElementEventArgs> JingleIqReceived;
 
         /// <summary>
         /// An enumerable collection of XMPP namespaces the extension implements.
@@ -149,7 +149,7 @@ namespace Sharp.Xmpp.Extensions
 
             // TODO - potentially send "error" (bad SDP for example)
 
-            JingleIqReceived.Raise(this, new MessageEventArgs(jingle.ToXmlString()));
+            JingleIqReceived.Raise(this, new XmlElementEventArgs(stanza.Data));
 
             // We took care of this IQ request, so intercept it and don't pass it
             // on to other handlers.
