@@ -141,6 +141,10 @@ namespace Sharp.Xmpp.Extensions
             // We ask a receipt only if ther is not already a received node
             if (message.Data["received"] == null)
             {
+                // Don't ask receipts for Jingle message
+                if (message.Data.FirstChild.NamespaceURI.StartsWith("urn:xmpp:jingle"))
+                    return;
+
                 XmlElement e = message.Data;
                 XmlNode child = e.OwnerDocument.CreateNode(XmlNodeType.Element, "request", "urn:xmpp:receipts");
                 message.Data.AppendChild(child);
