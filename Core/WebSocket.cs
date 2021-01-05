@@ -17,6 +17,7 @@ namespace Sharp.Xmpp.Core
     internal class WebSocket
     {
         private static readonly NLog.Logger log = LogConfigurator.GetLogger(typeof(WebSocket));
+        private static readonly NLog.Logger logWebRTC = LogConfigurator.GetLogger(typeof(WebSocket), "WEBRTC");
 
         public event EventHandler WebSocketOpened;
         public event EventHandler WebSocketClosed;
@@ -125,6 +126,15 @@ namespace Sharp.Xmpp.Core
                             if (messagesToSend.TryTake(out message, 50))
                             {
                                 log.Debug("[Message_Send]: {0}", message);
+
+                                // Log webRTC stuff
+                                if ( (logWebRTC != null) 
+                                    && (
+                                        message.Contains("<jingle") 
+                                        || message.Contains("urn:xmpp:jingle")) 
+                                        )
+                                    logWebRTC.Debug("[Message_Send]: {0}", message);
+
                                 if (webSocketSharp != null)
                                     webSocketSharp.Send(message);
                             }
@@ -301,6 +311,15 @@ namespace Sharp.Xmpp.Core
                     sb.Append(e.Data);
 
                     log.Debug("[Message_Received]: {0}", e.Data);
+
+                    // Log webRTC stuff
+                    if ((logWebRTC != null)
+                            && (
+                                e.Data.Contains("<jingle")
+                                || e.Data.Contains("urn:xmpp:jingle"))
+                                )
+                        logWebRTC.Debug("[Message_Received]: {0}", e.Data);
+
 
                     XmlDocument xmlDocument = new XmlDocument();
                     try
