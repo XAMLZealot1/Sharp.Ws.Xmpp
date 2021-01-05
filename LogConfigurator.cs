@@ -61,7 +61,7 @@ namespace Sharp.Xmpp
                     // Set configuration
                     NLog.LogManager.Configuration = config;
 
-                    // Ensure to have on Tager with a valid configuration AND wiht a name equals to "repositoryName"
+                    // Ensure to have a Target with a valid configuration AND with a name equals to "repositoryName"
                     IReadOnlyList<Target> targets = NLog.LogManager.Configuration.ConfiguredNamedTargets;
                     if ((targets != null) && (targets.Count > 0))
                     {
@@ -88,9 +88,13 @@ namespace Sharp.Xmpp
         /// </summary>
         /// <param name="className">Type declaration</param>
         /// <returns><see cref="Logger"/> object</returns>
-        static public Logger GetLogger(Type className)
+        static public Logger GetLogger(Type className, String loggerName = null)
         {
-            Logger log = NLog.LogManager.GetLogger(repositoryName);
+            Logger log;
+            if(String.IsNullOrEmpty(loggerName))
+                log = NLog.LogManager.GetLogger("*"); 
+            else
+                log = NLog.LogManager.GetLogger(loggerName);
             return log;
         }
     }
