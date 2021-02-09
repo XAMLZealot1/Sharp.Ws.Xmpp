@@ -52,6 +52,16 @@ namespace Sharp.Xmpp.Extensions
         public Boolean UnifiedPlan { get; set; }
 
         /// <summary>
+        /// Error Code if an error has raised
+        /// </summary>
+        public String ErrorCode { get; set; }
+
+        /// <summary>
+        /// Error Type if an error has raised
+        /// </summary>
+        public String ErrorType { get; set; }
+
+        /// <summary>
         /// Serialize this object to string
         /// </summary>
         /// <returns><see cref="String"/> as serialization result</returns>
@@ -63,8 +73,9 @@ namespace Sharp.Xmpp.Extensions
             if (Media != null)
                 media = String.Join(", ", Media);
 
-            return String.Format($"{tab}Id:[{Id}] {tab}FromJid/Resource:[{FromJid} / {FromResource}] {tab}ToJid/Resource:[{ToJid} / {ToResource}] {tab}Action:[{Action}] " +
-                $"{tab}Media:[{media}] {tab}UnifiedPlan:[{UnifiedPlan}] {tab}DisplayName:[{DisplayName}]");
+            return String.Format($"{tab}Id:[{Id}] {tab}FromJid/Resource:[{FromJid} / {FromResource}] {tab}ToJid/Resource:[{ToJid} / {ToResource}] " +
+                $"{tab}ErrorCode:[{ErrorCode}] {tab}ErrorType:[{ErrorType}]"  +
+                $"{tab}Action:[{Action}] {tab}Media:[{media}] {tab}UnifiedPlan:[{UnifiedPlan}] {tab}DisplayName:[{DisplayName}]");
         }
     }
 }

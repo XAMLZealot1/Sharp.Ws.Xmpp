@@ -113,6 +113,14 @@ namespace Sharp.Xmpp.Extensions
                             jingleMessageEventArgs.JingleMessage.Media.Add(description.GetAttribute("media"));
                         }
                     }
+
+                    // We need also to check if there is an error
+                    if (message.Data["error"] != null)
+                    {
+                        jingleMessageEventArgs.JingleMessage.ErrorCode = message.Data["error"]?.GetAttribute("code");
+                        jingleMessageEventArgs.JingleMessage.ErrorType = message.Data["error"]?.GetAttribute("type");
+                    }
+
                     JingleMessageInitiationReceived.Raise(this, jingleMessageEventArgs);
 
                     // We have wll managed this message
