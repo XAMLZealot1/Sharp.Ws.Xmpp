@@ -550,13 +550,28 @@ namespace Sharp.Xmpp.Core
         private void WebSocketClient_WebSocketClosed(object sender, EventArgs e)
         {
             log.Debug("[WebSocketClient_WebSocketClosed]");
-            Connected = false;
             RaiseConnectionStatus(false);
-            webSocketClient = null;
         }
 
         private void RaiseConnectionStatus(bool connected)
         {
+            Connected = connected;
+            if (!connected)
+            {
+                if (webSocketClient != null)
+                {
+                    try
+                    {
+                        webSocketClient.Close();
+                        webSocketClient.Dispose();
+                    } catch
+                    {
+                        // Nothing to do more
+                    }
+                }
+                webSocketClient = null;
+            }
+
             log.Debug("[RaiseConnectionStatus] connected:{0}", connected);
             ConnectionStatus.Raise(this, new ConnectionStatusEventArgs(connected));
         }
@@ -806,7 +821,6 @@ namespace Sharp.Xmpp.Core
 
                     if (request.To.Domain == Jid.Domain && (request.To.Node == null || request.To.Node == "") && (ping != null && ping.NamespaceURI == "urn:xmpp:ping"))
                     {
-                        Connected = false;
                         RaiseConnectionStatus(false);
                         var e = new XmppDisconnectionException("Timeout Disconnection happened at IqRequest");
                         if (!disposed)
@@ -1299,7 +1313,6 @@ namespace Sharp.Xmpp.Core
                 }
                 catch (IOException e)
                 {
-                    Connected = false;
                     RaiseConnectionStatus(false);
                     throw new XmppDisconnectionException(e.Message, e);
                 }
@@ -1344,7 +1357,6 @@ namespace Sharp.Xmpp.Core
             }
             catch (XmppDisconnectionException e)
             {
-                Connected = false;
                 RaiseConnectionStatus(false);
                 throw e;
             }
@@ -1535,7 +1547,6 @@ namespace Sharp.Xmpp.Core
                 //Add the failed connection
                 if ((e is IOException) || (e is XmppDisconnectionException))
                 {
-                    Connected = false;
                     RaiseConnectionStatus(false);
                     var ex = new XmppDisconnectionException(e.ToString());
                     e = ex;
@@ -1593,7 +1604,6 @@ namespace Sharp.Xmpp.Core
                 //Add the failed connection
                 if ((e is IOException) || (e is XmppDisconnectionException))
                 {
-                    Connected = false;
                     RaiseConnectionStatus(false);
                     var ex = new XmppDisconnectionException(e.ToString());
                     e = ex;
