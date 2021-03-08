@@ -75,7 +75,14 @@ namespace Sharp.Xmpp.Core
             {
                 webSocketSharp = new WebSocketSharp.WebSocket(uri);
 
-                webSocketSharp.SslConfiguration.EnabledSslProtocols = SslProtocols.Default | SslProtocols.Tls12 ;
+#if NETCOREAPP
+                webSocketSharp.SslConfiguration.EnabledSslProtocols = SslProtocols.Tls12 | SslProtocols.Tls13;
+
+#elif NETSTANDARD
+                webSocketSharp.SslConfiguration.EnabledSslProtocols = SslProtocols.Tls12;
+#endif
+
+
                 webSocketSharp.SslConfiguration.ServerCertificateValidationCallback =  (sender, certificate, chain, sslPolicyErrors) => {
                     return true; // If the server certificate is valid.
                 };
@@ -387,7 +394,7 @@ namespace Sharp.Xmpp.Core
         private void WebSocketSharp_OnClose(object sender, CloseEventArgs e)
         {
             webSocketOpened = false;
-            log.Debug("[WebSocketSharp_OnClose]");
+            log.Debug("[WebSocketSharp_OnClose] Code:[{0}] -  Reason:[{1}] -  WasClean:[{2}]", e.Code, e.Reason, e.WasClean);
             RaiseWebSocketClosed();
         }
 
