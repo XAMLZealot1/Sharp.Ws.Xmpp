@@ -42,6 +42,11 @@ namespace Sharp.Xmpp.Extensions
         public String DisplayName { get; set; }
 
         /// <summary>
+        /// Subject of the call
+        /// </summary>
+        public String Subject { get; set; }
+
+        /// <summary>
         /// Media list
         /// </summary>
         public List<String> Media { get; set; }

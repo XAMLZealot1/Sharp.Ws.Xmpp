@@ -100,6 +100,10 @@ namespace Sharp.Xmpp.Extensions
                     jingleMessageEventArgs.JingleMessage.UnifiedPlan = (element["unifiedplan"] != null);
                     jingleMessageEventArgs.JingleMessage.DisplayName = element.GetAttribute("displayname");
 
+                    // Subject
+                    if (element["subject"] != null)
+                        jingleMessageEventArgs.JingleMessage.Subject = element["subject"].InnerText;
+
                     // Media
                     XmlNodeList nodeList = element.GetElementsByTagName("description");
                     if(nodeList != null)
@@ -123,7 +127,7 @@ namespace Sharp.Xmpp.Extensions
 
                     JingleMessageInitiationReceived.Raise(this, jingleMessageEventArgs);
 
-                    // We have wll managed this message
+                    // We have well managed this message
                     return true;
                 }
             }
@@ -192,6 +196,14 @@ namespace Sharp.Xmpp.Extensions
                 // Display Name
                 if (!String.IsNullOrEmpty(jingleMessage.DisplayName))
                     actionElement.SetAttribute("displayname", jingleMessage.DisplayName);
+
+                // Subject
+                if (!String.IsNullOrEmpty(jingleMessage.Subject))
+                {
+                    XmlElement subject = e.OwnerDocument.CreateElement("subject", "urn:xmpp:jingle-subject:0");
+                    subject.InnerText = jingleMessage.Subject;
+                    actionElement.AppendChild(subject);
+                }
 
                 // Media
                 if (jingleMessage.Media != null)
