@@ -1540,10 +1540,16 @@ namespace Sharp.Xmpp.Core
 
                 // Shut down the dispatcher task.
                 cancelDispatch.Cancel();
+                cancelDispatch.Dispose();
+                cancelDispatch = null;
                 cancelDispatch = new CancellationTokenSource();
+
                 // Unblock any threads blocking on pending IQ requests.
                 cancelIq.Cancel();
+                cancelIq.Dispose();
+                cancelIq = null;
                 cancelIq = new CancellationTokenSource();
+
                 //Add the failed connection
                 if ((e is IOException) || (e is XmppDisconnectionException))
                 {
@@ -1597,9 +1603,14 @@ namespace Sharp.Xmpp.Core
 
                 // Shut down the dispatcher task.
                 cancelDispatch.Cancel();
+                cancelDispatch.Dispose();
+                cancelDispatch = null;
                 cancelDispatch = new CancellationTokenSource();
+
                 // Unblock any threads blocking on pending IQ requests.
                 cancelIq.Cancel();
+                cancelIq.Dispose();
+                cancelIq = null;
                 cancelIq = new CancellationTokenSource();
                 //Add the failed connection
                 if ((e is IOException) || (e is XmppDisconnectionException))
