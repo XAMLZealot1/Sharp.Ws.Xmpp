@@ -501,10 +501,16 @@ namespace Sharp.Xmpp.Core
                     if(String.IsNullOrEmpty(WebSocketUri))
                         throw new XmppException("URI not provided for WebSocket connection");
 
+                    // Destroy previous object (if any)
+                    if(webSocketClient != null)
+                    {
+                        webSocketClient.Close();
+                        webSocketClient = null;
+                    }
+
                     webSocketClient = new WebSocket(WebSocketUri, WebProxyInfo);
                     webSocketClient.WebSocketOpened += new EventHandler(WebSocketClient_WebSocketOpened);
                     webSocketClient.WebSocketClosed += new EventHandler(WebSocketClient_WebSocketClosed);
-                    webSocketClient.WebSocketError += new EventHandler<ExceptionEventArgs>(WebSocketClient_WebSocketError);
 
                     webSocketClient.Open();
                 }
@@ -562,14 +568,17 @@ namespace Sharp.Xmpp.Core
                 {
                     try
                     {
+                        webSocketClient.WebSocketClosed -= WebSocketClient_WebSocketClosed;
+                        webSocketClient.WebSocketOpened -= WebSocketClient_WebSocketOpened;
+
                         webSocketClient.Close();
-                        webSocketClient.Dispose();
+                        webSocketClient = null;
+
                     } catch
                     {
                         // Nothing to do more
                     }
                 }
-                webSocketClient = null;
             }
 
             log.Debug("[RaiseConnectionStatus] connected:{0}", connected);
@@ -1008,13 +1017,10 @@ namespace Sharp.Xmpp.Core
 
                     if (webSocketClient != null)
                     {
-                        webSocketClient.Close();
-
                         webSocketClient.WebSocketClosed -= WebSocketClient_WebSocketClosed;
                         webSocketClient.WebSocketOpened -= WebSocketClient_WebSocketOpened;
-                        webSocketClient.WebSocketError -= WebSocketClient_WebSocketError;
 
-                        webSocketClient.Dispose();
+                        webSocketClient.Close();
                         webSocketClient = null;
                     }
                 }

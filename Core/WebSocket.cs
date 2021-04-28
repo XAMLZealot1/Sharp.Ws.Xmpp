@@ -2,15 +2,15 @@
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Globalization;
+using System.IO;
 using System.Net;
+using System.Net.WebSockets;
 using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
 using System.Xml;
 
-using WebSocketSharp;
-
 using NLog;
-using System.Security.Authentication;
 
 namespace Sharp.Xmpp.Core
 {
@@ -21,13 +21,11 @@ namespace Sharp.Xmpp.Core
 
         public event EventHandler WebSocketOpened;
         public event EventHandler WebSocketClosed;
-        public event EventHandler<ExceptionEventArgs> WebSocketError;
 
         private bool webSocketOpened = false;
 
         private bool rootElement;
         private string uri;
-        private StringBuilder sb;
 
         private readonly object writeLock = new object();
 
@@ -39,7 +37,7 @@ namespace Sharp.Xmpp.Core
 
         private Tuple<String, String, String> webProxyInfo = null;
 
-        private WebSocketSharp.WebSocket webSocketSharp = null;
+        private ClientWebSocket clientWebSocket = null;
 
         public CultureInfo Language
         {
@@ -55,8 +53,6 @@ namespace Sharp.Xmpp.Core
 
             this.webProxyInfo = webProxyInfo;
 
-            sb = new StringBuilder();
-
             actionsToPerform = new BlockingCollection<string>(new ConcurrentQueue<string>());
             messagesToSend = new BlockingCollection<string>(new ConcurrentQueue<string>());
             messagesReceived = new BlockingCollection<string>(new ConcurrentQueue<string>());
@@ -69,96 +65,205 @@ namespace Sharp.Xmpp.Core
             Task.Factory.StartNew(CreateAndManageWebSocket, TaskCreationOptions.LongRunning | TaskCreationOptions.DenyChildAttach);
         }
 
-        private void CreateAndManageWebSocket()
+        public async void Close()
         {
-            if (webSocketSharp == null)
+            if (clientWebSocket != null)
             {
-                webSocketSharp = new WebSocketSharp.WebSocket(uri);
+                if (clientWebSocket.State != System.Net.WebSockets.WebSocketState.Closed)
+                {
+                    try
+                    {
+                        await clientWebSocket.CloseAsync(WebSocketCloseStatus.NormalClosure, "", CancellationToken.None);
+                    }
+                    catch
+                    {
+                        // Nothing to do more
+                    }
+                }
+            }
+
+            if (clientWebSocket != null)
+            { 
+                try
+                {
+                    clientWebSocket.Dispose();
+                    clientWebSocket = null;
+                }
+                catch
+                {
+                    // Nothing to do more
+                }
+            }
+        }
+
+        private async void CreateAndManageWebSocket()
+        {
+            // First CLose / Dispose previous object
+            Close();
 
 #if NETCOREAPP
-                webSocketSharp.SslConfiguration.EnabledSslProtocols = SslProtocols.Tls12 | SslProtocols.Tls13;
+            // USE TLS 1.2 or TLS 1.3 only
+            ServicePointManager.SecurityProtocol = SecurityProtocolType.Tls12 | SecurityProtocolType.Tls13;
 
 #elif NETSTANDARD
-                webSocketSharp.SslConfiguration.EnabledSslProtocols = SslProtocols.Tls12;
+            // USE TLS 1.2 only
+            ServicePointManager.SecurityProtocol = SecurityProtocolType.Tls12;
+#endif
+            // Create Client
+            clientWebSocket = new ClientWebSocket();
+
+            clientWebSocket.Options.KeepAliveInterval = TimeSpan.FromSeconds(2); ;
+
+#if NETCOREAPP
+            clientWebSocket.Options.RemoteCertificateValidationCallback = (sender, certificate, chain, sslPolicyErrors) => {
+                return true; // If the server certificate is valid.
+            };
 #endif
 
-
-                webSocketSharp.SslConfiguration.ServerCertificateValidationCallback =  (sender, certificate, chain, sslPolicyErrors) => {
-                    return true; // If the server certificate is valid.
-                };
-
-                webSocketSharp.EmitOnPing = true;
-                webSocketSharp.EnableRedirection = true;
-                webSocketSharp.WaitTime = TimeSpan.FromSeconds(2);
-
-                webSocketSharp.OnOpen += WebSocketSharp_Opened;
-                webSocketSharp.OnClose += WebSocketSharp_OnClose;
-                webSocketSharp.OnError += WebSocketSharp_OnError;
-                webSocketSharp.OnMessage += WebSocketSharp_OnMessage;
-            }
-
-            // Set proxy info
+            // Manage proxy configuration
             if (webProxyInfo == null)
-                webSocketSharp.SetProxy(null, null, null);
+                clientWebSocket.Options.Proxy = null;
             else
             {
-                // Set Ip End point
+                    
                 log.Debug("[CreateAndManageWebSocket] Web Proxy Info:[{0}]", webProxyInfo?.Item1);
-                webSocketSharp.SetProxy(webProxyInfo.Item1, webProxyInfo.Item2, webProxyInfo.Item3);
+                WebProxy proxy = new WebProxy(webProxyInfo.Item1);
+                if(!String.IsNullOrEmpty(webProxyInfo.Item2))
+                    proxy.Credentials = new NetworkCredential(webProxyInfo.Item2, webProxyInfo.Item3);
+                clientWebSocket.Options.Proxy = proxy;
             }
 
-            webSocketSharp.Connect();
+            await clientWebSocket.ConnectAsync(new Uri(uri), CancellationToken.None);
 
+
+            // Raise event ClientWebSocketOpened or ClientWebSocketClosed
+            if (clientWebSocket.State == System.Net.WebSockets.WebSocketState.Open)
+                ClientWebSocketOpened();
+            else
+            {
+                ClientWebSocketClosed();
+                return;
+            }
+
+            // Manage next incoming message
+            ManageIncomingMessage();
+
+            // Manage outgoing message
+            ManageOutgoingMessage();
+        }
+
+        private async void ManageOutgoingMessage()
+        {
             string message;
 
+            // Loop used to send message when they are avaialble
             while (true)
             {
-                if (webSocketSharp != null)
+                if (clientWebSocket != null)
                 {
-                    if(!webSocketSharp.IsAlive)
+                    if (clientWebSocket.State != System.Net.WebSockets.WebSocketState.Open)
                     {
-                        if (webSocketOpened)
-                        {
-                            webSocketOpened = false;
-                            log.Debug("[webSocketSharp] Web Socket is not alive ...");
-                            WebSocketError?.Invoke(this, new ExceptionEventArgs(new Exception("Web Socket is not alive")));
-                            return;
-                        }
+                        ClientWebSocketClosed();
+                        return;
                     }
-
-                    switch (webSocketSharp.ReadyState)
+                    else
                     {
-                        case WebSocketSharp.WebSocketState.Connecting:
-                        case WebSocketSharp.WebSocketState.Open:
-                            if (messagesToSend.TryTake(out message, 50))
-                            {
-                                log.Debug("[Message_Send]: {0}", message);
-
-                                // Log webRTC stuff
-                                if ( (logWebRTC != null) 
-                                    && (
-                                        message.Contains("<jingle") 
-                                        || message.Contains("urn:xmpp:jingle")) 
-                                        )
-                                    logWebRTC.Debug("[Message_Send]: {0}", message);
-
-                                if (webSocketSharp != null)
-                                    webSocketSharp.Send(message);
-                            }
+                        message = DequeueMessageToSend();
+                        if (message != null)
+                        {
+                            // Log webRTC stuff
+                            if ((logWebRTC != null)
+                                && (
+                                    message.Contains("<jingle")
+                                    || message.Contains("urn:xmpp:jingle"))
+                                    )
+                                logWebRTC.Debug("[ManageOutgoingMessage]: {0}", message);
                             else
-                            {
-                                //log.Debug("[Message_Send] TryTake failed ...");
-                            }
-                            break;
+                                log.Debug("[ManageOutgoingMessage]: {0}", message);
 
-                        case WebSocketSharp.WebSocketState.Closed:
-                        case WebSocketSharp.WebSocketState.Closing:
-                            return;
+
+                            var sendBuffer = new ArraySegment<byte>(Encoding.UTF8.GetBytes(message));
+                            try
+                            {
+                                await clientWebSocket.SendAsync(sendBuffer, WebSocketMessageType.Text, true, CancellationToken.None);
+                            }
+                            catch
+                            {
+                                // Nothing to do - if a pb occur here, it means that the socket has been closed
+                                // The loop will take this into account
+                            }
+                        }
                     }
                 }
                 else
                     return;
             }
+        }
+
+        private void ManageIncomingMessage()
+        {
+            Task.Factory.StartNew( async() =>
+                {
+                    ArraySegment<Byte> buffer = new ArraySegment<byte>(new Byte[8192]);
+
+                    WebSocketReceiveResult result = null;
+                    Boolean readingCorrectly = true;
+
+                    using (var ms = new MemoryStream())
+                    {
+                        do
+                        {
+                            try
+                            {
+                                result = await clientWebSocket.ReceiveAsync(buffer, CancellationToken.None);
+                                ms.Write(buffer.Array, buffer.Offset, result.Count);
+                            }
+                            catch
+                            {
+                                readingCorrectly = false;
+                            }
+                        }
+                        while (readingCorrectly && (!result.EndOfMessage));
+
+                        // Do we read on the web socket correctly ?
+                        if (!readingCorrectly)
+                        {
+                            ClientWebSocketClosed();
+                            return;
+                        }
+                        
+                        // Queue the message but only if we received text
+                        if (result.MessageType == WebSocketMessageType.Text)
+                        {
+                            ms.Seek(0, SeekOrigin.Begin);
+                            using (var reader = new StreamReader(ms, Encoding.UTF8))
+                            {
+                                String message = reader.ReadToEnd();
+
+                                // Log webRTC stuff
+                                if ((logWebRTC != null)
+                                        && (
+                                            message.Contains("<jingle")
+                                            || message.Contains("urn:xmpp:jingle"))
+                                            )
+                                    logWebRTC.Debug("[ManageIncomingMessage]: {0}", message);
+                                else
+                                    log.Debug("[ManageIncomingMessage]: {0}", message);
+
+
+                                QueueMessageReceived(message);
+                            }
+                        }
+                        else
+                        {
+                            log.Warn("[ManageIncomingMessage] We have received data using unmanaged type - MessageType:[{0}]", result.MessageType.ToString());
+                        }
+                    }
+
+                    // Manage next incoming message
+                    ManageIncomingMessage();
+                }
+            );
         }
 
         #region Iq stuff
@@ -190,9 +295,9 @@ namespace Sharp.Xmpp.Core
             return iq;
 
         }
-        #endregion
+#endregion
 
-        #region Action to perform
+#region Action to perform
         public void QueueActionToPerform(String action)
         {
             //log.Debug("QueueActionToPerform");
@@ -206,9 +311,9 @@ namespace Sharp.Xmpp.Core
             //log.Debug("DequeueActionToPerform - END");
             return action;
         }
-        #endregion
+#endregion
 
-        #region Messages to send
+#region Messages to send
         private void QueueMessageToSend(String message)
         {
             messagesToSend.Add(message);
@@ -216,38 +321,33 @@ namespace Sharp.Xmpp.Core
 
         private string DequeueMessageToSend()
         {
-            return messagesToSend.Take();
+            String message;
+            if (messagesToSend.TryTake(out message, 50))
+                return message;
+            return null;
         }
-        #endregion
+#endregion
 
-        #region Messages received
+#region Messages received
         public void QueueMessageReceived(String message)
         {
             lock (writeLock)
             {
-                string xmlMessage;
-
-                sb.Append(message);
-
                 XmlDocument xmlDocument = new XmlDocument();
                 try
                 {
-                    xmlMessage = sb.ToString();
-
                     // Check if we have a valid XML message - if not an exception is raised
-                    xmlDocument.LoadXml(sb.ToString());
-
-                    //Clear string builder
-                    sb.Clear();
+                    xmlDocument.LoadXml(message);
 
                     if (rootElement)
                     {
-                        // Add XML message in the queue
-                        //log.Debug("Queue XML message received");
-                        messagesReceived.Add(xmlMessage);
+                        // Add message in the queue
+                        messagesReceived.Add(message);
                     }
                     else
+                    {
                         ReadRootElement(xmlDocument);
+                    }
                 }
                 catch
                 {
@@ -263,24 +363,12 @@ namespace Sharp.Xmpp.Core
             //log.Debug("Dequeue XML Message Received - END");
             return message;
         }
-        #endregion
-
-        public void Dispose()
-        {
-            if (webSocketSharp != null)
-                webSocketSharp = null;
-        }
-
-        public void Close()
-        {
-            if (webSocketSharp != null)
-                webSocketSharp.Close();
-        }
+#endregion
 
         private bool IsConnected()
         {
-            if (webSocketSharp != null)
-                return webSocketSharp.ReadyState == WebSocketSharp.WebSocketState.Open;
+            if (clientWebSocket != null)
+                return clientWebSocket.State == System.Net.WebSockets.WebSocketState.Open;
             return false;
         }
 
@@ -289,7 +377,7 @@ namespace Sharp.Xmpp.Core
             QueueMessageToSend(xml);
         }
 
-        private void WebSocketSharp_Opened(object sender, EventArgs e)
+        private void ClientWebSocketOpened()
         {
             log.Debug("Web socket opened");
             webSocketOpened = true;
@@ -299,105 +387,28 @@ namespace Sharp.Xmpp.Core
             {
                 try
                 {
-                    h(this, e);
+                    h(this, null);
                 }
                 catch (Exception)
                 {
-                    log.Error("WebSocketSharp_Opened - ERROR");
+                    log.Error("ClientWebSocketOpened - ERROR");
                 }
             }
         }
 
-        private void WebSocketSharp_OnMessage(object sender, WebSocketSharp.MessageEventArgs e)
-        {
-            lock (writeLock)
-            {
-                if (e.IsText)
-                {
-                    string xmlMessage;
-                    sb.Append(e.Data);
-
-                    log.Debug("[Message_Received]: {0}", e.Data);
-
-                    // Log webRTC stuff
-                    if ((logWebRTC != null)
-                            && (
-                                e.Data.Contains("<jingle")
-                                || e.Data.Contains("urn:xmpp:jingle"))
-                                )
-                        logWebRTC.Debug("[Message_Received]: {0}", e.Data);
-
-
-                    XmlDocument xmlDocument = new XmlDocument();
-                    try
-                    {
-                        xmlMessage = sb.ToString();
-
-                        // Check if we have a valid XML message - if not an exception is raised
-                        xmlDocument.LoadXml(sb.ToString());
-
-                        //Clear string builder
-                        sb.Clear();
-
-                        if (rootElement)
-                        {
-                            // Add XML message in the queue
-                            QueueMessageReceived(xmlMessage);
-                        }
-                        else
-                            ReadRootElement(xmlDocument);
-                    }
-                    catch (Exception)
-                    {
-                        log.Error("WebSocket4NetClient_MessageReceived - ERROR");
-                    }
-                }
-                else if (e.IsPing)
-                {
-                    log.Debug("[Message_Received]: Ping received");
-                }
-                else 
-                {
-                    log.Debug("[Message_Received]: message type not managed");
-                }
-            }
-        }
-
-        private void WebSocketSharp_OnError(object sender, WebSocketSharp.ErrorEventArgs e)
+        private void ClientWebSocketClosed()
         {
             if (webSocketOpened)
             {
                 webSocketOpened = false;
+                if (clientWebSocket != null)
+                    log.Debug("[ClientWebSocketClosed] CloseStatus:[{0}] -  CloseStatusDescription:[{1}]", clientWebSocket.CloseStatus, clientWebSocket.CloseStatusDescription);
+                else
+                    log.Debug("[ClientWebSocketClosed]");
 
-                if (!String.IsNullOrEmpty(e.Message))
-                    log.Debug("[WebSocketSharp_OnError] Message:[{0}]", e.Message);
-
-                if (e.Exception != null)
-                    log.Debug("[WebSocketSharp_OnError] Exception:[{0}]", Util.SerializeException(e.Exception));
-
-                EventHandler<ExceptionEventArgs> h = this.WebSocketError;
-
-                if (h != null)
-                {
-                    try
-                    {
-                        h(this, new ExceptionEventArgs(e.Exception));
-                    }
-                    catch (Exception)
-                    {
-                        log.Error("WebSocket4NetClient_Error - ERROR");
-                    }
-                }
+                RaiseWebSocketClosed();
             }
         }
-
-        private void WebSocketSharp_OnClose(object sender, CloseEventArgs e)
-        {
-            webSocketOpened = false;
-            log.Debug("[WebSocketSharp_OnClose] Code:[{0}] -  Reason:[{1}] -  WasClean:[{2}]", e.Code, e.Reason, e.WasClean);
-            RaiseWebSocketClosed();
-        }
-
 
         private void RaiseWebSocketClosed()
         {
