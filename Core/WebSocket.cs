@@ -112,7 +112,7 @@ namespace Sharp.Xmpp.Core
             // Create Client
             clientWebSocket = new ClientWebSocket();
 
-            clientWebSocket.Options.KeepAliveInterval = TimeSpan.FromSeconds(2); ;
+            clientWebSocket.Options.KeepAliveInterval = TimeSpan.FromMinutes(2);
 
 #if NETCOREAPP
             clientWebSocket.Options.RemoteCertificateValidationCallback = (sender, certificate, chain, sslPolicyErrors) => {
