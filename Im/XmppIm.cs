@@ -294,7 +294,6 @@ namespace Sharp.Xmpp.Im
 
         /// <summary>
         /// The event that is raised when the connection status with the server is modified
-        /// received.
         /// </summary>
         public event EventHandler<ConnectionStatusEventArgs> ConnectionStatus;
 
