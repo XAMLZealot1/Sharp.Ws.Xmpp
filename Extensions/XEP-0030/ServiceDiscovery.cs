@@ -215,8 +215,7 @@ namespace Sharp.Xmpp.Extensions
         public ServiceDiscovery(XmppIm im)
             : base(im)
         {
-            Attribute attr = Assembly.GetExecutingAssembly().
-                GetCustomAttribute(typeof(AssemblyProductAttribute));
+            Attribute attr = typeof(ServiceDiscovery).Assembly.GetCustomAttribute(typeof(AssemblyProductAttribute));
             string name = attr != null ? ((AssemblyProductAttribute)attr).Product :
                 "S22.Xmpp";
             Identity = new Identity("client", "pc", name);
