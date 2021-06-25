@@ -99,7 +99,8 @@ namespace Sharp.Xmpp.Extensions
             // Raise 'VCardChanged' event.
             VCardChanged.Raise(this, new VCardChangedEventArgs(stanza.From, type));
 
-            return true;
+            //Even if we raised the 'VCardChanged' event we need to deal with presence message too
+            return false;
         }
 
         //http://www.xmpp.org/extensions/xep-0153.html
