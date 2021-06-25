@@ -2845,9 +2845,7 @@ namespace Sharp.Xmpp.Client
             block = im.LoadExtension<BlockingCommand>();
             pep = im.LoadExtension<Pep>();
             userTune = im.LoadExtension<UserTune>();
-#if WINDOWSPLATFORM
-			ertguserAvatar = im.LoadExtension<UserAvatar>();
-#endif
+
             userMood = im.LoadExtension<UserMood>();
             dataForms = im.LoadExtension<DataForms>();
             featureNegotiation = im.LoadExtension<FeatureNegotiation>();
