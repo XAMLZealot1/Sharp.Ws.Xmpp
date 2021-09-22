@@ -1,12 +1,15 @@
-﻿using Sharp.Xmpp.Extensions;
-using Sharp.Xmpp.Im;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Globalization;
 using System.IO;
 using System.Net;
 using System.Net.Security;
 using System.Xml;
+
+using Sharp.Xmpp.Extensions;
+using Sharp.Xmpp.Im;
+
+using NLog;
 
 namespace Sharp.Xmpp.Client
 {
@@ -21,6 +24,8 @@ namespace Sharp.Xmpp.Client
     /// </remarks>
     public class XmppClient : IDisposable
     {
+        private static readonly Logger log = LogConfigurator.GetLogger(typeof(XmppClient));
+
         /// <summary>
         /// True if the instance has been disposed of.
         /// </summary>
@@ -203,6 +208,11 @@ namespace Sharp.Xmpp.Client
         /// Provides the CallService extension
         /// </summary>
         private CallService callService;
+
+        /// <summary>
+        /// Provides the StreamManagement extension
+        /// </summary>
+        private StreamManagement streamManagement;
 
         public Tuple<String, String, String> WebProxyInfo
         {
@@ -486,6 +496,7 @@ namespace Sharp.Xmpp.Client
                 im.ConnectionStatus -= value;
             }
         }
+        
         /// <summary>
         /// The event that is raised when a status notification has been received.
         /// </summary>
@@ -1028,7 +1039,7 @@ namespace Sharp.Xmpp.Client
             }
             remove
             {
-                callService.PBXCallsInProgress += value;
+                callService.PBXCallsInProgress -= value;
             }
         }
 
@@ -1272,8 +1283,6 @@ namespace Sharp.Xmpp.Client
             }
         }
         
-
-
         /// <summary>
         /// The event that is raised when a result is donrecevied after asking list of messages archive
         /// </summary>
@@ -1286,6 +1295,38 @@ namespace Sharp.Xmpp.Client
             remove
             {
                 mam.MessageArchiveManagementResult -= value;
+            }
+        }
+
+        /// <summary>
+        /// The event that is raised if Stream Management failed
+        /// </summary>
+        public event EventHandler<EventArgs> StreamManagementFailed
+        {
+            add
+            {
+                streamManagement.Failed += value;
+
+            }
+            remove
+            {
+                streamManagement.Failed -= value;
+            }
+        }
+
+        /// <summary>
+        /// The event that is raised if Stream Management has accepted to resume stanzas
+        /// </summary>
+        public event EventHandler<EventArgs> StreamManagementResumed
+        {
+            add
+            {
+                streamManagement.Resumed += value;
+
+            }
+            remove
+            {
+                streamManagement.Resumed -= value;
             }
         }
 
@@ -1876,6 +1917,41 @@ namespace Sharp.Xmpp.Client
 #endif
 
         /// <summary>
+        /// Returns true if the server can manage Stream Management and it was sucessfully enabled
+        /// </summary>
+        public Boolean StreamManagementIsEnabled()
+        {
+            return im.StreamManagementEnabled;
+        }
+
+        public void EnableStreamManagement(Boolean resume)
+        {
+            im.EnableStreamManagement = resume;
+        }
+
+        public void ResumeStreamManagement(String resumeId, uint lastStanzaReceivedHandled, uint lastStanzaSentHandled)
+        {
+            if (im.EnableStreamManagement && (!String.IsNullOrEmpty(resumeId)))
+            {
+                im.ResumeStreamManagement = true;
+                im.StreamManagementResumeId = resumeId;
+                im.StreamManagementLastStanzaReceivedAndHandledByServer = lastStanzaReceivedHandled;
+                im.StreamManagementLastStanzaReceivedAndHandledByClient = lastStanzaSentHandled;
+            }
+            else
+                im.ResumeStreamManagement = false;
+
+            log.Info("[ResumeStreamManagement] - ResumeStreamManagement - ResumeId:[{0}] - LastStanzaReceivedHandled:[{1}]", im.StreamManagementResumeId, im.StreamManagementLastStanzaReceivedAndHandledByServer);
+        }
+
+        public void GetResumeStreamInfo(out String resumeId, out uint lastStanzaReceivedHandled, out uint lastStanzaSentHandled)
+        {
+            resumeId = im.StreamManagementResumeId;
+            lastStanzaReceivedHandled = im.StreamManagementLastStanzaReceivedAndHandledByServer;
+            lastStanzaSentHandled = im.StreamManagementLastStanzaReceivedAndHandledByClient;
+        }
+
+        /// <summary>
         /// Publishes the image located at the specified path as the user's avatar using vcard based Avatars
         /// </summary>
         /// <param name="filePath">The path to the image to publish as the user's avatar.</param>
@@ -1942,7 +2018,6 @@ namespace Sharp.Xmpp.Client
             AssertValid();
             mam.DeleteAllArchivedMessages(jid, queryId, isRoom);
         }
-
 
         public void RequestCallLogs(string queryId, int maxNumber, string before = null, string after = null)
         {
@@ -2839,7 +2914,10 @@ namespace Sharp.Xmpp.Client
             version = im.LoadExtension<SoftwareVersion>();
             sdisco = im.LoadExtension<ServiceDiscovery>();
             ecapa = im.LoadExtension<EntityCapabilities>();
+
+            streamManagement = im.LoadExtension<StreamManagement>(); // /!\ StreamManagement must be loaded before Ping - we use ping occurence to request acknowledgement
             ping = im.LoadExtension<Ping>();
+
             attention = im.LoadExtension<Attention>();
             time = im.LoadExtension<EntityTime>();
             block = im.LoadExtension<BlockingCommand>();
@@ -2875,6 +2953,7 @@ namespace Sharp.Xmpp.Client
             cap = im.LoadExtension<Cap>();
             msgDeliveryReceipt = im.LoadExtension<MessageDeliveryReceipts>();
             callService = im.LoadExtension<CallService>();
+            
         }
     }
 }

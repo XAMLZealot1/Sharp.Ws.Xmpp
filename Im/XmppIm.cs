@@ -180,6 +180,150 @@ namespace Sharp.Xmpp.Im
         }
 
         /// <summary>
+        /// If true it means that server can manage Stream Management
+        /// </summary>
+        public bool StreamManagementAvailable
+        {
+            get
+            {
+                return core.StreamManagementAvailable;
+            }
+
+            set
+            {
+                core.StreamManagementAvailable = value;
+            }
+        }
+
+        /// <summary>
+        /// If true it means that server can manage Stream Management and it was sucessfully enabled
+        /// </summary>
+        public bool StreamManagementEnabled
+        {
+            get
+            {
+                return core.StreamManagementEnabled;
+            }
+
+            set
+            {
+                core.StreamManagementEnabled = value;
+            }
+        }
+
+        /// <summary>
+        /// If true the session will enable Stream Management (if server accepts it)
+        /// </summary>
+        public bool EnableStreamManagement
+        {
+            get
+            {
+                return core.StreamManagementEnable;
+            }
+
+            set
+            {
+                core.StreamManagementEnable = value;
+            }
+        }
+
+        /// <summary>
+        /// If true the session will try to resume Stream Management (if server accepts it)
+        /// </summary>
+        public bool ResumeStreamManagement
+        {
+            get
+            {
+                return core.StreamManagementResume;
+            }
+
+            set
+            {
+                core.StreamManagementResume = value;
+            }
+        }
+
+        /// <summary>
+        ///  Id to resume Stream Management (if server accepts it)
+        /// </summary>
+        public String StreamManagementResumeId
+        {
+            get
+            {
+                return core.StreamManagementResumeId;
+            }
+
+            set
+            {
+                core.StreamManagementResumeId = value;
+            }
+        }
+
+        /// <summary>
+        ///  Delay to resume Stream Management (if server accepts it)
+        /// </summary>
+        public int StreamManagementResumeDelay
+        {
+            get
+            {
+                return core.StreamManagementResumeDelay;
+            }
+
+            set
+            {
+                core.StreamManagementResumeDelay = value;
+            }
+        }
+
+        /// <summary>
+        ///  Last Stanza received and handled by server (in Stream Management context if server accepts it)
+        /// </summary>
+        public uint StreamManagementLastStanzaReceivedAndHandledByServer
+        {
+            get
+            {
+                return core.StreamManagementLastStanzaReceivedAndHandledByServer;
+            }
+
+            set
+            {
+                core.StreamManagementLastStanzaReceivedAndHandledByServer = value;
+            }
+        }
+
+        /// <summary>
+        ///  Date of Last Stanza to resume Stream Management (if server accepts it)
+        /// </summary>
+        public DateTime StreamManagementLastStanzaDateReceivedAndHandledByServer
+        {
+            get
+            {
+                return core.StreamManagementLastStanzaDateReceivedAndHandledByServer;
+            }
+
+            set
+            {
+                core.StreamManagementLastStanzaDateReceivedAndHandledByServer = value;
+            }
+        }
+
+        /// <summary>
+        ///  Last Stanza received and handled by client (in Stream Management context if server accepts it)
+        /// </summary>
+        public uint StreamManagementLastStanzaReceivedAndHandledByClient
+        {
+            get
+            {
+                return core.StreamManagementLastStanzaReceivedAndHandledByClient;
+            }
+
+            set
+            {
+                core.StreamManagementLastStanzaReceivedAndHandledByClient = value;
+            }
+        }
+
+        /// <summary>
         /// A delegate used for verifying the remote Secure Sockets Layer (SSL)
         /// certificate which is used for authentication.
         /// </summary>
@@ -450,7 +594,6 @@ namespace Sharp.Xmpp.Im
             try
             {
                 core.ConnectionStatus += Core_ConnectionStatus;
-
                 if (UseWebSocket)
                 {
                     core.ActionToPerform += Core_ActionToPerform;
@@ -501,27 +644,31 @@ namespace Sharp.Xmpp.Im
                     core.SetLanguage();
                     ServiceDiscovery serviceDiscovery = GetExtension<ServiceDiscovery>();
                     serviceDiscovery.Supports(core.Jid.Domain, new Extension[] { });
+                    
+                    core.QueueActionToPerform(XmppCore.ACTION_ENABLE_STREAM_MANAGEMENT);
+                    break;
 
+                case XmppCore.ACTION_ENABLE_STREAM_MANAGEMENT:
+                    // Enable stream management if:
+                    // - client wants it: EnableStreamManagement
+                    // - server accepts it: StreamManagementAvailable
+                    if (EnableStreamManagement && StreamManagementAvailable)
+                    {
+                        var xml = Xml.Element("enable", "urn:xmpp:sm:3");
+                        xml.SetAttribute("resume", "true");
+                        Send(xml);
+                    }
                     core.QueueActionToPerform(XmppCore.ACTION_ENABLE_MESSAGE_CARBONS);
                     break;
 
                 case XmppCore.ACTION_ENABLE_MESSAGE_CARBONS:
-                    MessageCarbons messageCarbons = GetExtension<MessageCarbons>();
-                    messageCarbons.EnableCarbons(true);
+                    GetExtension<MessageCarbons>()?.EnableCarbons(true);
 
                     core.QueueActionToPerform(XmppCore.ACTION_GET_ROSTER);
                     break;
 
                 case XmppCore.ACTION_GET_ROSTER:
                     GetRoster();
-
-                    core.QueueActionToPerform(XmppCore.ACTION_SET_DEFAULT_STATUS);
-                    //core.QueueActionToPerform(XmppCore.ACTION_FULLY_CONNECTED);
-                    break;
-
-                case XmppCore.ACTION_SET_DEFAULT_STATUS:
-                    // No more set default status here - it must be done in application itself
-                    //SetStatus(defaultStatus, "", 5);
 
                     core.QueueActionToPerform(XmppCore.ACTION_FULLY_CONNECTED);
                     break;
@@ -1516,6 +1663,16 @@ namespace Sharp.Xmpp.Im
         }
 
         /// <summary>
+        /// Send the XML element - Used by Stream Management
+        /// </summary>
+        /// <param name="element">The XML element to send.</param>
+        internal void Send(XmlElement element)
+        {
+            core.Send(element);
+        }
+
+
+        /// <summary>
         /// Performs an IQ set/get request and blocks until the response IQ comes in.
         /// </summary>
         /// <param name="type">The type of the request. This must be either
@@ -1714,6 +1871,7 @@ namespace Sharp.Xmpp.Im
                 }
                 
             };
+
             core.Message += (sender, e) =>
             {
                 try
@@ -1726,10 +1884,24 @@ namespace Sharp.Xmpp.Im
                     log.Error("[SetupEventHandlers] cannot create new Message object:\r\nStanza:\r\n{0}\r\nException:\r\n{1}", e.Stanza.ToString(), Util.SerializeException(eMessage));
                 }
             };
+
             core.Error += (sender, e) =>
             {
                 log.Error("[SetupEventHandlers] error fired\r\nException[{0}]", Util.SerializeException(e.Exception));
                 Error.Raise(sender, new ErrorEventArgs(e.Exception));
+            };
+
+            core.StreamManagementStanza += (sender, e) =>
+            {
+                try
+                {
+                    StreamManagementStanza sms = new StreamManagementStanza(e.Stanza);
+                    OnStreamManagementStanza(sms);
+                }
+                catch (Exception eMessage)
+                {
+                    log.Error("[SetupEventHandlers] cannot create new StreamManagementStanza object:\r\nStanza:\r\n{0}\r\nException:\r\n{1}", e.Stanza.ToString(), Util.SerializeException(eMessage));
+                }
             };
         }
 
@@ -1751,6 +1923,25 @@ namespace Sharp.Xmpp.Im
                 throw new InvalidOperationException("Not connected to XMPP server.");
             if (authRequired && !Authenticated)
                 throw new InvalidOperationException("Not authenticated with XMPP server.");
+        }
+
+
+        private void OnStreamManagementStanza(StreamManagementStanza sms)
+        {
+            // Invoke IInput<Iq> Plugins.
+            foreach (var ext in extensions)
+            {
+                var filter = ext as IInputFilter<StreamManagementStanza>;
+                if (filter != null)
+                {
+                    // Swallow StreamManagement stanza?
+                    if (filter.Input(sms))
+                    {
+                        log.Debug("[OnStreamManagementStanza] filter used by extension [{0}]", ext.Xep.ToString());
+                        return;
+                    }
+                }
+            }
         }
 
         /// <summary>
@@ -1923,7 +2114,12 @@ namespace Sharp.Xmpp.Im
             string lang = presence.Data.GetAttribute("xml:lang");
             var dict = new Dictionary<string, string>();
             if (String.IsNullOrEmpty(lang))
+            {
+                if (core.Language == null)
+                    core.SetLanguage();
+
                 lang = core.Language.Name;
+            }
             foreach (XmlNode node in presence.Data.GetElementsByTagName("status"))
             {
                 XmlElement element = node as XmlElement;
@@ -2136,7 +2332,7 @@ namespace Sharp.Xmpp.Im
             return new PrivacyRule(allow, order, granularity);
         }
 
-        private void RaiseConnectionStatus(bool connected)
+        internal void RaiseConnectionStatus(bool connected)
         {
             log.Debug("[RaiseConnectionStatus] connected:{0}", connected);
             EventHandler<ConnectionStatusEventArgs> h = this.ConnectionStatus;

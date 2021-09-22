@@ -1,4 +1,5 @@
 ﻿using Sharp.Xmpp.Core.Sasl;
+using Sharp.Xmpp.Extensions;
 
 using System;
 using System.Collections.Concurrent;
@@ -31,9 +32,10 @@ namespace Sharp.Xmpp.Core
 
         public const String ACTION_CREATE_SESSION = "CREATE_SESSION";
         public const String ACTION_SERVICE_DISCOVERY = "SERVICE_DISCOVERY";
+        public const String ACTION_ENABLE_STREAM_MANAGEMENT = "ENABLE_STREAM_MANAGEMENT";
         public const String ACTION_ENABLE_MESSAGE_CARBONS = "ENABLE_MESSAGE_CARBON";
         public const String ACTION_GET_ROSTER = "GET_ROSTER";
-        public const String ACTION_SET_DEFAULT_STATUS = "SET_DEFAULT_STATUS";
+        // public const String ACTION_SET_DEFAULT_STATUS = "SET_DEFAULT_STATUS"; // No more used -> Must be done by application itself
         public const String ACTION_FULLY_CONNECTED = "FULLY_CONNECTED";
 
         public event EventHandler<TextEventArgs> ActionToPerform;
@@ -307,6 +309,87 @@ namespace Sharp.Xmpp.Core
         }
 
         /// <summary>
+        /// If true it means that server can manage Stream Management
+        /// </summary>
+        public bool StreamManagementAvailable
+        {
+            get;
+            set;
+        }
+
+        /// <summary>
+        /// If true it means that server can manage Stream Management and it was sucessfully enabled
+        /// </summary>
+        public bool StreamManagementEnabled
+        {
+            get;
+            set;
+        }
+
+        /// <summary>
+        /// If true the session will enable Stream Management (if server accepts it)
+        /// </summary>
+        public bool StreamManagementEnable
+        {
+            get;
+            set;
+        }
+
+        /// <summary>
+        /// If true the session will try to resume Stream Management (if server accepts it)
+        /// </summary>
+        public bool StreamManagementResume
+        {
+            get;
+            set;
+        }
+
+        /// <summary>
+        ///  Id to resume Stream Management (if server accepts it)
+        /// </summary>
+        public String StreamManagementResumeId
+        {
+            get;
+            set;
+        }
+
+        /// <summary>
+        ///  Delay to resume Stream Management (if server accepts it)
+        /// </summary>
+        public int StreamManagementResumeDelay
+        {
+            get;
+            set;
+        }
+
+        /// <summary>
+        ///  Last Stanza received and handled to resume Stream Management (if server accepts it)
+        /// </summary>
+        public uint StreamManagementLastStanzaReceivedAndHandledByServer
+        {
+            get;
+            set;
+        }
+
+        /// <summary>
+        ///  Date of Last Stanza to resume Stream Management (if server accepts it)
+        /// </summary>
+        public DateTime StreamManagementLastStanzaDateReceivedAndHandledByServer
+        {
+            get;
+            set;
+        }
+
+        /// <summary>
+        ///  Last Stanza sent and handled to resume Stream Management (if server accepts it)
+        /// </summary>
+        public uint StreamManagementLastStanzaReceivedAndHandledByClient
+        {
+            get;
+            set;
+        }
+
+        /// <summary>
         /// A delegate used for verifying the remote Secure Sockets Layer (SSL)
         /// certificate which is used for authentication.
         /// </summary>
@@ -380,6 +463,11 @@ namespace Sharp.Xmpp.Core
         /// The event that is raised when a Presence stanza has been received.
         /// </summary>
         public event EventHandler<PresenceEventArgs> Presence;
+
+        /// <summary>
+        /// The event that is raised when a Presence stanza has been received.
+        /// </summary>
+        public event EventHandler<StreamManagementStanzaEventArgs> StreamManagementStanza;
 
         public void SetLanguage()
         {
@@ -1283,7 +1371,7 @@ namespace Sharp.Xmpp.Core
         /// is null.</exception>
         /// <exception cref="IOException">There was a failure while writing
         /// to the network.</exception>
-        private void Send(XmlElement element)
+        internal void Send(XmlElement element)
         {
             element.ThrowIfNull("element");
             Send(element.ToXmlString());
@@ -1475,14 +1563,29 @@ namespace Sharp.Xmpp.Core
                                 }
                                 else if (subElem.Name == "bind")
                                 {
-                                    xmlResponse = Xml.Element("iq")
-                                        .Attr("type", "set")
-                                        .Attr("id", BIND_ID);
-                                    var bind = Xml.Element("bind", "urn:ietf:params:xml:ns:xmpp-bind");
-                                    if (resource != null)
-                                        bind.Child(Xml.Element("resource").Text(resource));
-                                    xmlResponse.Child(bind);
-                                    Send(xmlResponse);
+                                    // Check if StreamManagement is Supported
+                                    var smElement = elem["sm", "urn:xmpp:sm:3"];
+                                    StreamManagementAvailable = (smElement != null);
+
+                                    // /!\ Need to RESUME session here (if needed) and AVOID to do a binding in this case
+                                    if (StreamManagementAvailable && StreamManagementResume)
+                                    {
+                                        var xml = Xml.Element("resume", "urn:xmpp:sm:3");
+                                        xml.SetAttribute("h", StreamManagementLastStanzaReceivedAndHandledByClient.ToString());
+                                        xml.SetAttribute("previd", StreamManagementResumeId);
+                                        Send(xml);
+                                    }
+                                    else
+                                    {
+                                        xmlResponse = Xml.Element("iq")
+                                            .Attr("type", "set")
+                                            .Attr("id", BIND_ID);
+                                        var bind = Xml.Element("bind", "urn:ietf:params:xml:ns:xmpp-bind");
+                                        if (resource != null)
+                                            bind.Child(Xml.Element("resource").Text(resource));
+                                        xmlResponse.Child(bind);
+                                        Send(xmlResponse);
+                                    }
                                 }
                                 break;
 
@@ -1530,6 +1633,29 @@ namespace Sharp.Xmpp.Core
                             case "presence":
                                 //log.Debug("presence received");
                                 stanzaQueue.Add(new Presence(elem));
+                                break;
+
+                            case "enabled": // in response to "enable"
+                            case "a": // answer to a request
+                            case "r": // request
+                            case "resumed": // in response to "resume"
+                            case "failed": // In case of pb
+                                stanzaQueue.Add(new StreamManagementStanza(elem));
+                                break;
+
+                            case "open":
+                                // Nothing special to do
+                                break;
+
+                            case "close":
+                                // Server has closed the session
+                                // We need to cancel any resume info
+                                StreamManagementResumeId = "";
+                                break;
+
+                            default:
+                                log.Error("ReadXmlWebSocketMessage - not managed:[{0}]", elem.Name);
+
                                 break;
                         }
 
@@ -1631,6 +1757,14 @@ namespace Sharp.Xmpp.Core
             }
         }
 
+        private void IncreaseStanzaReceivedAndHandled()
+        {
+            if (StreamManagementLastStanzaReceivedAndHandledByClient < uint.MaxValue)
+                StreamManagementLastStanzaReceivedAndHandledByClient++;
+            else
+                StreamManagementLastStanzaReceivedAndHandledByClient = 0;
+        }
+
         /// <summary>
         /// Continously removes stanzas from the FIFO of incoming stanzas and raises
         /// the respective events.
@@ -1646,11 +1780,22 @@ namespace Sharp.Xmpp.Core
                     Stanza stanza = stanzaQueue.Take(cancelDispatch.Token);
                     //log.Debug("DispatchEvents - message:[{0}]", stanza.ToString());
                     if (stanza is Iq)
+                    {
                         Iq.Raise(this, new IqEventArgs(stanza as Iq));
-                    else if (stanza is Message)
-                        Message.Raise(this, new MessageEventArgs(stanza as Message));
-                    else if (stanza is Presence)
-                        Presence.Raise(this, new PresenceEventArgs(stanza as Presence));
+                        IncreaseStanzaReceivedAndHandled();
+                    }
+                    else if (stanza is Message message)
+                    {
+                        Message.Raise(this, new MessageEventArgs(message));
+                        IncreaseStanzaReceivedAndHandled();
+                    }
+                    else if (stanza is Presence presence)
+                    {
+                        Presence.Raise(this, new PresenceEventArgs(presence));
+                        IncreaseStanzaReceivedAndHandled();
+                    }
+                    else if (stanza is StreamManagementStanza sms)
+                        StreamManagementStanza.Raise(this, new StreamManagementStanzaEventArgs(sms));
                     else
                         log.Error("DispatchEvents - not a valide stanza ....");
                 }

@@ -29,6 +29,11 @@
         Ping,
 
         /// <summary>
+        /// An extension to support Stream Management (XEP-0198)
+        /// </summary>
+        StreamManagement,
+
+        /// <summary>
         /// An extension for getting the attention of another user.
         /// </summary>
         Attention,
