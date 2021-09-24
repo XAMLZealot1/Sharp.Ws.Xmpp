@@ -398,13 +398,16 @@ namespace Sharp.Xmpp.Core
 
         private void ClientWebSocketClosed()
         {
-            webSocketOpened = false;
-            if (clientWebSocket != null)
-                log.Debug("[ClientWebSocketClosed] CloseStatus:[{0}] -  CloseStatusDescription:[{1}]", clientWebSocket.CloseStatus, clientWebSocket.CloseStatusDescription);
-            else
-                log.Debug("[ClientWebSocketClosed]");
+            if (webSocketOpened)
+            {
+                webSocketOpened = false;
+                if (clientWebSocket != null)
+                    log.Debug("[ClientWebSocketClosed] CloseStatus:[{0}] -  CloseStatusDescription:[{1}]", clientWebSocket.CloseStatus, clientWebSocket.CloseStatusDescription);
+                else
+                    log.Debug("[ClientWebSocketClosed]");
 
-            RaiseWebSocketClosed();
+                RaiseWebSocketClosed();
+            }
         }
 
         private void RaiseWebSocketClosed()
