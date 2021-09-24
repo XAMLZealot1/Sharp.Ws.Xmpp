@@ -9,7 +9,7 @@ namespace Sharp.Xmpp.Extensions
     /// <summary>
     /// Implements the 'Stream Management' extension as defined in XEP-0198.
     /// </summary>
-    internal class StreamManagement : XmppExtension, IInputFilter<Iq>, IInputFilter<StreamManagementStanza>
+    internal class StreamManagement : XmppExtension, IInputFilter<StreamManagementStanza>
     {
         private static readonly Logger log = LogConfigurator.GetLogger(typeof(StreamManagement));
 
@@ -53,36 +53,14 @@ namespace Sharp.Xmpp.Extensions
         internal void RequestAcknowledgement()
         {
             var xml = Xml.Element("r", "urn:xmpp:sm:3");
-            im.Send(xml);
+            im.Send(xml, false);
         }
 
         internal void SendkAcknowledgement(uint h)
         {
             var xml = Xml.Element("a", "urn:xmpp:sm:3");
             xml.SetAttribute("h", h.ToString());
-            im.Send(xml);
-        }
-
-        private Boolean IsEnabled()
-        {
-            return (im.EnableStreamManagement && im.StreamManagementAvailable);
-        }
-
-        /// <summary>
-        /// Invoked when an IQ stanza is being received.
-        /// </summary>
-        /// <param name="stanza">The stanza which is being received.</param>
-        /// <returns>true to intercept the stanza or false to pass the stanza
-        /// on to the next handler.</returns>
-        public bool Input(Iq stanza)
-        {
-            if (IsEnabled())
-            {
-                var ping = stanza.Data["ping"];
-                if ((ping?.NamespaceURI == "urn:xmpp:ping"))
-                    RequestAcknowledgement();
-            }
-            return false;
+            im.Send(xml, false);
         }
 
         /// <summary>
@@ -105,6 +83,8 @@ namespace Sharp.Xmpp.Extensions
                 switch (stanza.Data.LocalName)
                 {
                     case "failed":
+                        im.StreamManagementResumeId = "";
+                        im.RaiseConnectionStatus(false);
                         Failed.Raise(this, null);
                         break;
 
@@ -147,9 +127,12 @@ namespace Sharp.Xmpp.Extensions
                         im.StreamManagementLastStanzaReceivedAndHandledByServer = stanzasReceivedHandled;
                         im.StreamManagementLastStanzaDateReceivedAndHandledByServer = DateTime.UtcNow;
 
+                        //log.Debug("[Input] - StreamManagementLastStanzaReceivedAndHandledByClient:[{0}]", im.StreamManagementLastStanzaReceivedAndHandledByClient);
+
                         break;
 
                     case "r": // answer to the request
+                        im.StreamManagementLastStanzaReceivedAndHandledByClient = im.StreamManagementLastStanzaReceivedByClient;
                         SendkAcknowledgement(im.StreamManagementLastStanzaReceivedAndHandledByClient);
                         break;
                 }

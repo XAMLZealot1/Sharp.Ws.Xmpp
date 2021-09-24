@@ -1935,13 +1935,16 @@ namespace Sharp.Xmpp.Client
             {
                 im.ResumeStreamManagement = true;
                 im.StreamManagementResumeId = resumeId;
+
                 im.StreamManagementLastStanzaReceivedAndHandledByServer = lastStanzaReceivedHandled;
+
                 im.StreamManagementLastStanzaReceivedAndHandledByClient = lastStanzaSentHandled;
+                im.StreamManagementLastStanzaReceivedByClient = lastStanzaSentHandled;
             }
             else
                 im.ResumeStreamManagement = false;
 
-            log.Info("[ResumeStreamManagement] - ResumeStreamManagement - ResumeId:[{0}] - LastStanzaReceivedHandled:[{1}]", im.StreamManagementResumeId, im.StreamManagementLastStanzaReceivedAndHandledByServer);
+            log.Info("[ResumeStreamManagement] - ResumeStreamManagement - ResumeId:[{0}] - LastStanzaReceivedHandled:[{1}] - LastStanzaSentdHandled:[{2}]", im.StreamManagementResumeId, im.StreamManagementLastStanzaReceivedAndHandledByServer, im.StreamManagementLastStanzaReceivedAndHandledByClient);
         }
 
         public void GetResumeStreamInfo(out String resumeId, out uint lastStanzaReceivedHandled, out uint lastStanzaSentHandled)
@@ -2915,7 +2918,7 @@ namespace Sharp.Xmpp.Client
             sdisco = im.LoadExtension<ServiceDiscovery>();
             ecapa = im.LoadExtension<EntityCapabilities>();
 
-            streamManagement = im.LoadExtension<StreamManagement>(); // /!\ StreamManagement must be loaded before Ping - we use ping occurence to request acknowledgement
+            streamManagement = im.LoadExtension<StreamManagement>();
             ping = im.LoadExtension<Ping>();
 
             attention = im.LoadExtension<Attention>();

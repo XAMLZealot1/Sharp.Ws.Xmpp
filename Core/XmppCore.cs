@@ -40,6 +40,7 @@ namespace Sharp.Xmpp.Core
 
         public event EventHandler<TextEventArgs> ActionToPerform;
         public event EventHandler<ConnectionStatusEventArgs> ConnectionStatus;
+        public event EventHandler<EventArgs> StreamManagementRequestAcknowledgement;
 
         /// <summary>
         /// The TCP connection to the XMPP server.
@@ -153,6 +154,11 @@ namespace Sharp.Xmpp.Core
         /// A FIFO of stanzas waiting to be processed.
         /// </summary>
         private BlockingCollection<Stanza> stanzaQueue = new BlockingCollection<Stanza>();
+
+        private BlockingCollection<Stanza> streamManagementStanzaQueue = new BlockingCollection<Stanza>();
+
+        private BlockingCollection<Stanza>[] fullStanzaQueue;
+         
 
         /// <summary>
         /// A cancellation token source for cancelling the dispatcher, if neccessary.
@@ -390,6 +396,16 @@ namespace Sharp.Xmpp.Core
         }
 
         /// <summary>
+        ///  Last Stanza received (but not yet handled) by client (in Stream Management context if server accepts it)
+        /// </summary>
+        public uint StreamManagementLastStanzaReceivedByClient
+        {
+            get;
+            set;
+        }
+
+
+        /// <summary>
         /// A delegate used for verifying the remote Secure Sockets Layer (SSL)
         /// certificate which is used for authentication.
         /// </summary>
@@ -512,6 +528,9 @@ namespace Sharp.Xmpp.Core
             Password = password;
             Tls = tls;
             Validate = validate;
+
+            fullStanzaQueue = new BlockingCollection<Stanza>[] { streamManagementStanzaQueue, stanzaQueue };
+
         }
 
         /// <summary>
@@ -690,7 +709,7 @@ namespace Sharp.Xmpp.Core
                 .Attr("version", "1.0")
                 .Attr("xmlns:stream", "http://etherx.jabber.org/streams")
                 .Attr("xml:lang", CultureInfo.CurrentCulture.Name);
-            Send(xml.ToXmlString(xmlDeclaration: true, leaveOpen: false));
+            Send(xml.ToXmlString(xmlDeclaration: true, leaveOpen: false), false);
         }
 
         /// <summary>
@@ -1209,7 +1228,7 @@ namespace Sharp.Xmpp.Core
                 .Attr("version", "1.0")
                 .Attr("xmlns:stream", "http://etherx.jabber.org/streams")
                 .Attr("xml:lang", CultureInfo.CurrentCulture.Name);
-            Send(xml.ToXmlString(xmlDeclaration: true, leaveOpen: true));
+            Send(xml.ToXmlString(xmlDeclaration: true, leaveOpen: true), false);
             // Create a new parser instance.
             if (parser != null)
                 parser.Close();
@@ -1244,7 +1263,7 @@ namespace Sharp.Xmpp.Core
         {
             // Send STARTTLS command and ensure the server acknowledges the request.
             SendAndReceive(Xml.Element("starttls",
-                "urn:ietf:params:xml:ns:xmpp-tls"), "proceed");
+                "urn:ietf:params:xml:ns:xmpp-tls"), false, "proceed");
             // Complete TLS negotiation and switch to secure stream.
             SslStream sslStream = new SslStream(stream, false, validate ??
                 ((sender, cert, chain, err) => true));
@@ -1283,7 +1302,7 @@ namespace Sharp.Xmpp.Core
             var xml = Xml.Element("auth", "urn:ietf:params:xml:ns:xmpp-sasl")
                 .Attr("mechanism", name)
                 .Text(m.HasInitial ? m.GetResponse(String.Empty) : String.Empty);
-            Send(xml);
+            Send(xml, false);
             while (true)
             {
                 XmlElement ret = parser.NextElement("challenge", "success", "failure");
@@ -1304,7 +1323,7 @@ namespace Sharp.Xmpp.Core
                 }
                 xml = Xml.Element("response",
                     "urn:ietf:params:xml:ns:xmpp-sasl").Text(response);
-                Send(xml);
+                Send(xml, false);
             }
             // The instance is now authenticated.
             Authenticated = true;
@@ -1357,7 +1376,7 @@ namespace Sharp.Xmpp.Core
             if (resourceName != null)
                 bind.Child(Xml.Element("resource").Text(resourceName));
             xml.Child(bind);
-            XmlElement res = SendAndReceive(xml, "iq");
+            XmlElement res = SendAndReceive(xml, true, "iq");
             if (res["bind"] == null || res["bind"]["jid"] == null)
                 throw new XmppException("Erroneous server response.");
             return new Jid(res["bind"]["jid"].InnerText);
@@ -1371,10 +1390,10 @@ namespace Sharp.Xmpp.Core
         /// is null.</exception>
         /// <exception cref="IOException">There was a failure while writing
         /// to the network.</exception>
-        internal void Send(XmlElement element)
+        internal void Send(XmlElement element, Boolean isStanza)
         {
             element.ThrowIfNull("element");
-            Send(element.ToXmlString());
+            Send(element.ToXmlString(), isStanza);
         }
 
         /// <summary>
@@ -1384,7 +1403,7 @@ namespace Sharp.Xmpp.Core
         /// <exception cref="ArgumentNullException">The xml parameter is null.</exception>
         /// <exception cref="IOException">There was a failure while writing to
         /// the network.</exception>
-        private void Send(string xml)
+        private void Send(string xml, Boolean isStanza)
         {
             xml.ThrowIfNull("xml");
             // XMPP is guaranteed to be UTF-8.
@@ -1392,7 +1411,9 @@ namespace Sharp.Xmpp.Core
 
             if (useWebSocket)
             {
-                webSocketClient.Send(xml);
+                webSocketClient.Send(xml); 
+                if(isStanza && StreamManagementEnabled)
+                    StreamManagementRequestAcknowledgement.Raise(this, null);
                 return;
             }
 
@@ -1424,7 +1445,7 @@ namespace Sharp.Xmpp.Core
         private void Send(Stanza stanza)
         {
             stanza.ThrowIfNull("stanza");
-            Send(stanza.ToString());
+            Send(stanza.ToString(), true);
         }
 
         /// <summary>
@@ -1441,10 +1462,9 @@ namespace Sharp.Xmpp.Core
         /// <exception cref="ArgumentNullException">The element parameter is null.</exception>
         /// <exception cref="IOException">There was a failure while writing to
         /// the network, or there was a failure while reading from the network.</exception>
-        private XmlElement SendAndReceive(XmlElement element,
-            params string[] expected)
+        private XmlElement SendAndReceive(XmlElement element, Boolean isStanza, params string[] expected)
         {
-            Send(element);
+            Send(element, isStanza);
             try
             {
                 return parser.NextElement(expected);
@@ -1515,7 +1535,7 @@ namespace Sharp.Xmpp.Core
                                 response = saslMechanism.GetResponse(elem.InnerText);
                                 xmlResponse = Xml.Element("response", 
                                     "urn:ietf:params:xml:ns:xmpp-sasl").Text(response);
-                                Send(xmlResponse);
+                                Send(xmlResponse, false);
                                 break;
 
                             case "success":
@@ -1530,7 +1550,7 @@ namespace Sharp.Xmpp.Core
                                             .Attr("version", "1.0")
                                             .Attr("xmlns:stream", "http://etherx.jabber.org/streams")
                                             .Attr("xml:lang", CultureInfo.CurrentCulture.Name);
-                                    Send(elem.ToXmlString(xmlDeclaration: true, leaveOpen: false));
+                                    Send(elem.ToXmlString(xmlDeclaration: true, leaveOpen: false), false);
                                 }
                                 break;
 
@@ -1559,7 +1579,7 @@ namespace Sharp.Xmpp.Core
                                     xmlResponse = Xml.Element("auth", "urn:ietf:params:xml:ns:xmpp-sasl")
                                         .Attr("mechanism", name)
                                         .Text(saslMechanism.HasInitial ? saslMechanism.GetResponse(String.Empty) : String.Empty);
-                                    Send(xmlResponse);
+                                    Send(xmlResponse, false);
                                 }
                                 else if (subElem.Name == "bind")
                                 {
@@ -1573,7 +1593,7 @@ namespace Sharp.Xmpp.Core
                                         var xml = Xml.Element("resume", "urn:xmpp:sm:3");
                                         xml.SetAttribute("h", StreamManagementLastStanzaReceivedAndHandledByClient.ToString());
                                         xml.SetAttribute("previd", StreamManagementResumeId);
-                                        Send(xml);
+                                        Send(xml, false);
                                     }
                                     else
                                     {
@@ -1584,7 +1604,7 @@ namespace Sharp.Xmpp.Core
                                         if (resource != null)
                                             bind.Child(Xml.Element("resource").Text(resource));
                                         xmlResponse.Child(bind);
-                                        Send(xmlResponse);
+                                        Send(xmlResponse, true);
                                     }
                                 }
                                 break;
@@ -1640,7 +1660,7 @@ namespace Sharp.Xmpp.Core
                             case "r": // request
                             case "resumed": // in response to "resume"
                             case "failed": // In case of pb
-                                stanzaQueue.Add(new StreamManagementStanza(elem));
+                                streamManagementStanzaQueue.Add(new StreamManagementStanza(elem));
                                 break;
 
                             case "open":
@@ -1759,10 +1779,10 @@ namespace Sharp.Xmpp.Core
 
         private void IncreaseStanzaReceivedAndHandled()
         {
-            if (StreamManagementLastStanzaReceivedAndHandledByClient < uint.MaxValue)
-                StreamManagementLastStanzaReceivedAndHandledByClient++;
+            if (StreamManagementLastStanzaReceivedByClient < uint.MaxValue)
+                StreamManagementLastStanzaReceivedByClient++;
             else
-                StreamManagementLastStanzaReceivedAndHandledByClient = 0;
+                StreamManagementLastStanzaReceivedByClient = 0;
         }
 
         /// <summary>
@@ -1777,7 +1797,9 @@ namespace Sharp.Xmpp.Core
             {
                 try
                 {
-                    Stanza stanza = stanzaQueue.Take(cancelDispatch.Token);
+                    Stanza stanza;
+                    BlockingCollection<Stanza>.TakeFromAny(fullStanzaQueue, out stanza, cancelDispatch.Token);
+
                     //log.Debug("DispatchEvents - message:[{0}]", stanza.ToString());
                     if (stanza is Iq)
                     {
@@ -1852,7 +1874,7 @@ namespace Sharp.Xmpp.Core
                 return;
 
             // Close the XML stream.
-            Send("</stream:stream>");
+            Send("</stream:stream>", false);
 
             if (useWebSocket)
             {

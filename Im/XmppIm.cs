@@ -324,6 +324,23 @@ namespace Sharp.Xmpp.Im
         }
 
         /// <summary>
+        ///  Last Stanza received (but not yet handled) by client (in Stream Management context if server accepts it)
+        /// </summary>
+        public uint StreamManagementLastStanzaReceivedByClient
+        {
+            get
+            {
+                return core.StreamManagementLastStanzaReceivedByClient;
+            }
+
+            set
+            {
+                core.StreamManagementLastStanzaReceivedByClient = value;
+            }
+        }
+
+
+        /// <summary>
         /// A delegate used for verifying the remote Secure Sockets Layer (SSL)
         /// certificate which is used for authentication.
         /// </summary>
@@ -656,7 +673,7 @@ namespace Sharp.Xmpp.Im
                     {
                         var xml = Xml.Element("enable", "urn:xmpp:sm:3");
                         xml.SetAttribute("resume", "true");
-                        Send(xml);
+                        Send(xml, false);
                     }
                     core.QueueActionToPerform(XmppCore.ACTION_ENABLE_MESSAGE_CARBONS);
                     break;
@@ -1666,9 +1683,9 @@ namespace Sharp.Xmpp.Im
         /// Send the XML element - Used by Stream Management
         /// </summary>
         /// <param name="element">The XML element to send.</param>
-        internal void Send(XmlElement element)
+        internal void Send(XmlElement element, Boolean isStanza)
         {
-            core.Send(element);
+            core.Send(element, isStanza);
         }
 
 
@@ -1903,6 +1920,11 @@ namespace Sharp.Xmpp.Im
                     log.Error("[SetupEventHandlers] cannot create new StreamManagementStanza object:\r\nStanza:\r\n{0}\r\nException:\r\n{1}", e.Stanza.ToString(), Util.SerializeException(eMessage));
                 }
             };
+
+            core.StreamManagementRequestAcknowledgement += (sender, e) =>
+            {
+                GetExtension<StreamManagement>()?.RequestAcknowledgement();
+            };
         }
 
         /// <summary>
@@ -1924,7 +1946,6 @@ namespace Sharp.Xmpp.Im
             if (authRequired && !Authenticated)
                 throw new InvalidOperationException("Not authenticated with XMPP server.");
         }
-
 
         private void OnStreamManagementStanza(StreamManagementStanza sms)
         {
