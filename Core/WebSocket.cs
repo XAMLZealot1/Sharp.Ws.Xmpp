@@ -231,7 +231,7 @@ namespace Sharp.Xmpp.Core
                             ClientWebSocketClosed();
                             return;
                         }
-                        
+
                         // Queue the message but only if we received text
                         if (result.MessageType == WebSocketMessageType.Text)
                         {
@@ -254,10 +254,15 @@ namespace Sharp.Xmpp.Core
                                 QueueMessageReceived(message);
                             }
                         }
-                        else
+                        else if (result.MessageType == WebSocketMessageType.Binary)
                         {
                             log.Warn("[ManageIncomingMessage] We have received data using unmanaged type - MessageType:[{0}]", result.MessageType.ToString());
                         }
+                        //else
+                        //{
+                        //    // Nothing special to do here
+                        //}
+
                     }
 
                     // Manage next incoming message
@@ -266,7 +271,7 @@ namespace Sharp.Xmpp.Core
             );
         }
 
-        #region Iq stuff
+#region Iq stuff
         public void AddExpectedIqId(string id)
         {
             //log.Debug("AddExpectedIqId:{0}", id);
