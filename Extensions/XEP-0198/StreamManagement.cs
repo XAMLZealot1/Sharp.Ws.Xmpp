@@ -84,13 +84,14 @@ namespace Sharp.Xmpp.Extensions
                 {
                     case "failed":
                         im.StreamManagementResumeId = "";
+
+                        Failed.Raise(this, null); //  /!\ This event must be ALWAYS raised before RaiseConnectionStatus !!!
                         im.RaiseConnectionStatus(false);
-                        Failed.Raise(this, null);
                         break;
 
                     case "resumed": // in response to "resume"
+                        Resumed.Raise(this, null); //  /!\ This event must be ALWAYS raised before RaiseConnectionStatus !!!
                         im.RaiseConnectionStatus(true);
-                        Resumed.Raise(this, null);
                         break;
 
                     case "enabled": // in response to "enable"
