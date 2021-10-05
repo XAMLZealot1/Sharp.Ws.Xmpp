@@ -59,6 +59,8 @@ namespace Sharp.Xmpp.Core
         /// </summary>
         private StreamParser parser;
 
+        private bool normalClosure;
+
         /// <summary>
         /// True if the instance has been disposed of.
         /// </summary>
@@ -1077,10 +1079,11 @@ namespace Sharp.Xmpp.Core
         /// connected to a remote host.</exception>
         /// <exception cref="IOException">There was a failure while writing to the
         /// network.</exception>
-        public void Close()
+        public void Close(bool normalClosure = true)
         {
             //FIXME, instead of asert valid I have ifs, only for the closing
             //AssertValid();
+            this.normalClosure = normalClosure;
             // Close the XML stream.
             if (Connected) Disconnect();
             if (!disposed) Dispose();
@@ -1127,7 +1130,7 @@ namespace Sharp.Xmpp.Core
                         webSocketClient.WebSocketClosed -= WebSocketClient_WebSocketClosed;
                         webSocketClient.WebSocketOpened -= WebSocketClient_WebSocketOpened;
 
-                        webSocketClient.Close();
+                        webSocketClient.Close(normalClosure);
                         webSocketClient = null;
                     }
                 }
@@ -1873,16 +1876,18 @@ namespace Sharp.Xmpp.Core
             if (!Connected)
                 return;
 
-            // Close the XML stream.
-            Send("</stream:stream>", false);
 
-            if (useWebSocket)
-            {
-                if (webSocketClient != null)
-                {
-                    webSocketClient.Close();
-                }
-            }
+            // Close the XML stream.
+            if (normalClosure)
+                Send("</stream:stream>", false);
+
+            //if (useWebSocket)
+            //{
+            //    if (webSocketClient != null)
+            //    {
+            //        webSocketClient.Close(normalClosure);
+            //    }
+            //}
             
             Connected = false;
             Authenticated = false;

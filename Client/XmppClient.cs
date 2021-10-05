@@ -26,6 +26,8 @@ namespace Sharp.Xmpp.Client
     {
         private static readonly Logger log = LogConfigurator.GetLogger(typeof(XmppClient));
 
+        private bool normalClosure;
+
         /// <summary>
         /// True if the instance has been disposed of.
         /// </summary>
@@ -1949,9 +1951,18 @@ namespace Sharp.Xmpp.Client
 
         public void GetResumeStreamInfo(out String resumeId, out uint lastStanzaReceivedHandled, out uint lastStanzaSentHandled)
         {
-            resumeId = im.StreamManagementResumeId;
-            lastStanzaReceivedHandled = im.StreamManagementLastStanzaReceivedAndHandledByServer;
-            lastStanzaSentHandled = im.StreamManagementLastStanzaReceivedAndHandledByClient;
+            try
+            {
+                resumeId = im.StreamManagementResumeId;
+                lastStanzaReceivedHandled = im.StreamManagementLastStanzaReceivedAndHandledByServer;
+                lastStanzaSentHandled = im.StreamManagementLastStanzaReceivedAndHandledByClient;
+            }
+            catch 
+            {
+                resumeId = "";
+                lastStanzaReceivedHandled = 0;
+                lastStanzaSentHandled = 0;
+            }
         }
 
         /// <summary>
@@ -2852,10 +2863,12 @@ namespace Sharp.Xmpp.Client
         /// </summary>
         /// <exception cref="ObjectDisposedException">The XmppClient object has been
         /// disposed.</exception>
-        public void Close()
+        public void Close(bool normalClosure = true)
         {
             if (disposed)
                 throw new ObjectDisposedException(GetType().FullName);
+
+            this.normalClosure = normalClosure;
             Dispose();
         }
 
@@ -2884,7 +2897,7 @@ namespace Sharp.Xmpp.Client
                 if (disposing)
                 {
                     if (im != null)
-                        im.Close();
+                        im.Close(normalClosure);
                     im = null;
                 }
                 // Get rid of unmanaged resources.

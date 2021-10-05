@@ -29,6 +29,8 @@ namespace Sharp.Xmpp.Im
         /// </summary>
         private XmppCore core;
 
+        private bool normalClosure;
+
         /// <summary>
         /// True if the instance has been disposed of.
         /// </summary>
@@ -1522,10 +1524,11 @@ namespace Sharp.Xmpp.Im
         /// </summary>
         /// <exception cref="ObjectDisposedException">The XmppIm object has been
         /// disposed.</exception>
-        public void Close()
+        public void Close(bool normalClosure = true)
         {
             if (disposed)
                 throw new ObjectDisposedException(GetType().FullName);
+            this.normalClosure = normalClosure;
             Dispose();
         }
 
@@ -1554,7 +1557,7 @@ namespace Sharp.Xmpp.Im
                 if (disposing)
                 {
                     if (core != null)
-                        core.Close();
+                        core.Close(normalClosure);
                     core = null;
                 }
                 // Get rid of unmanaged resources.

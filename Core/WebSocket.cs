@@ -65,7 +65,7 @@ namespace Sharp.Xmpp.Core
             Task.Factory.StartNew(CreateAndManageWebSocket, TaskCreationOptions.LongRunning | TaskCreationOptions.DenyChildAttach);
         }
 
-        public async void Close()
+        public async void Close(bool normalClosure = true)
         {
             if (clientWebSocket != null)
             {
@@ -73,7 +73,10 @@ namespace Sharp.Xmpp.Core
                 {
                     try
                     {
-                        await clientWebSocket.CloseAsync(WebSocketCloseStatus.NormalClosure, "", CancellationToken.None);
+                        if(normalClosure)
+                            await clientWebSocket.CloseAsync(WebSocketCloseStatus.NormalClosure, "", CancellationToken.None);
+                        else
+                            await clientWebSocket.CloseAsync(WebSocketCloseStatus.EndpointUnavailable, "", CancellationToken.None);
                     }
                     catch
                     {
