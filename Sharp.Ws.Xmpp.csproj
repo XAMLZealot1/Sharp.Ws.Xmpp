@@ -3,7 +3,7 @@
   <PropertyGroup>
     <TargetFrameworks>netstandard2.0;netcoreapp3.1</TargetFrameworks>
     <AssemblyName>Sharp.Ws.Xmpp</AssemblyName>
-    <Version>2.5.1-sts</Version>
+    <Version>2.5.2-sts</Version>
     <Authors>Christophe Irles</Authors>
     <Company>ALE International</Company>
     <Product>Sharp.Ws.Xmpp</Product>
