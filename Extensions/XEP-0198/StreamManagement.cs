@@ -1,4 +1,5 @@
-﻿using NLog;
+﻿using Microsoft.Extensions.Logging;
+
 using Sharp.Xmpp.Core;
 using Sharp.Xmpp.Im;
 using System;
@@ -11,7 +12,7 @@ namespace Sharp.Xmpp.Extensions
     /// </summary>
     internal class StreamManagement : XmppExtension, IInputFilter<StreamManagementStanza>
     {
-        private static readonly Logger log = LogConfigurator.GetLogger(typeof(StreamManagement));
+        private static readonly ILogger log = LogFactory.CreateLogger<StreamManagement>();
 
         public event EventHandler<EventArgs> Failed;
         public event EventHandler<EventArgs> Resumed;
@@ -115,7 +116,7 @@ namespace Sharp.Xmpp.Extensions
                         im.StreamManagementResumeId = resumeId;
                         im.StreamManagementResumeDelay = delay;
 
-                        log.Debug("[Input] - StreamManagementEnabled:[{0}] - ResumeStreamManagementId:[{1}] - ResumeStreamManagementDelay:[{2}]", im.StreamManagementEnabled, im.StreamManagementResumeId, im.StreamManagementResumeDelay);
+                        log.LogDebug("[Input] - StreamManagementEnabled:[{0}] - ResumeStreamManagementId:[{1}] - ResumeStreamManagementDelay:[{2}]", im.StreamManagementEnabled, im.StreamManagementResumeId, im.StreamManagementResumeDelay);
 
                         break;
 
@@ -128,7 +129,7 @@ namespace Sharp.Xmpp.Extensions
                         im.StreamManagementLastStanzaReceivedAndHandledByServer = stanzasReceivedHandled;
                         im.StreamManagementLastStanzaDateReceivedAndHandledByServer = DateTime.UtcNow;
 
-                        //log.Debug("[Input] - StreamManagementLastStanzaReceivedAndHandledByClient:[{0}]", im.StreamManagementLastStanzaReceivedAndHandledByClient);
+                        //log.LogDebug("[Input] - StreamManagementLastStanzaReceivedAndHandledByClient:[{0}]", im.StreamManagementLastStanzaReceivedAndHandledByClient);
 
                         break;
 

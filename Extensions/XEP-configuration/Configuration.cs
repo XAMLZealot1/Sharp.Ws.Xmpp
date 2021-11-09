@@ -2,8 +2,9 @@ using Sharp.Xmpp.Im;
 using System;
 using System.Collections.Generic;
 
-using NLog;
+using Microsoft.Extensions.Logging;
 using System.Xml;
+
 
 namespace Sharp.Xmpp.Extensions
 {
@@ -12,7 +13,7 @@ namespace Sharp.Xmpp.Extensions
     /// </summary>
     internal class Configuration : XmppExtension, IInputFilter<Message>
     {
-        private static readonly Logger log = LogConfigurator.GetLogger(typeof(Configuration));
+        private static readonly ILogger log = LogFactory.CreateLogger<Configuration>();
 
         /// <summary>
         /// An enumerable collection of XMPP namespaces the extension implements.
@@ -228,7 +229,7 @@ namespace Sharp.Xmpp.Extensions
                     //string md5 = e["md5sum"]?.InnerText;
                     //string duration = e["duration"]?.InnerText;
 
-                    ////log.Debug("duration:[{0}]", duration);
+                    ////log.LogDebug("duration:[{0}]", duration);
                     //VoiceMailManagement.Raise(this, new VoiceMailManagementEventArgs(msgId, fileId, action, url, mimeType, fileName, size, md5, duration));
                 }
                 // Do we receive message about file
@@ -260,7 +261,7 @@ namespace Sharp.Xmpp.Extensions
                     }
                     catch(Exception exc)
                     {
-                        log.Warn("[Input] Exception occurred for thumbnail: [{0}]", Util.SerializeException(exc));
+                        log.LogWarning("[Input] Exception occurred for thumbnail: [{0}]", Util.SerializeException(exc));
                     }
 
                     ThumbnailManagement.Raise(this, new ThumbnailEventArgs(fileId, width, height));
@@ -308,7 +309,7 @@ namespace Sharp.Xmpp.Extensions
                     GroupManagement.Raise(this, new MessageEventArgs(e.ToXmlString()));
                 }
                 else
-                    log.Info("[Input] Message not managed");
+                    log.LogInformation("[Input] Message not managed");
                 // Since it's a Management message, we prevent next handler to parse it
                 return true;
             }

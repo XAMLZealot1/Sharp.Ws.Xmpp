@@ -6,7 +6,8 @@ using System.Linq;
 using System.Reflection;
 using System.Xml;
 
-using NLog;
+using Microsoft.Extensions.Logging;
+
 
 namespace Sharp.Xmpp.Extensions
 {
@@ -15,7 +16,7 @@ namespace Sharp.Xmpp.Extensions
     /// </summary>
     internal class ServiceDiscovery : XmppExtension, IInputFilter<Iq>
     {
-        private static readonly Logger log = LogConfigurator.GetLogger(typeof(ServiceDiscovery));
+        private static readonly ILogger log = LogFactory.CreateLogger<ServiceDiscovery>();
 
         /// <summary>
         /// A dictionary for caching supported services of XMPP entities.
@@ -261,7 +262,7 @@ namespace Sharp.Xmpp.Extensions
             foreach (XmlElement e in query.GetElementsByTagName("feature"))
                 ns.Add(e.GetAttribute("var"));
 
-            // log.Debug($"[QueryFeatures] - namespaces:[{String.Join(", ", ns.ToList())}]");
+            // log.LogDebug($"[QueryFeatures] - namespaces:[{String.Join(", ", ns.ToList())}]");
             // Go through each extension we support and see if the entity supports
             // all of the extension's namespaces.
             ISet<Extension> feats = new HashSet<Extension>();
@@ -270,7 +271,7 @@ namespace Sharp.Xmpp.Extensions
                 if (ns.IsSupersetOf(ext.Namespaces))
                 {
                     feats.Add(ext.Xep);
-                    log.Debug("Extension used:{0}", ext.Xep.ToString());
+                    log.LogDebug("Extension used:{0}", ext.Xep.ToString());
                 }
             }
 

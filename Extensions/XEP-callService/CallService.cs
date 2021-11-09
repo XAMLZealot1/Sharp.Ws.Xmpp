@@ -4,7 +4,7 @@ using System;
 using System.Collections.Generic;
 using System.Xml;
 
-using NLog;
+using Microsoft.Extensions.Logging;
 
 
 namespace Sharp.Xmpp.Extensions
@@ -14,7 +14,7 @@ namespace Sharp.Xmpp.Extensions
     /// </summary>
     internal class CallService : XmppExtension, IInputFilter<Sharp.Xmpp.Im.Message>
     {
-        private static readonly Logger log = LogConfigurator.GetLogger(typeof(CallService));
+        private static readonly ILogger log = LogFactory.CreateLogger<CallService>();
 
         private static readonly String CALLSERVICE_NS = "urn:xmpp:pbxagent:callservice:1";
 
@@ -158,7 +158,7 @@ namespace Sharp.Xmpp.Extensions
                 //For any reply we execute the callback
                 if (iq.Type == IqType.Error)
                 {
-                    log.Error("AskPBXCalls - Iq sent not valid - server sent an error as response");
+                    log.LogError("AskPBXCalls - Iq sent not valid - server sent an error as response");
                     return;
                 }
 
@@ -176,7 +176,7 @@ namespace Sharp.Xmpp.Extensions
                     }
                     catch (Exception)
                     {
-                        log.Error("AskPbxAgentInfo - an error occurred ...");
+                        log.LogError("AskPbxAgentInfo - an error occurred ...");
                     }
 
                 }
@@ -197,7 +197,7 @@ namespace Sharp.Xmpp.Extensions
                 //For any reply we execute the callback
                 if (iq.Type == IqType.Error)
                 {
-                    log.Error("AskVoiceMessagesNumber - Iq sent not valid - server sent an error as response");
+                    log.LogError("AskVoiceMessagesNumber - Iq sent not valid - server sent an error as response");
                     return;
                 }
 
@@ -218,7 +218,7 @@ namespace Sharp.Xmpp.Extensions
                 //For any reply we execute the callback
                 if (iq.Type == IqType.Error)
                 {
-                    log.Error("AskPbxAgentInfo - Iq sent not valid - server sent an error as response");
+                    log.LogError("AskPbxAgentInfo - Iq sent not valid - server sent an error as response");
                     return;
                 }
 
@@ -242,7 +242,7 @@ namespace Sharp.Xmpp.Extensions
                     }
                     catch (Exception)
                     {
-                        log.Error("AskPbxAgentInfo - an error occurred ...");
+                        log.LogError("AskPbxAgentInfo - an error occurred ...");
                     }
 
                 }

@@ -9,7 +9,7 @@ using System.Xml;
 using Sharp.Xmpp.Extensions;
 using Sharp.Xmpp.Im;
 
-using NLog;
+using Microsoft.Extensions.Logging;
 
 namespace Sharp.Xmpp.Client
 {
@@ -24,7 +24,7 @@ namespace Sharp.Xmpp.Client
     /// </remarks>
     public class XmppClient : IDisposable
     {
-        private static readonly Logger log = LogConfigurator.GetLogger(typeof(XmppClient));
+        private static readonly ILogger log = LogFactory.CreateLogger<XmppClient>();
 
         private bool normalClosure;
 
@@ -1946,7 +1946,7 @@ namespace Sharp.Xmpp.Client
             else
                 im.ResumeStreamManagement = false;
 
-            log.Info("[ResumeStreamManagement] - ResumeStreamManagement - ResumeId:[{0}] - LastStanzaReceivedHandled:[{1}] - LastStanzaSentdHandled:[{2}]", im.StreamManagementResumeId, im.StreamManagementLastStanzaReceivedAndHandledByServer, im.StreamManagementLastStanzaReceivedAndHandledByClient);
+            log.LogInformation("[ResumeStreamManagement] - ResumeStreamManagement - ResumeId:[{0}] - LastStanzaReceivedHandled:[{1}] - LastStanzaSentdHandled:[{2}]", im.StreamManagementResumeId, im.StreamManagementLastStanzaReceivedAndHandledByServer, im.StreamManagementLastStanzaReceivedAndHandledByClient);
         }
 
         public void GetResumeStreamInfo(out String resumeId, out uint lastStanzaReceivedHandled, out uint lastStanzaSentHandled)

@@ -5,13 +5,14 @@ using System.Xml;
 using Sharp.Xmpp.Core;
 using Sharp.Xmpp.Im;
 
-using NLog;
+using Microsoft.Extensions.Logging;
+
 
 namespace Sharp.Xmpp.Extensions
 {
     internal class JingleMessageInitiation : XmppExtension, IInputFilter<Sharp.Xmpp.Im.Message>, IInputFilter<Iq>
     {
-        private static readonly Logger log = LogConfigurator.GetLogger(typeof(CallLog));
+        private static readonly ILogger log = LogFactory.CreateLogger<JingleMessageInitiation>();
 
         private static readonly String NamespaceJingleMessage = "urn:xmpp:jingle-message:0";
         private static readonly String NamespaceJingleIq = "urn:xmpp:jingle:1";

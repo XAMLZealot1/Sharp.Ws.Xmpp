@@ -2,8 +2,9 @@ using Sharp.Xmpp.Im;
 using System;
 using System.Collections.Generic;
 
-using NLog;
+using Microsoft.Extensions.Logging;
 using System.Xml;
+
 
 namespace Sharp.Xmpp.Extensions
 {
@@ -12,7 +13,7 @@ namespace Sharp.Xmpp.Extensions
     /// </summary>
     internal class Conference : XmppExtension, IInputFilter<Message>
     {
-        private static readonly Logger log = LogConfigurator.GetLogger(typeof(Conference));
+        private static readonly ILogger log = LogFactory.CreateLogger<Conference>();
 
         /// <summary>
         /// An enumerable collection of XMPP namespaces the extension implements.

@@ -10,14 +10,15 @@ using System.Threading;
 using System.Threading.Tasks;
 using System.Xml;
 
-using NLog;
+using Microsoft.Extensions.Logging;
+
 
 namespace Sharp.Xmpp.Core
 {
     internal class WebSocket
     {
-        private static readonly NLog.Logger log = LogConfigurator.GetLogger(typeof(WebSocket));
-        private static readonly NLog.Logger logWebRTC = LogConfigurator.GetLogger(typeof(WebSocket), "WEBRTC");
+        private static readonly ILogger log = LogFactory.CreateLogger<WebSocket>();
+        private static readonly ILogger logWebRTC = LogFactory.CreateWebRTCLogger();
 
         public event EventHandler WebSocketOpened;
         public event EventHandler WebSocketClosed;
@@ -47,7 +48,7 @@ namespace Sharp.Xmpp.Core
 
         public WebSocket(String uri, Tuple<String, String, String> webProxyInfo)
         {
-            log.Debug("Create Web socket");
+            log.LogDebug("Create Web socket");
             this.uri = uri;
             rootElement = false;
 
@@ -129,7 +130,7 @@ namespace Sharp.Xmpp.Core
             else
             {
                     
-                log.Debug("[CreateAndManageWebSocket] Web Proxy Info:[{0}]", webProxyInfo?.Item1);
+                log.LogDebug("[CreateAndManageWebSocket] Web Proxy Info:[{0}]", webProxyInfo?.Item1);
                 WebProxy proxy = new WebProxy(webProxyInfo.Item1);
                 if(!String.IsNullOrEmpty(webProxyInfo.Item2))
                     proxy.Credentials = new NetworkCredential(webProxyInfo.Item2, webProxyInfo.Item3);
@@ -180,9 +181,9 @@ namespace Sharp.Xmpp.Core
                                     message.Contains("<jingle")
                                     || message.Contains("urn:xmpp:jingle"))
                                     )
-                                logWebRTC.Debug("[ManageOutgoingMessage]: {0}", message);
+                                logWebRTC.LogDebug("[ManageOutgoingMessage]: {0}", message);
                             else
-                                log.Debug("[ManageOutgoingMessage]: {0}", message);
+                                log.LogDebug("[ManageOutgoingMessage]: {0}", message);
 
 
                             var sendBuffer = new ArraySegment<byte>(Encoding.UTF8.GetBytes(message));
@@ -249,9 +250,9 @@ namespace Sharp.Xmpp.Core
                                             message.Contains("<jingle")
                                             || message.Contains("urn:xmpp:jingle"))
                                             )
-                                    logWebRTC.Debug("[ManageIncomingMessage]: {0}", message);
+                                    logWebRTC.LogDebug("[ManageIncomingMessage]: {0}", message);
                                 else
-                                    log.Debug("[ManageIncomingMessage]: {0}", message);
+                                    log.LogDebug("[ManageIncomingMessage]: {0}", message);
 
 
                                 QueueMessageReceived(message);
@@ -259,7 +260,7 @@ namespace Sharp.Xmpp.Core
                         }
                         else if (result.MessageType == WebSocketMessageType.Binary)
                         {
-                            log.Warn("[ManageIncomingMessage] We have received data using unmanaged type - MessageType:[{0}]", result.MessageType.ToString());
+                            log.LogWarning("[ManageIncomingMessage] We have received data using unmanaged type - MessageType:[{0}]", result.MessageType.ToString());
                         }
                         //else
                         //{
@@ -277,29 +278,29 @@ namespace Sharp.Xmpp.Core
 #region Iq stuff
         public void AddExpectedIqId(string id)
         {
-            //log.Debug("AddExpectedIqId:{0}", id);
+            //log.LogDebug("AddExpectedIqId:{0}", id);
             if (!iqIdList.Contains(id))
                 iqIdList.Add(id);
         }
 
         public bool IsExpectedIqId(string id)
         {
-            //log.Debug("IsExpectedIqId:{0}", id);
+            //log.LogDebug("IsExpectedIqId:{0}", id);
             return iqIdList.Contains(id);
         }
 
         public void QueueExpectedIqMessage(Iq iq)
         {
-            //log.Debug("QueueExpectedIqMessage :{0}", iq.ToString());
+            //log.LogDebug("QueueExpectedIqMessage :{0}", iq.ToString());
             iqMessagesReceived.Add(iq);
         }
 
         public Iq DequeueExpectedIqMessage()
         {
             Iq iq = null;
-            //log.Debug("DequeueExpectedIqMessage - START");
+            //log.LogDebug("DequeueExpectedIqMessage - START");
             iq = iqMessagesReceived.Take();
-            //log.Debug("DequeueExpectedIqMessage - END");
+            //log.LogDebug("DequeueExpectedIqMessage - END");
             return iq;
 
         }
@@ -308,15 +309,15 @@ namespace Sharp.Xmpp.Core
 #region Action to perform
         public void QueueActionToPerform(String action)
         {
-            //log.Debug("QueueActionToPerform");
+            //log.LogDebug("QueueActionToPerform");
             actionsToPerform.Add(action);
         }
 
         public string DequeueActionToPerform()
         {
-            //log.Debug("DequeueActionToPerform - START");
+            //log.LogDebug("DequeueActionToPerform - START");
             string action = actionsToPerform.Take();
-            //log.Debug("DequeueActionToPerform - END");
+            //log.LogDebug("DequeueActionToPerform - END");
             return action;
         }
 #endregion
@@ -359,16 +360,16 @@ namespace Sharp.Xmpp.Core
                 }
                 catch
                 {
-                    log.Error("QueueMessageReceived - ERROR");
+                    log.LogError("QueueMessageReceived - ERROR");
                 }
             }
         }
 
         public string DequeueMessageReceived()
         {
-            //log.Debug("Dequeue XML Message Received - START");
+            //log.LogDebug("Dequeue XML Message Received - START");
             string message = messagesReceived.Take();
-            //log.Debug("Dequeue XML Message Received - END");
+            //log.LogDebug("Dequeue XML Message Received - END");
             return message;
         }
 #endregion
@@ -387,7 +388,7 @@ namespace Sharp.Xmpp.Core
 
         private void ClientWebSocketOpened()
         {
-            log.Debug("Web socket opened");
+            log.LogDebug("Web socket opened");
             webSocketOpened = true;
             EventHandler h = this.WebSocketOpened;
 
@@ -399,7 +400,7 @@ namespace Sharp.Xmpp.Core
                 }
                 catch (Exception)
                 {
-                    log.Error("ClientWebSocketOpened - ERROR");
+                    log.LogError("ClientWebSocketOpened - ERROR");
                 }
             }
         }
@@ -410,9 +411,9 @@ namespace Sharp.Xmpp.Core
             {
                 webSocketOpened = false;
                 if (clientWebSocket != null)
-                    log.Debug("[ClientWebSocketClosed] CloseStatus:[{0}] -  CloseStatusDescription:[{1}]", clientWebSocket.CloseStatus, clientWebSocket.CloseStatusDescription);
+                    log.LogDebug("[ClientWebSocketClosed] CloseStatus:[{0}] -  CloseStatusDescription:[{1}]", clientWebSocket.CloseStatus, clientWebSocket.CloseStatusDescription);
                 else
-                    log.Debug("[ClientWebSocketClosed]");
+                    log.LogDebug("[ClientWebSocketClosed]");
 
                 RaiseWebSocketClosed();
             }
@@ -420,7 +421,7 @@ namespace Sharp.Xmpp.Core
 
         private void RaiseWebSocketClosed()
         {
-            log.Debug("[RaiseWebSocketClosed]");
+            log.LogDebug("[RaiseWebSocketClosed]");
             EventHandler h = this.WebSocketClosed;
 
             if (h != null)
@@ -431,7 +432,7 @@ namespace Sharp.Xmpp.Core
                 }
                 catch (Exception)
                 {
-                    log.Error("RaiseWebSocketClosed - ERROR");
+                    log.LogError("RaiseWebSocketClosed - ERROR");
                 }
             }
         }
@@ -443,7 +444,7 @@ namespace Sharp.Xmpp.Core
 
             if (Open == null)
             {
-                log.Error("ReadRootElement - Unexpected XML message received");
+                log.LogError("ReadRootElement - Unexpected XML message received");
             }
 
             if (Open.Name == "open")
@@ -455,7 +456,7 @@ namespace Sharp.Xmpp.Core
             }
             else
             {
-                log.Error("ReadRootElement - ERROR");
+                log.LogError("ReadRootElement - ERROR");
             }
         }
     }
