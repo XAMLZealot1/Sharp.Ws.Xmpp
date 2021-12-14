@@ -1196,7 +1196,24 @@ namespace Sharp.Xmpp.Client
                 configuration.GroupManagement -= value;
             }
         }
+
+        /// <summary>
+        /// The event raised when a record has been done in a conference. We receive a RecordingFile info node
+        /// </summary>
+        public event EventHandler<Sharp.Xmpp.Extensions.MessageEventArgs> RecordingFile
+        {
+            add
+            {
+                configuration.RecordingFile += value;
+            }
+            remove
+            {
+                configuration.RecordingFile -= value;
+            }
+        }
+
         
+
 
         /// <summary>
         /// The event that is raised when the current user password has been updated

@@ -96,9 +96,14 @@ namespace Sharp.Xmpp.Extensions
         public event EventHandler<MessageEventArgs> ChanneItemManagement;
 
         /// <summary>
-        /// The event raised when a Group is created, updated, deleted but alos when a member is added / remove in a group
+        /// The event raised when a Group is created, updated, deleted but also when a member is added / remove in a group
         /// </summary>
         public event EventHandler<MessageEventArgs> GroupManagement;
+
+        /// <summary>
+        /// The event raised when a record has been done in a conference. We receive a RecordingFile info node
+        /// </summary>
+        public event EventHandler<MessageEventArgs> RecordingFile;
 
         /// <summary>
         /// Invoked when a message stanza has been received.
@@ -307,6 +312,11 @@ namespace Sharp.Xmpp.Extensions
                 {
                     XmlElement e = message.Data["group"];
                     GroupManagement.Raise(this, new MessageEventArgs(e.ToXmlString()));
+                }
+                else if (message.Data["recordingfile"] != null)
+                {
+                    XmlElement e = message.Data["recordingfile"];
+                    RecordingFile.Raise(this, new MessageEventArgs(e.ToXmlString()));
                 }
                 else
                     log.LogInformation("[Input] Message not managed");
