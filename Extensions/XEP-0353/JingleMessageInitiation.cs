@@ -150,9 +150,6 @@ namespace Sharp.Xmpp.Extensions
         /// on to the next handler.</returns>
         public bool Input(Iq stanza)
         {
-            if (stanza.Type != IqType.Set)
-                return false;
-
             var jingle = stanza.Data["jingle"];
             if (jingle == null || jingle.NamespaceURI != NamespaceJingleIq)
                 return false;
