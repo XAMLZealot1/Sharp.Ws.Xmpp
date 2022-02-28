@@ -10,6 +10,9 @@ using Sharp.Xmpp.Extensions;
 using Sharp.Xmpp.Im;
 
 using Microsoft.Extensions.Logging;
+using Sharp.Ws.Xmpp.Extensions;
+using Sharp.Ws.Xmpp.Extensions.Omemo;
+using Sharp.Ws.Xmpp.Extensions.Omemo.Messages;
 
 namespace Sharp.Xmpp.Client
 {
@@ -215,6 +218,21 @@ namespace Sharp.Xmpp.Client
         /// Provides the StreamManagement extension
         /// </summary>
         private StreamManagement streamManagement;
+
+        /// <summary>
+        /// Provides the OmemoEncryption extension
+        /// </summary>
+        private OmemoEncryption omemoEncryption;
+
+        /// <summary>
+        /// Provides the MessageProcessingHints extension
+        /// </summary>
+        private MessageProcessingHints messageProcessingHints;
+
+        /// <summary>
+        /// Provides the StanzaContentEncryption extension
+        /// </summary>
+        private StanzaContentEncryption stanzaContentEncryption;
 
         public Tuple<String, String, String> WebProxyInfo
         {
@@ -2939,11 +2957,51 @@ namespace Sharp.Xmpp.Client
                 throw new InvalidOperationException("Not authenticated with XMPP server.");
         }
 
+        #region Omemo Encryption
+
+        public OmemoEncryptionSettings OmemoEncryptionSettings
+        {
+            get
+            {
+                return im?.OmemoSettings;
+            }
+            set
+            {
+                if (value == null)
+                    return;
+
+                if (im != null)
+                {
+                    im.OmemoSettings = value; ;
+                }
+            }
+        }
+
+        public OmemoIdentity GenerateOmemoIdentity(uint signedPreKeyID = 0, uint preKeyStartID = 0, uint preKeyCount = 100)
+        {
+            return new OmemoIdentity(signedPreKeyID, preKeyStartID, preKeyCount);
+        }
+
+        public void PublishOmemoBundle(uint deviceID, OmemoIdentity identity)
+        {
+            OmemoBundleMessage message = new OmemoBundleMessage(deviceID, identity.SignedPreKey, identity.IdentityKeyPair.pubKey, identity.PreKeys);
+            im.Send(message.IqElement, true);
+        }
+
+        public void RequestDeviceList()
+        {
+            OmemoDeviceListRequestMessage message = new OmemoDeviceListRequestMessage(Jid.GetBareJid());
+            var iq = im.IqRequest(message.Type, Jid.GetBareJid(), null, message.Element);
+        }
+
+        #endregion
+
         /// <summary>
         /// Initializes the various XMPP extension modules.
         /// </summary>
         private void LoadExtensions()
         {
+
             version = im.LoadExtension<SoftwareVersion>();
             sdisco = im.LoadExtension<ServiceDiscovery>();
             ecapa = im.LoadExtension<EntityCapabilities>();
@@ -2986,7 +3044,10 @@ namespace Sharp.Xmpp.Client
             cap = im.LoadExtension<Cap>();
             msgDeliveryReceipt = im.LoadExtension<MessageDeliveryReceipts>();
             callService = im.LoadExtension<CallService>();
-            
+
+            messageProcessingHints = im.LoadExtension<MessageProcessingHints>();
+            omemoEncryption = im.LoadExtension<OmemoEncryption>();
+            stanzaContentEncryption = im.LoadExtension<StanzaContentEncryption>();
         }
     }
 }

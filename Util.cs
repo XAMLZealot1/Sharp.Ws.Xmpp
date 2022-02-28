@@ -1,6 +1,13 @@
-﻿using Sharp.Xmpp.Core;
+﻿using Sharp.Ws.Xmpp.Extensions;
+using Sharp.Ws.Xmpp.Extensions.Omemo;
+using Sharp.Ws.Xmpp.Extensions.Omemo.Keys;
+using Sharp.Ws.Xmpp.Extensions.Omemo.Messages;
+using Sharp.Ws.Xmpp.Extensions.Omemo.Storage;
+using Sharp.Xmpp.Core;
+using Sharp.Xmpp.Im;
 using System;
 using System.Collections;
+using System.Collections.Generic;
 using System.Diagnostics;
 using System.Reflection;
 using System.Xml;
@@ -312,5 +319,38 @@ namespace Sharp.Xmpp
                 throw new ArgumentException("T must be an enumerated type.");
             return (T)Enum.Parse(typeof(T), value, ignoreCase);
         }
+
     }
+
+    public class OmemoTester
+    {
+
+        public static void ParseMessage(string xml)
+        {
+            var im = new XmppIm("hyatts.net", "donnie", "jmojm");
+            OmemoEncryption extension = new OmemoEncryption(im);
+
+            extension.settings = new Client.OmemoEncryptionSettings
+            {
+                Storage = new InMemoryOmemoStorage(), DeviceID = 0, Identity = new OmemoIdentity()
+            };
+
+            XmlDocument xmlDocument = new XmlDocument();
+            xmlDocument.LoadXml(xml);
+
+            var message = new Im.Message(new Core.Message(xmlDocument.DocumentElement));
+
+            var omemoMessage = new OmemoEncryptedMessage(message, extension);
+
+            IdentityKeyPair identityKey = KeyHelper.GenerateIdentityKeyPair();
+            List<PreKey> preKeys = KeyHelper.GeneratePreKeys(0, 11);
+            SignedPreKey signedPreKey = KeyHelper.GenerateSignedPreKey(0, identityKey.privKey);
+
+            omemoMessage.Decrypt(new Jid("donnie@hyatts.net"), 252549526, signedPreKey, preKeys);
+
+
+        }
+
+    }
+
 }

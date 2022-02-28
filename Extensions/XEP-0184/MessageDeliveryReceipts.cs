@@ -142,7 +142,7 @@ namespace Sharp.Xmpp.Extensions
             if (message.Data["received"] == null)
             {
                 // Don't ask receipts for Jingle message
-                if (message.Data.FirstChild.NamespaceURI.StartsWith("urn:xmpp:jingle"))
+                if (message.Data?.FirstChild?.NamespaceURI?.StartsWith("urn:xmpp:jingle") ?? false)
                     return;
 
                 XmlElement e = message.Data;

@@ -43,6 +43,19 @@ namespace Sharp.Xmpp
             return e;
         }
 
+        public static XmlElement Append(this XmlElement e, XmlElement child)
+        {
+            XmlNode imported = e.OwnerDocument.ImportNode(child, true);
+            e.AppendChild(imported);
+            return e[child.Name];
+        }
+
+        public static XmlElement InnerText(this XmlElement e, string innerText)
+        {
+            e.InnerText = innerText;
+            return e;
+        }
+
         /// <summary>
         /// Sets the value of the attribute with the specified name.
         /// </summary>

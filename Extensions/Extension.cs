@@ -203,6 +203,21 @@
         /// <summary>
         /// An extension added by Rainbow Hub to manage conference
         /// </summary>
-        Conference
+        Conference,
+
+        /// <summary>
+        /// An extension added by Donnie Hyatt to manage message level encryption
+        /// </summary>
+        OmemoEncryption,
+
+        /// <summary>
+        /// An extension added by donnie@hyatts.net to manage message processing hints
+        /// </summary>
+        MessageProcessingHints,
+
+        /// <summary>
+        /// An extension added by donnie@hyatts.net to manage stanza content encryption
+        /// </summary>
+        StanzaContentEncryption
     }
 }

@@ -16,7 +16,11 @@ Several extensions have been added to support Rainbow features (https://openrain
   </PropertyGroup>
 
   <ItemGroup>
+    <PackageReference Include="Easy-X25519" Version="1.0.0" />
     <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="6.0.0" />
+    <PackageReference Include="Newtonsoft.Json" Version="13.0.1" />
+    <PackageReference Include="NSec.Cryptography" Version="20.2.0" />
+    <PackageReference Include="Portable.BouncyCastle" Version="1.9.0" />
   </ItemGroup>
 
 </Project>

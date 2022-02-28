@@ -13,7 +13,10 @@ using System.Security.Authentication;
 using System.Xml;
 
 using Microsoft.Extensions.Logging;
-
+using Sharp.Ws.Xmpp.Extensions.Omemo;
+using Sharp.Ws.Xmpp.Extensions.Omemo.Storage;
+using Sharp.Xmpp.Client;
+using Sharp.Ws.Xmpp.Extensions;
 
 namespace Sharp.Xmpp.Im
 {
@@ -2105,6 +2108,27 @@ namespace Sharp.Xmpp.Im
                 Message.Raise(this, new MessageEventArgs(realMessage.From, realMessage, true));
             }
         }
+
+        #region Omemo Encryption
+
+        private OmemoEncryptionSettings omemoSettings;
+        internal OmemoEncryptionSettings OmemoSettings
+        {
+            get
+            {
+                return omemoSettings;
+            }
+            set
+            {
+                omemoSettings = value;
+
+                OmemoEncryption extension = GetExtension<OmemoEncryption>();
+                if (extension != null)
+                    extension.settings = value;
+            }
+        }
+
+        #endregion
 
         /// <summary>
         /// Processes presence stanzas containing availability and status

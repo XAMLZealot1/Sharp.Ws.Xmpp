@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Sharp.Ws.Xmpp.Im;
+using System;
 using System.Collections.Generic;
 using System.Globalization;
 using System.Linq;
@@ -187,7 +188,7 @@ namespace Sharp.Xmpp.Im
             get;
             private set;
         }
-
+        
         /// <summary>
         /// A dictionary of alternate forms of the message bodies. The keys of the
         /// dictionary denote ISO 2 language codes.
@@ -197,7 +198,6 @@ namespace Sharp.Xmpp.Im
             get;
             private set;
         }
-
 
         protected void SetOobInfo(Dictionary<String, String> oobInfo)
         {
