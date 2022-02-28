@@ -12,7 +12,8 @@ using Sharp.Xmpp.Im;
 using Microsoft.Extensions.Logging;
 using Sharp.Ws.Xmpp.Extensions;
 using Sharp.Ws.Xmpp.Extensions.Omemo;
-using Sharp.Ws.Xmpp.Extensions.Omemo.Messages;
+using Sharp.Ws.Xmpp.Extensions.Omemo.Storage;
+using libsignal.state;
 
 namespace Sharp.Xmpp.Client
 {
@@ -2959,39 +2960,32 @@ namespace Sharp.Xmpp.Client
 
         #region Omemo Encryption
 
-        public OmemoEncryptionSettings OmemoEncryptionSettings
+        public void SetOmemoRegistrationStore(IRegistrationStore store)
         {
-            get
-            {
-                return im?.OmemoSettings;
-            }
-            set
-            {
-                if (value == null)
-                    return;
+            if (sdisco == null)
+                throw new Exception("Service discovery is not available");
 
-                if (im != null)
-                {
-                    im.OmemoSettings = value; ;
-                }
-            }
+            if (!sdisco.Supports(Jid, Extension.OmemoEncryption))
+                throw new Exception("Omemo Encryption is not supported on this server");
+
+            if (omemoEncryption == null)
+                throw new Exception("Omemo extension is not loaded!");
+
+            omemoEncryption.InitializeRegistration(store);
         }
 
-        public OmemoIdentity GenerateOmemoIdentity(uint signedPreKeyID = 0, uint preKeyStartID = 0, uint preKeyCount = 100)
+        public void SetOmemoSignalStore(SignalProtocolStore store)
         {
-            return new OmemoIdentity(signedPreKeyID, preKeyStartID, preKeyCount);
-        }
+            if (sdisco == null)
+                throw new Exception("Service discovery is not available");
 
-        public void PublishOmemoBundle(uint deviceID, OmemoIdentity identity)
-        {
-            OmemoBundleMessage message = new OmemoBundleMessage(deviceID, identity.SignedPreKey, identity.IdentityKeyPair.pubKey, identity.PreKeys);
-            im.Send(message.IqElement, true);
-        }
+            if (!sdisco.Supports(Jid, Extension.OmemoEncryption))
+                throw new Exception("Omemo Encryption is not supported on this server");
 
-        public void RequestDeviceList()
-        {
-            OmemoDeviceListRequestMessage message = new OmemoDeviceListRequestMessage(Jid.GetBareJid());
-            var iq = im.IqRequest(message.Type, Jid.GetBareJid(), null, message.Element);
+            if (omemoEncryption == null)
+                throw new Exception("Omemo extension is not loaded!");
+
+            omemoEncryption.InitializeSignal(store);
         }
 
         #endregion

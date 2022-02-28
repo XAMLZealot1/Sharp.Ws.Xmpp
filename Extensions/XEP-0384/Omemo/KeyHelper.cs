@@ -1,5 +1,4 @@
-﻿using NSec.Cryptography;
-using Sharp.Ws.Xmpp.Extensions.Omemo.Keys;
+﻿using Sharp.Ws.Xmpp.Extensions.Omemo.Keys;
 using System.Collections.Generic;
 using X25519;
 
@@ -7,8 +6,8 @@ namespace Sharp.Ws.Xmpp.Extensions.Omemo
 {
     public static class KeyHelper
     {
-        public static int PUB_KEY_SIZE = SignatureAlgorithm.Ed25519.PublicKeySize;
-        public static int PRIV_KEY_SIZE = SignatureAlgorithm.Ed25519.PrivateKeySize;
+        public static int PUB_KEY_SIZE = 32;
+        public static int PRIV_KEY_SIZE = 32;
 
         /// <summary>
         /// Generates a new Ed25519 <see cref="IdentityKeyPair"/> and returns it.
@@ -54,6 +53,7 @@ namespace Sharp.Ws.Xmpp.Extensions.Omemo
         public static SignedPreKey GenerateSignedPreKey(uint id, ECPrivKey identiyKey)
         {
             PreKey preKey = GeneratePreKey(id);
+            
             byte[] signature = SignatureAlgorithm.Ed25519.Sign(Key.Import(SignatureAlgorithm.Ed25519, identiyKey.Key, KeyBlobFormat.RawPrivateKey), preKey.pubKey.Key);
             return new SignedPreKey(preKey, signature);
         }

@@ -4,15 +4,16 @@ using Sharp.Xmpp.Omemo.Exceptions;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using X25519;
 
 namespace Sharp.Ws.Xmpp.Extensions.Omemo
 {
     public class DoubleRachet
     {
 
-        private readonly IdentityKeyPair OWN_IDENTITY_KEY;
+        private readonly X25519KeyPair OWN_IDENTITY_KEY;
 
-        public DoubleRachet(IdentityKeyPair ownIdentityKey)
+        public DoubleRachet(X25519KeyPair ownIdentityKey)
         {
             OWN_IDENTITY_KEY = ownIdentityKey;
         }

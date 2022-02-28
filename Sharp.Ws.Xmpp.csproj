@@ -16,11 +16,28 @@ Several extensions have been added to support Rainbow features (https://openrain
   </PropertyGroup>
 
   <ItemGroup>
+    <Compile Remove="Extensions\XEP-0384\Omemo\CryptoUtils.cs" />
+    <Compile Remove="Extensions\XEP-0384\Omemo\DoubleRachet.cs" />
+    <Compile Remove="Extensions\XEP-0384\Omemo\KeyHelper.cs" />
+    <Compile Remove="Extensions\XEP-0384\Omemo\Keys\AbstractECKeyPair.cs" />
+    <Compile Remove="Extensions\XEP-0384\Omemo\Keys\Bundle.cs" />
+    <Compile Remove="Extensions\XEP-0384\Omemo\Keys\ECKey.cs" />
+    <Compile Remove="Extensions\XEP-0384\Omemo\Keys\ECPrivKey.cs" />
+    <Compile Remove="Extensions\XEP-0384\Omemo\Keys\ECPubKey.cs" />
+    <Compile Remove="Extensions\XEP-0384\Omemo\Keys\EphemeralKeyPair.cs" />
+    <Compile Remove="Extensions\XEP-0384\Omemo\Keys\GenericECKeyPair.cs" />
+    <Compile Remove="Extensions\XEP-0384\Omemo\Keys\IdentityKeyPair.cs" />
+  </ItemGroup>
+
+  <ItemGroup>
     <PackageReference Include="Easy-X25519" Version="1.0.0" />
+    <PackageReference Include="libsignal-protocol-dotnet" Version="2.8.1" />
     <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="6.0.0" />
     <PackageReference Include="Newtonsoft.Json" Version="13.0.1" />
-    <PackageReference Include="NSec.Cryptography" Version="20.2.0" />
     <PackageReference Include="Portable.BouncyCastle" Version="1.9.0" />
+    <PackageReference Include="Rebex.Elliptic.Castle" Version="1.2.1" />
+    <PackageReference Include="Rebex.Elliptic.Curve25519" Version="1.2.1" />
+    <PackageReference Include="Rebex.Elliptic.Ed25519" Version="1.2.1" />
   </ItemGroup>
 
 </Project>

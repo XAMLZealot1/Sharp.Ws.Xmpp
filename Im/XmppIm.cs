@@ -2109,27 +2109,6 @@ namespace Sharp.Xmpp.Im
             }
         }
 
-        #region Omemo Encryption
-
-        private OmemoEncryptionSettings omemoSettings;
-        internal OmemoEncryptionSettings OmemoSettings
-        {
-            get
-            {
-                return omemoSettings;
-            }
-            set
-            {
-                omemoSettings = value;
-
-                OmemoEncryption extension = GetExtension<OmemoEncryption>();
-                if (extension != null)
-                    extension.settings = value;
-            }
-        }
-
-        #endregion
-
         /// <summary>
         /// Processes presence stanzas containing availability and status
         /// information.
