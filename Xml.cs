@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Sharp.Xmpp.Core;
+using System;
 using System.Security;
 using System.Text;
 using System.Text.RegularExpressions;
@@ -80,6 +81,32 @@ namespace Sharp.Xmpp
         {
             e.AppendChild(e.OwnerDocument.CreateTextNode(text));
             return e;
+        }
+
+        public static void OpenAccessModel(this Stanza stanza)
+        {
+            XmlElement pubsub = stanza.Data.SelectSingleNode("//pubsub") as XmlElement;
+
+            XmlElement publishOptions = Xml.Element("publish-options");
+
+            XmlElement x = publishOptions.Append(Xml.Element("x", "jabber:x:data").Attr("type", "submit"));
+
+            XmlElement f1 = Xml.Element("field").Attr("var", "FORM_TYPE").Attr("type", "hidden");
+            XmlElement v1 = Xml.Element("value").InnerText("http://jabber.org/protocol/pubsub#publish-options");
+            f1.Child(v1);
+            x.Child(f1);
+
+            XmlElement f2 = Xml.Element("field").Attr("var", "pubsub#persist_items");
+            XmlElement v2 = Xml.Element("value").InnerText("true");
+            f2.Child(v2);
+            x.Child(f2);
+
+            XmlElement f3 = Xml.Element("field").Attr("var", "pubsub#access_model");
+            XmlElement v3 = Xml.Element("value").InnerText("open");
+            f3.Child(v3);
+            x.Child(f3);
+
+            stanza.Data["pubsub"].Child(publishOptions);
         }
 
         /// <summary>

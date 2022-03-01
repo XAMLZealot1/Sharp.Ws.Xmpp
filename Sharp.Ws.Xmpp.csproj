@@ -34,6 +34,7 @@ Several extensions have been added to support Rainbow features (https://openrain
     <PackageReference Include="libsignal-protocol-dotnet" Version="2.8.1" />
     <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="6.0.0" />
     <PackageReference Include="Newtonsoft.Json" Version="13.0.1" />
+    <PackageReference Include="NLog" Version="4.7.14" />
     <PackageReference Include="Portable.BouncyCastle" Version="1.9.0" />
     <PackageReference Include="Rebex.Elliptic.Castle" Version="1.2.1" />
     <PackageReference Include="Rebex.Elliptic.Curve25519" Version="1.2.1" />

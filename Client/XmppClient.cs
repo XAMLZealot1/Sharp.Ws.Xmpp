@@ -2972,6 +2972,8 @@ namespace Sharp.Xmpp.Client
                 throw new Exception("Omemo extension is not loaded!");
 
             omemoEncryption.InitializeRegistration(store);
+
+            //omemoEncryption.PublishBundle();
         }
 
         public void SetOmemoSignalStore(SignalProtocolStore store)

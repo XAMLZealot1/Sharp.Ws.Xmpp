@@ -3,12 +3,16 @@ using System.Collections.Generic;
 
 namespace Sharp.Xmpp.Extensions
 {
+
+
     /// <summary>
     /// The base class from which all implementations of XMPP extensions must
     /// derive.
     /// </summary>
     internal abstract class XmppExtension
     {
+        protected static readonly NLog.Logger logger = NLog.LogManager.GetCurrentClassLogger();
+
         /// <summary>
         /// A reference to the instance of the XmppIm class.
         /// </summary>

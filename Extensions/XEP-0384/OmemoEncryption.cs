@@ -1,5 +1,6 @@
 ﻿using libsignal.state;
 using libsignal.util;
+using Microsoft.Extensions.Logging;
 using Sharp.Ws.Xmpp.Extensions.Omemo;
 using Sharp.Ws.Xmpp.Extensions.Omemo.Storage;
 using Sharp.Xmpp;
@@ -9,19 +10,17 @@ using Sharp.Xmpp.Extensions;
 using Sharp.Xmpp.Im;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Xml;
 
 namespace Sharp.Ws.Xmpp.Extensions
 {
+
     /// <summary>
     /// Implements the 'OMEMO Encryption' extension as defined in XEP-0384
     /// </summary>
-    internal class OmemoEncryption : XmppExtension, IInputFilter<Sharp.Xmpp.Im.Message>, IInputFilter<Iq>, IOutputFilter<Iq>
+    internal class OmemoEncryption : XmppExtension, IInputFilter<Stanza>, IOutputFilter<Stanza>, IOutputFilter<Iq>
     {
-        internal const string NS_OMEMO = "urn:xmpp:omemo:2";
-        internal const string NS_DEVICE_DISCOVERY = "urn:xmpp:omemo:2:devices";
-        internal const string NS_BUNDLES = "urn:xmpp:omemo:2:bundles";
-
         /// <summary>
         /// Initializes a new instance of the ServerIpCheck class.
         /// </summary>
@@ -60,7 +59,13 @@ namespace Sharp.Ws.Xmpp.Extensions
         {
             get
             {
-                return new string[] { NS_OMEMO };
+                return new string[] {
+                    "urn:xmpp:omemo:2",
+                    "urn:xmpp:omemo:2:bundles+notify",
+                    "urn:xmpp:omemo:2:devices+notify",
+                    "eu.siacs.conversations.axolotl",
+                    "eu.siacs.conversations.axolotl:bundles+notify",
+                    "eu.siacs.conversations.axolotldevices+notify" };
             }
         }
 
@@ -97,15 +102,24 @@ namespace Sharp.Ws.Xmpp.Extensions
         /// </summary>
         public override void Initialize()
         {
+            logger.Info($"Initializing Omemo extension (XEP-0384)...{Environment.NewLine}");
             ecapa = im.GetExtension<EntityCapabilities>();
             pep = im.GetExtension<Pep>();
             stanzaContentEncryption = im.GetExtension<StanzaContentEncryption>();
+
             pep.Subscribe("eu.siacs.conversations.axolotl.devicelist", DeviceListPublished);
+            pep.Subscribe("urn:xmpp:omemo:2.devicelist", DeviceListPublished);
         }
 
         internal void PublishBundle()
         {
-            
+            XmlElement bundle = Xml.Element("bundle", "eu.siacs.conversations.axolotl");
+
+            var spk = SignalStore.LoadSignedPreKeys().FirstOrDefault();
+
+            XmlElement signedPreKeyPublic = Xml.Element("signedPreKeyPublic").Attr("signedPreKeyId", spk.getId().ToString());
+
+            pep.Publish($"eu.siacs.conversations.axolotl.bundles:{RegistrationStore.RegistrationID}", "current");
         }
 
         internal void PublishDeviceList(uint deviceID)
@@ -156,62 +170,24 @@ namespace Sharp.Ws.Xmpp.Extensions
 
         private void DeviceListPublished(Jid jid, XmlElement element)
         {
-
-        }
-
-        public bool Input(Sharp.Xmpp.Im.Message stanza)
-        {
-            // Receive encrypted OMEMO messages?
-
-            return false;
-        }
-
-        public bool Input(Iq stanza)
-        {
-            // Handle device list responses?
-
-            var pubSub = stanza.Data["pubsub"];
-            var items = pubSub["items"];
-
-            if (stanza.To.GetBareJid().Equals(im.Jid.GetBareJid()) && pubSub?.NamespaceURI == "http://jabber.org/protocol/pubsub" && items?.GetAttribute("node") == "eu.siacs.conversations.axolotl.devicelist")
-            {
-                return true;
-            }
-
-            return false;
+            logger.Debug($"Device list received from '{jid}'");
         }
 
         public void Output(Iq stanza)
         {
             if (stanza.Data?.SelectSingleNode("//publish")?.Attributes["node"]?.Value == "eu.siacs.conversations.axolotl.devicelist")
-            {
+                stanza.OpenAccessModel();
+        }
 
-                XmlElement pubsub = stanza.Data.SelectSingleNode("//pubsub") as XmlElement;
+        public bool Input(Stanza stanza)
+        {
+            logger.Debug(stanza.ToString());
+            return false;
+        }
 
-                XmlElement publishOptions = Xml.Element("publish-options");
-
-                XmlElement x = publishOptions.Append(Xml.Element("x", "jabber:x:data").Attr("type", "submit"));
-
-                XmlElement f1 = Xml.Element("field").Attr("var", "FORM_TYPE").Attr("type", "hidden");
-                XmlElement v1 = Xml.Element("value").InnerText("http://jabber.org/protocol/pubsub#publish-options");
-                f1.Child(v1);
-                x.Child(f1);
-
-                XmlElement f2 = Xml.Element("field").Attr("var", "pubsub#persist_items");
-                XmlElement v2 = Xml.Element("value").InnerText("true");
-                f2.Child(v2);
-                x.Child(f2);
-
-                XmlElement f3 = Xml.Element("field").Attr("var", "pubsub#access_model");
-                XmlElement v3 = Xml.Element("value").InnerText("open");
-                f3.Child(v3);
-                x.Child(f3);
-
-                stanza.Data["pubsub"].Child(publishOptions);
-
-                string xml = stanza.ToString();
-
-            }
+        public void Output(Stanza stanza)
+        {
+            logger.Debug(stanza.ToString());
         }
     }
 }
