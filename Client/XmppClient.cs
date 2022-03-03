@@ -467,6 +467,8 @@ namespace Sharp.Xmpp.Client
             }
         }
 
+        public OmemoManager OmemoManager { get; private set; }
+
         /// <summary>
         /// A callback method to invoke when a request for a subscription is received
         /// from another XMPP user.
@@ -2893,6 +2895,11 @@ namespace Sharp.Xmpp.Client
             groupChat.RequestPrivilige(chatRoom, Role.Participant);
         }
 
+        public void InitializeOmemo(IRegistrationStore registrar, SignalProtocolStore store)
+        {
+            OmemoManager = new OmemoManager(omemoEncryption, registrar, store);
+        }
+
         /// <summary>
         /// Closes the connection with the XMPP server. This automatically disposes
         /// of the object.
@@ -2958,40 +2965,6 @@ namespace Sharp.Xmpp.Client
                 throw new InvalidOperationException("Not authenticated with XMPP server.");
         }
 
-        #region Omemo Encryption
-
-        public void SetOmemoRegistrationStore(IRegistrationStore store)
-        {
-            if (sdisco == null)
-                throw new Exception("Service discovery is not available");
-
-            if (!sdisco.Supports(Jid, Extension.OmemoEncryption))
-                throw new Exception("Omemo Encryption is not supported on this server");
-
-            if (omemoEncryption == null)
-                throw new Exception("Omemo extension is not loaded!");
-
-            omemoEncryption.InitializeRegistration(store);
-
-            //omemoEncryption.PublishBundle();
-        }
-
-        public void SetOmemoSignalStore(SignalProtocolStore store)
-        {
-            if (sdisco == null)
-                throw new Exception("Service discovery is not available");
-
-            if (!sdisco.Supports(Jid, Extension.OmemoEncryption))
-                throw new Exception("Omemo Encryption is not supported on this server");
-
-            if (omemoEncryption == null)
-                throw new Exception("Omemo extension is not loaded!");
-
-            omemoEncryption.InitializeSignal(store);
-        }
-
-        #endregion
-
         /// <summary>
         /// Initializes the various XMPP extension modules.
         /// </summary>
@@ -3042,8 +3015,11 @@ namespace Sharp.Xmpp.Client
             callService = im.LoadExtension<CallService>();
 
             messageProcessingHints = im.LoadExtension<MessageProcessingHints>();
-            omemoEncryption = im.LoadExtension<OmemoEncryption>();
             stanzaContentEncryption = im.LoadExtension<StanzaContentEncryption>();
+
+
+
+            omemoEncryption = im.LoadExtension<OmemoEncryption>();
         }
     }
 }

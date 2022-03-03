@@ -97,6 +97,31 @@ namespace Sharp.Ws.Xmpp.Extensions
 
         internal SignalProtocolStore SignalStore { get; private set; }
 
+        internal void GetDeviceList(Jid jid = null)
+        {
+            try
+            {
+                var result = pep.RetrieveItems(im.Jid.GetBareJid(), "urn:xmpp:omemo:2:devices");
+            }
+            catch (Exception ex)
+            {
+                logger.Error(ex);
+            }
+
+            //pep.Subscribe("urn:xmpp:omemo:2:devices", (j, e) =>
+            //{
+
+            //});
+        }
+
+        private void OnConnected(object sender, ConnectionStatusEventArgs e)
+        {
+            if (!e.Connected)
+                return;
+
+            PublishDeviceList(RegistrationStore.RegistrationID);
+        }
+
         /// <summary>
         /// Invoked after all extensions have been loaded.
         /// </summary>
@@ -107,8 +132,10 @@ namespace Sharp.Ws.Xmpp.Extensions
             pep = im.GetExtension<Pep>();
             stanzaContentEncryption = im.GetExtension<StanzaContentEncryption>();
 
-            pep.Subscribe("eu.siacs.conversations.axolotl.devicelist", DeviceListPublished);
-            pep.Subscribe("urn:xmpp:omemo:2.devicelist", DeviceListPublished);
+            if (im.Connected)
+                OnConnected(im, new ConnectionStatusEventArgs(true));
+            else
+                im.ConnectionStatus += OnConnected;
         }
 
         internal void PublishBundle()
@@ -166,11 +193,6 @@ namespace Sharp.Ws.Xmpp.Extensions
             {
                 PublishDeviceList(store.RegistrationID);
             }
-        }
-
-        private void DeviceListPublished(Jid jid, XmlElement element)
-        {
-            logger.Debug($"Device list received from '{jid}'");
         }
 
         public void Output(Iq stanza)
