@@ -24,9 +24,14 @@ namespace Sharp.Ws.Xmpp.Extensions.Omemo
         /// 
         /// </summary>
         /// <param name="jid">The user for which to request device list. If null, will request own devices.</param>
-        public void GetDeviceList(Jid jid = null)
+        public IEnumerable<OmemoDevice> GetDeviceList(Jid jid = null)
         {
-            omemoEncryption.GetDeviceList(jid);
+            return omemoEncryption.GetDeviceList(jid);
+        }
+
+        public void StartSession(Jid jid)
+        {
+            
         }
 
     }

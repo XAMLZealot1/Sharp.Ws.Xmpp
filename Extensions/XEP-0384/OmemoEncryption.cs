@@ -65,7 +65,7 @@ namespace Sharp.Ws.Xmpp.Extensions
                     "urn:xmpp:omemo:2:devices+notify",
                     "eu.siacs.conversations.axolotl",
                     "eu.siacs.conversations.axolotl:bundles+notify",
-                    "eu.siacs.conversations.axolotldevices+notify" };
+                    "eu.siacs.conversations.axolotl:devices+notify" };
             }
         }
 
@@ -97,29 +97,43 @@ namespace Sharp.Ws.Xmpp.Extensions
 
         internal SignalProtocolStore SignalStore { get; private set; }
 
-        internal void GetDeviceList(Jid jid = null)
+        internal IEnumerable<OmemoDevice> GetDeviceList(Jid jid)
         {
             try
             {
-                var result = pep.RetrieveItems(im.Jid.GetBareJid(), "urn:xmpp:omemo:2:devices");
+                var nodes = serviceDiscovery.GetItems(jid.GetBareJid());
+                
+                var deviceNodes = nodes.Where(x => new string[]
+                {
+                    "urn:xmpp:omemo:2:devices",
+                    "eu.siacs.conversations.axolotl.devicelist"
+                }.Contains(x.Node));
+
+                List<OmemoDevice> devices = new List<OmemoDevice>();
+                foreach (var node in deviceNodes?.ToArray())
+                {
+                    var items = pep.RetrieveItems(node.Jid, node.Node);
+                    if (items != null)
+                    {
+                        foreach (var item in items)
+                        {
+                            var deviceList = new DeviceList(item, jid);
+                            foreach (var device in deviceList?.Devices)
+                            {
+                                if (!devices.Any(x => x.DeviceID == device.DeviceID))
+                                    devices.Add(device);
+                            }
+                        }
+                    }
+                }
+                return devices;
             }
             catch (Exception ex)
             {
                 logger.Error(ex);
             }
 
-            //pep.Subscribe("urn:xmpp:omemo:2:devices", (j, e) =>
-            //{
-
-            //});
-        }
-
-        private void OnConnected(object sender, ConnectionStatusEventArgs e)
-        {
-            if (!e.Connected)
-                return;
-
-            PublishDeviceList(RegistrationStore.RegistrationID);
+            return new OmemoDevice[] { };
         }
 
         /// <summary>
@@ -131,11 +145,7 @@ namespace Sharp.Ws.Xmpp.Extensions
             ecapa = im.GetExtension<EntityCapabilities>();
             pep = im.GetExtension<Pep>();
             stanzaContentEncryption = im.GetExtension<StanzaContentEncryption>();
-
-            if (im.Connected)
-                OnConnected(im, new ConnectionStatusEventArgs(true));
-            else
-                im.ConnectionStatus += OnConnected;
+            serviceDiscovery = im.GetExtension<ServiceDiscovery>();
         }
 
         internal void PublishBundle()
@@ -180,6 +190,8 @@ namespace Sharp.Ws.Xmpp.Extensions
 
             if (store.IsRegistered)
                 RegistrationStore = store;
+
+            PublishDeviceList(store.RegistrationID);
 
             return store.IsRegistered;
         }
