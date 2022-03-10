@@ -71,10 +71,14 @@ namespace Sharp.Ws.Xmpp.Signal
                 uint signedPreKeyId = GenerateRandomUint();
 
                 preKey = new PreKeyBundle(
-                    store.GetLocalRegistrationId(),
-                    deviceID, preKeyId, preKeyPair.getPublicKey(), signedPreKeyId,
-                    signedPreKeyPair.getPublicKey(), signedPreKeySignature,
-                    store.GetIdentityKeyPair().getPublicKey());
+                    uint.MaxValue,                                                            // Registration ID
+                    deviceID,                                                                 // Device ID
+                    preKeyId,                                                                 // Pre Key ID
+                    preKeyPair.getPublicKey(),                // Pre Key Public
+                    signedPreKeyId,                                                           // Signed Pre Key ID
+                    signedPreKeyPair.getPublicKey(),          // Signed Pre Key Public
+                    signedPreKeySignature,                                                    // Signature Bytes
+                    store.GetIdentityKeyPair().getPublicKey());                               // Identity Key
 
                 store.StorePreKey(preKeyId, new PreKeyRecord(preKey.getPreKeyId(), preKeyPair));
                 store.StoreSignedPreKey(signedPreKeyId, new SignedPreKeyRecord(signedPreKeyId, 0, signedPreKeyPair, signedPreKeySignature));
@@ -96,28 +100,6 @@ namespace Sharp.Ws.Xmpp.Signal
             OmemoKey key = new OmemoKey(Convert.ToBase64String(prekey.getKeyPair().getPublicKey().serialize()), preKeyId);
 
             return new OmemoBundle(bundle, new OmemoKey[] { key });
-        }
-
-        public PreKeyBundle RehydrateBundle(string signedPreKeyPublic, uint signedPreKeyId, string signedPreKeySignature, string identityKey, uint deviceID, uint preKeyID, string preKeyB64)
-        {
-            ECPublicKey signedPreKey = new DjbECPublicKey(Convert.FromBase64String(signedPreKeyPublic));
-            ECPublicKey preKey = new DjbECPublicKey(Convert.FromBase64String(preKeyB64));
-            byte[] signature = Convert.FromBase64String(signedPreKeySignature);
-            IdentityKey ik = new IdentityKey(Convert.FromBase64String(identityKey), 0);
-
-            var result = new PreKeyBundle
-            (
-                uint.MaxValue,  // Registration ID
-                deviceID,       // Device ID
-                preKeyID,       // Pre Key ID
-                preKey,         // Pre Key Public
-                signedPreKeyId, // Signed Pre Key ID
-                signedPreKey,   // Signed Pre Key Public
-                signature,      // Signature Bytes
-                ik              // Identity Key
-            );
-
-            return result;
         }
 
         protected uint GenerateRandomUint(int lowerBound = 0, int upperBound = int.MaxValue)

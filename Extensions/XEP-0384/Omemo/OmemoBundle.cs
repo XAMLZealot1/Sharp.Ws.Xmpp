@@ -30,7 +30,9 @@ namespace Sharp.Ws.Xmpp.Extensions.Omemo
         }
         public OmemoBundle(PreKeyBundle bundle, IEnumerable<OmemoKey> keys)
         {
-            SignedPreKeyPublic = new OmemoKey(Convert.ToBase64String(bundle.getSignedPreKey().serialize()), bundle.getSignedPreKeyId());
+            var signedPreKey = new DjbECPublicKey(bundle.getSignedPreKey().serialize());
+
+            SignedPreKeyPublic = new OmemoKey(Convert.ToBase64String(signedPreKey.getPublicKey()), bundle.getSignedPreKeyId());
             SignedPreKeySignature = bundle.getSignedPreKeySignature();
             IdentityKeyData = bundle.getIdentityKey().serialize();
             DeviceID = bundle.getDeviceId();
@@ -114,18 +116,19 @@ namespace Sharp.Ws.Xmpp.Extensions.Omemo
 
         internal PreKeyBundle ToPreKey()
         {
-            PreKeyBundle result = null;
+            OmemoKey preKey = PreKeys.SelectRandomItem<OmemoKey>();
 
-            uint preKeyID = PreKeys.SelectRandomItem<OmemoKey>().PreKeyID;
-            IdentityKeyPair identityKeyPair = new IdentityKeyPair(IdentityKeyData);
-
-            ECPublicKey preKeyPublic = new DjbECPublicKey(SignedPreKeyPublic.KeyData);
-
-            //byte[] signedPreKeySignature = Curve.calculateSignature(identityKeyPair.getPrivateKey(), signedPreKeyPair.getPublicKey().serialize());
-
-            //result = new PreKeyBundle(RemoteRegistrationID, DeviceID, preKeyID, preKeyPublic, SignedPreKeyID, )
-
-            return result;
+            return new PreKeyBundle
+            (
+                RemoteRegistrationID,
+                DeviceID,
+                preKey.PreKeyID,
+                Curve.decodePoint(preKey.KeyData, 0),
+                SignedPreKeyPublic.PreKeyID,
+                Curve.decodePoint(SignedPreKeyPublic.KeyData, 0),
+                SignedPreKeySignature,
+                new IdentityKey(IdentityKeyData, 0)
+            );
         }
 
         #region Xml

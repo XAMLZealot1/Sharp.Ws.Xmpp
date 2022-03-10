@@ -1,6 +1,8 @@
 ﻿using libsignal;
+using libsignal.ecc;
 using libsignal.protocol;
 using libsignal.state;
+using libsignal.util;
 using Sharp.Ws.Xmpp.Extensions.Omemo;
 using Sharp.Ws.Xmpp.Extensions.Omemo.Keys;
 using Sharp.Xmpp;
@@ -16,43 +18,30 @@ namespace Sharp.Ws.Xmpp.Signal
 
         public Alice(string jabberID, string password) : base(new Jid(jabberID), password)
         {
-            //SignalUser bob = new Bob("test2@weoflibertyandfreedom.com", "Repsol!442110");
+            SignalUser bob = new Bob("test2@weoflibertyandfreedom.com", "");
 
-            //SessionBuilder sessionBuilder = new SessionBuilder(store, bob.Address);
+            SessionBuilder sessionBuilder = new SessionBuilder(store, bob.Address);
 
-            //OmemoBundle obundle = bob.GetBundle();
+            var bundle1 = bob.RequestBundle(out ECPublicKey spk, out ECPublicKey pk);
 
-            //OmemoKey key = Utils.SelectRandomItem<OmemoKey>(obundle.PreKeys);
+            var obundle = new OmemoBundle(bundle1, new OmemoKey[] { new OmemoKey(Convert.ToBase64String(bundle1.getPreKey().serialize()), bundle1.getPreKeyId()) });
 
-            //PreKeyBundle bobBundle;
+            sessionBuilder.process(obundle.ToPreKey());
 
-            ////bobBundle = bob.RequestBundle();
+            string plainTextMessage = "Hello, Bob. This is Alice.";
 
-            //bobBundle = bob.RehydrateBundle(
-            //    obundle.SignedPreKeyPublic.Base64Payload,                // Signed Pre Key Public B64
-            //    obundle.SignedPreKeyPublic.PreKeyID,                     // Signed Pre Key ID
-            //    Convert.ToBase64String(obundle.SignedPreKeySignature),   // Signed Pre Key Signature B64
-            //    Convert.ToBase64String(obundle.IdentityKeyData),         // Identity Key B64
-            //    obundle.DeviceID,                                        // Device ID
-            //    key.PreKeyID,                                            // Pre Key ID
-            //    key.Base64Payload);                                      // Pre Key B64
+            SessionCipher cipher = new SessionCipher(store, bob.Address);
 
-            //sessionBuilder.process(bobBundle);
+            CiphertextMessage initialMessage = cipher.encrypt(Encoding.UTF8.GetBytes(plainTextMessage));
 
-            //string plainTextMessage = "Hello, Bob. This is Alice.";
+            byte[] data = initialMessage.serialize();
 
-            //SessionCipher cipher = new SessionCipher(store, bob.Address);
-
-            //CiphertextMessage initialMessage = cipher.encrypt(Encoding.UTF8.GetBytes(plainTextMessage));
-
-            //byte[] data = initialMessage.serialize();
-
-            //string encryptedText = Convert.ToBase64String(data);
+            string encryptedText = Convert.ToBase64String(data);
 
 
-            //bob.SendMessage(this, encryptedText);
+            bob.SendMessage(this, encryptedText);
 
-            
+
         }
 
     }
