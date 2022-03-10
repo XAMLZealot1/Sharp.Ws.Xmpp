@@ -12,8 +12,8 @@ using Sharp.Xmpp.Im;
 using Microsoft.Extensions.Logging;
 using Sharp.Ws.Xmpp.Extensions;
 using Sharp.Ws.Xmpp.Extensions.Omemo;
-using Sharp.Ws.Xmpp.Extensions.Omemo.Storage;
 using libsignal.state;
+using Sharp.Ws.Xmpp.Extensions.Interfaces;
 
 namespace Sharp.Xmpp.Client
 {
@@ -2895,9 +2895,9 @@ namespace Sharp.Xmpp.Client
             groupChat.RequestPrivilige(chatRoom, Role.Participant);
         }
 
-        public void InitializeOmemo(IRegistrationStore registrar, SignalProtocolStore store)
+        public void InitializeOmemo(SignalProtocolStore store, uint deviceID, IPreKeyCollection preKeyStore)
         {
-            OmemoManager = new OmemoManager(omemoEncryption, registrar, store);
+            OmemoManager = new OmemoManager(omemoEncryption, store, Jid, deviceID, preKeyStore);
         }
 
         /// <summary>

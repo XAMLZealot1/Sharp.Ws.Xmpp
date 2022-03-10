@@ -19,14 +19,6 @@ Several extensions have been added to support Rainbow features (https://openrain
     <Compile Remove="Extensions\XEP-0384\Omemo\CryptoUtils.cs" />
     <Compile Remove="Extensions\XEP-0384\Omemo\DoubleRachet.cs" />
     <Compile Remove="Extensions\XEP-0384\Omemo\KeyHelper.cs" />
-    <Compile Remove="Extensions\XEP-0384\Omemo\Keys\AbstractECKeyPair.cs" />
-    <Compile Remove="Extensions\XEP-0384\Omemo\Keys\Bundle.cs" />
-    <Compile Remove="Extensions\XEP-0384\Omemo\Keys\ECKey.cs" />
-    <Compile Remove="Extensions\XEP-0384\Omemo\Keys\ECPrivKey.cs" />
-    <Compile Remove="Extensions\XEP-0384\Omemo\Keys\ECPubKey.cs" />
-    <Compile Remove="Extensions\XEP-0384\Omemo\Keys\EphemeralKeyPair.cs" />
-    <Compile Remove="Extensions\XEP-0384\Omemo\Keys\GenericECKeyPair.cs" />
-    <Compile Remove="Extensions\XEP-0384\Omemo\Keys\IdentityKeyPair.cs" />
   </ItemGroup>
 
   <ItemGroup>

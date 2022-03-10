@@ -1,16 +1,16 @@
-﻿using libsignal.state;
-using libsignal.util;
-using Microsoft.Extensions.Logging;
+﻿using libsignal;
+using libsignal.ecc;
+using libsignal.state;
+using Sharp.Ws.Xmpp.Extensions.Interfaces;
 using Sharp.Ws.Xmpp.Extensions.Omemo;
-using Sharp.Ws.Xmpp.Extensions.Omemo.Storage;
 using Sharp.Xmpp;
-using Sharp.Xmpp.Client;
 using Sharp.Xmpp.Core;
 using Sharp.Xmpp.Extensions;
 using Sharp.Xmpp.Im;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Text.RegularExpressions;
 using System.Xml;
 
 namespace Sharp.Ws.Xmpp.Extensions
@@ -19,7 +19,7 @@ namespace Sharp.Ws.Xmpp.Extensions
     /// <summary>
     /// Implements the 'OMEMO Encryption' extension as defined in XEP-0384
     /// </summary>
-    internal class OmemoEncryption : XmppExtension, IInputFilter<Stanza>, IOutputFilter<Stanza>, IOutputFilter<Iq>
+    internal class OmemoEncryption : XmppExtension, IOutputFilter<Iq>
     {
         /// <summary>
         /// Initializes a new instance of the ServerIpCheck class.
@@ -81,28 +81,53 @@ namespace Sharp.Ws.Xmpp.Extensions
             }
         }
 
-        /// <summary>
-        /// Determines whether our server supports personal eventing and thusly
-        /// the Omemo Encryption extension.
-        /// </summary>
-        public bool Supported
+        internal IEnumerable<PreKeyRecord> GeneratePreKeys(SignalProtocolStore signalStore, int count = 100)
         {
-            get
+            int preKeyStart = new Random().Next(0, int.MaxValue - 100);
+            int preKeyEnd = preKeyStart + 100;
+
+            var result = new List<PreKeyRecord>();
+
+            for (int i = preKeyStart; i <= preKeyEnd;i++)
             {
-                return pep.Supported;
+                uint preKeyID = Convert.ToUInt32(i);
+                var preKey = new PreKeyRecord(preKeyID, Curve.generateKeyPair());
+                signalStore.StorePreKey(preKeyID, preKey);
+                result.Add(preKey);
             }
+
+            return result;
         }
 
-        internal IRegistrationStore RegistrationStore { get; private set; }
+        internal OmemoBundle GetBundle(Jid jid, uint deviceID)
+        {
+            var nodes = serviceDiscovery.GetItems(jid.GetBareJid());
 
-        internal SignalProtocolStore SignalStore { get; private set; }
+            var bundleItems = nodes.Where(x => Regex.IsMatch(x.Node, OmemoBundle.BundleNodePattern));
+            if (bundleItems == null)
+                return null;
 
-        internal IEnumerable<OmemoDevice> GetDeviceList(Jid jid)
+            var result = new List<OmemoBundle>();
+
+            foreach (var bundleItem in bundleItems)
+            {
+                IEnumerable<XmlElement> bundleElements = pep.RetrieveItems(bundleItem.Jid, bundleItem.Node);
+                if (bundleElements == null)
+                    return null;
+
+                foreach (var bundleElement in bundleElements)
+                    result.Add(new OmemoBundle(bundleElement, bundleItem.Node));
+            }
+
+            return result.FirstOrDefault(x => x.DeviceID == deviceID);
+        }
+
+        internal IEnumerable<OmemoDevice> GetDeviceList(Jid jid, SignalProtocolStore store)
         {
             try
             {
                 var nodes = serviceDiscovery.GetItems(jid.GetBareJid());
-                
+
                 var deviceNodes = nodes.Where(x => new string[]
                 {
                     "urn:xmpp:omemo:2:devices",
@@ -117,11 +142,14 @@ namespace Sharp.Ws.Xmpp.Extensions
                     {
                         foreach (var item in items)
                         {
-                            var deviceList = new DeviceList(item, jid);
+                            var deviceList = new DeviceList(item, jid, store);
                             foreach (var device in deviceList?.Devices)
                             {
                                 if (!devices.Any(x => x.DeviceID == device.DeviceID))
+                                {
+                                    device.Bundle = GetBundle(jid, device.DeviceID);
                                     devices.Add(device);
+                                }
                             }
                         }
                     }
@@ -136,6 +164,27 @@ namespace Sharp.Ws.Xmpp.Extensions
             return new OmemoDevice[] { };
         }
 
+        private PreKeyBundle GeneratePreKey(SignalProtocolStore store, uint deviceID, IPreKeyCollection preKeyStore)
+        {
+            ECKeyPair preKeyPair = Curve.generateKeyPair();
+            ECKeyPair signedPreKeyPair = Curve.generateKeyPair();
+            byte[] signedPreKeySignature = Curve.calculateSignature(store.GetIdentityKeyPair().getPrivateKey(), signedPreKeyPair.getPublicKey().serialize());
+
+            uint preKeyId = preKeyStore.GetRandomPreKeyID();
+            uint signedPreKeyId = Utils.GenerateRandomUint();
+
+            var preKey = new PreKeyBundle(
+                store.GetLocalRegistrationId(),
+                deviceID, preKeyId, preKeyPair.getPublicKey(), signedPreKeyId,
+                signedPreKeyPair.getPublicKey(), signedPreKeySignature,
+                store.GetIdentityKeyPair().getPublicKey());
+
+            store.StorePreKey(preKeyId, new PreKeyRecord(preKey.getPreKeyId(), preKeyPair));
+            store.StoreSignedPreKey(signedPreKeyId, new SignedPreKeyRecord(signedPreKeyId, 0, signedPreKeyPair, signedPreKeySignature));
+
+            return preKey;
+        }
+
         /// <summary>
         /// Invoked after all extensions have been loaded.
         /// </summary>
@@ -148,80 +197,34 @@ namespace Sharp.Ws.Xmpp.Extensions
             serviceDiscovery = im.GetExtension<ServiceDiscovery>();
         }
 
-        internal void PublishBundle()
+        internal OmemoBundle PublishBundle(SignalProtocolStore store, uint deviceID, IPreKeyCollection preKeyStore)
         {
-            XmlElement bundle = Xml.Element("bundle", "eu.siacs.conversations.axolotl");
-
-            var spk = SignalStore.LoadSignedPreKeys().FirstOrDefault();
-
-            XmlElement signedPreKeyPublic = Xml.Element("signedPreKeyPublic").Attr("signedPreKeyId", spk.getId().ToString());
-
-            pep.Publish($"eu.siacs.conversations.axolotl.bundles:{RegistrationStore.RegistrationID}", "current");
+            PreKeyBundle preKeyBundle = GeneratePreKey(store, deviceID, preKeyStore);
+            IEnumerable<PreKeyRecord> preKeyRecords = preKeyStore.Store.Select(x => new PreKeyRecord(x.Value));
+            OmemoBundle bundle = new OmemoBundle(preKeyBundle, preKeyRecords);
+            im.IqRequestAsync(IqType.Set, data: bundle.RootElement);
+            return bundle;
         }
 
-        internal void PublishDeviceList(uint deviceID)
+        internal OmemoDevice PublishDeviceList(uint deviceID, Jid jid)
         {
             XmlElement devices = Xml.Element("list", "eu.siacs.conversations.axolotl");
             XmlElement device = Xml.Element("device").Attr("id", deviceID.ToString());
             devices.Child(device);
 
             pep.Publish("eu.siacs.conversations.axolotl.devicelist", "current", data: devices);
-            
-        }
 
-        internal void InitializeSignal(SignalProtocolStore store)
-        {
-            if (store == null)
-                throw new ArgumentNullException(nameof(store));
-
-            SignalStore = store;
-        }
-
-        internal bool InitializeRegistration(IRegistrationStore store)
-        {
-            if (store == null)
-                throw new ArgumentNullException(nameof(store));
-
-            if (!store.IsRegistered)
-                Register(store);
-
-            if (!store.IsRegistered)
-                throw new Exception("Unable to register omemo device");
-
-            if (store.IsRegistered)
-                RegistrationStore = store;
-
-            PublishDeviceList(store.RegistrationID);
-
-            return store.IsRegistered;
-        }
-
-        internal void Register(IRegistrationStore store)
-        {
-            store.IdentityKeys = KeyHelper.generateIdentityKeyPair();
-            store.RegistrationID = KeyHelper.generateRegistrationId(false);
-
-            if (store.IsRegistered)
-            {
-                PublishDeviceList(store.RegistrationID);
-            }
+            return new OmemoDevice(device, jid);
         }
 
         public void Output(Iq stanza)
         {
             if (stanza.Data?.SelectSingleNode("//publish")?.Attributes["node"]?.Value == "eu.siacs.conversations.axolotl.devicelist")
                 stanza.OpenAccessModel();
+
+            if (stanza.Data?.SelectSingleNode("//publish")?.Attributes["node"]?.Value.StartsWith("eu.siacs.conversations.axolotl.bundles:") ?? false)
+                stanza.OpenAccessModel();
         }
 
-        public bool Input(Stanza stanza)
-        {
-            logger.Debug(stanza.ToString());
-            return false;
-        }
-
-        public void Output(Stanza stanza)
-        {
-            logger.Debug(stanza.ToString());
-        }
     }
 }

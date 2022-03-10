@@ -1,22 +1,15 @@
-﻿using Sharp.Xmpp.Core;
+﻿using Microsoft.Extensions.Logging;
+using Sharp.Xmpp.Core;
 using Sharp.Xmpp.Extensions;
-
 using System;
 using System.Collections.Generic;
 using System.Globalization;
 using System.IO;
 using System.Linq;
-using System.Net;
 using System.Net.Security;
 using System.Net.Sockets;
 using System.Security.Authentication;
 using System.Xml;
-
-using Microsoft.Extensions.Logging;
-using Sharp.Ws.Xmpp.Extensions.Omemo;
-using Sharp.Ws.Xmpp.Extensions.Omemo.Storage;
-using Sharp.Xmpp.Client;
-using Sharp.Ws.Xmpp.Extensions;
 
 namespace Sharp.Xmpp.Im
 {
