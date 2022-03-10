@@ -5,10 +5,10 @@ using System.Text;
 
 namespace Sharp.Ws.Xmpp.Signal
 {
-    internal class Bob : SignalUser
+    public class Bob : SignalUser
     {
 
-        internal Bob(string jabberID, string password) : base(new Jid(jabberID), password)
+        public Bob(string jabberID, string password) : base(new Jid(jabberID), password)
         {
 
         }

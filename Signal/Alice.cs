@@ -16,41 +16,41 @@ namespace Sharp.Ws.Xmpp.Signal
 
         public Alice(string jabberID, string password) : base(new Jid(jabberID), password)
         {
-            SignalUser bob = new Bob("test2@weoflibertyandfreedom.com", "Repsol!442110");
+            //SignalUser bob = new Bob("test2@weoflibertyandfreedom.com", "Repsol!442110");
 
-            SessionBuilder sessionBuilder = new SessionBuilder(store, bob.Address);
+            //SessionBuilder sessionBuilder = new SessionBuilder(store, bob.Address);
 
-            OmemoBundle obundle = bob.GetBundle();
+            //OmemoBundle obundle = bob.GetBundle();
 
-            OmemoKey key = Utils.SelectRandomItem<OmemoKey>(obundle.PreKeys);
+            //OmemoKey key = Utils.SelectRandomItem<OmemoKey>(obundle.PreKeys);
 
-            PreKeyBundle bobBundle;
+            //PreKeyBundle bobBundle;
 
-            //bobBundle = bob.RequestBundle();
+            ////bobBundle = bob.RequestBundle();
 
-            bobBundle = bob.RehydrateBundle(
-                obundle.SignedPreKeyPublic.Base64Payload,                // Signed Pre Key Public B64
-                obundle.SignedPreKeyPublic.PreKeyID,                     // Signed Pre Key ID
-                Convert.ToBase64String(obundle.SignedPreKeySignature),   // Signed Pre Key Signature B64
-                Convert.ToBase64String(obundle.IdentityKeyData),         // Identity Key B64
-                obundle.DeviceID,                                        // Device ID
-                key.PreKeyID,                                            // Pre Key ID
-                key.Base64Payload);                                      // Pre Key B64
+            //bobBundle = bob.RehydrateBundle(
+            //    obundle.SignedPreKeyPublic.Base64Payload,                // Signed Pre Key Public B64
+            //    obundle.SignedPreKeyPublic.PreKeyID,                     // Signed Pre Key ID
+            //    Convert.ToBase64String(obundle.SignedPreKeySignature),   // Signed Pre Key Signature B64
+            //    Convert.ToBase64String(obundle.IdentityKeyData),         // Identity Key B64
+            //    obundle.DeviceID,                                        // Device ID
+            //    key.PreKeyID,                                            // Pre Key ID
+            //    key.Base64Payload);                                      // Pre Key B64
 
-            sessionBuilder.process(bobBundle);
+            //sessionBuilder.process(bobBundle);
 
-            string plainTextMessage = "Hello, Bob. This is Alice.";
+            //string plainTextMessage = "Hello, Bob. This is Alice.";
 
-            SessionCipher cipher = new SessionCipher(store, bob.Address);
+            //SessionCipher cipher = new SessionCipher(store, bob.Address);
 
-            CiphertextMessage initialMessage = cipher.encrypt(Encoding.UTF8.GetBytes(plainTextMessage));
+            //CiphertextMessage initialMessage = cipher.encrypt(Encoding.UTF8.GetBytes(plainTextMessage));
 
-            byte[] data = initialMessage.serialize();
+            //byte[] data = initialMessage.serialize();
 
-            string encryptedText = Convert.ToBase64String(data);
+            //string encryptedText = Convert.ToBase64String(data);
 
 
-            bob.SendMessage(this, encryptedText);
+            //bob.SendMessage(this, encryptedText);
 
             
         }

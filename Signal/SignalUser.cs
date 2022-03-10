@@ -55,12 +55,16 @@ namespace Sharp.Ws.Xmpp.Signal
 
         }
 
-        internal PreKeyBundle RequestBundle()
+        public PreKeyBundle RequestBundle(out ECPublicKey spk, out ECPublicKey pk)
         {
             if (preKey == null)
             {
                 ECKeyPair preKeyPair = Curve.generateKeyPair();
                 ECKeyPair signedPreKeyPair = Curve.generateKeyPair();
+
+                spk = signedPreKeyPair.getPublicKey();
+                pk = preKeyPair.getPublicKey();
+
                 byte[] signedPreKeySignature = Curve.calculateSignature(store.GetIdentityKeyPair().getPrivateKey(), signedPreKeyPair.getPublicKey().serialize());
                 preKeyId = GenerateRandomUint(1000000, 1000100);
 
@@ -75,13 +79,18 @@ namespace Sharp.Ws.Xmpp.Signal
                 store.StorePreKey(preKeyId, new PreKeyRecord(preKey.getPreKeyId(), preKeyPair));
                 store.StoreSignedPreKey(signedPreKeyId, new SignedPreKeyRecord(signedPreKeyId, 0, signedPreKeyPair, signedPreKeySignature));
             }
+            else
+            {
+                spk = null;
+                pk = null;
+            }
 
             return preKey;
         }
 
-        internal OmemoBundle GetBundle()
+        public OmemoBundle GetBundle()
         {
-            var bundle = RequestBundle();
+            var bundle = RequestBundle(out ECPublicKey spk, out ECPublicKey pk);
             var prekey = store.LoadPreKey(preKeyId);
 
             OmemoKey key = new OmemoKey(Convert.ToBase64String(prekey.getKeyPair().getPublicKey().serialize()), preKeyId);
@@ -89,7 +98,7 @@ namespace Sharp.Ws.Xmpp.Signal
             return new OmemoBundle(bundle, new OmemoKey[] { key });
         }
 
-        internal PreKeyBundle RehydrateBundle(string signedPreKeyPublic, uint signedPreKeyId, string signedPreKeySignature, string identityKey, uint deviceID, uint preKeyID, string preKeyB64)
+        public PreKeyBundle RehydrateBundle(string signedPreKeyPublic, uint signedPreKeyId, string signedPreKeySignature, string identityKey, uint deviceID, uint preKeyID, string preKeyB64)
         {
             ECPublicKey signedPreKey = new DjbECPublicKey(Convert.FromBase64String(signedPreKeyPublic));
             ECPublicKey preKey = new DjbECPublicKey(Convert.FromBase64String(preKeyB64));
@@ -116,7 +125,7 @@ namespace Sharp.Ws.Xmpp.Signal
             return Convert.ToUInt32(random.Next(lowerBound, upperBound));
         }
 
-        internal void SendMessage(SignalUser sender, string encryptedText)
+        public void SendMessage(SignalUser sender, string encryptedText)
         {
             PreKeySignalMessage encryptedMessage = new PreKeySignalMessage(Convert.FromBase64String(encryptedText));
 
