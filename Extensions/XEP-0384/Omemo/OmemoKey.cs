@@ -37,6 +37,8 @@ namespace Sharp.Ws.Xmpp.Extensions.Omemo.Keys
             Base64Payload = node.InnerText;
             if (uint.TryParse(node.GetAttribute("preKeyId"), out uint preKeyId))
                 PreKeyID = preKeyId;
+            else if (uint.TryParse(node.GetAttribute("signedPreKeyId"), out uint signedPreKeyId))
+                PreKeyID = signedPreKeyId;
 
             if (!string.IsNullOrEmpty(Base64Payload))
                 KeyData = Convert.FromBase64String(Base64Payload);

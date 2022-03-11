@@ -1,6 +1,8 @@
 ﻿using libsignal;
 using libsignal.ecc;
+using libsignal.protocol;
 using libsignal.state;
+using Org.BouncyCastle.Security;
 using Sharp.Ws.Xmpp.Extensions.Interfaces;
 using Sharp.Ws.Xmpp.Extensions.Omemo;
 using Sharp.Xmpp;
@@ -10,6 +12,7 @@ using Sharp.Xmpp.Im;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Text;
 using System.Text.RegularExpressions;
 using System.Xml;
 
@@ -164,6 +167,14 @@ namespace Sharp.Ws.Xmpp.Extensions
             return new OmemoDevice[] { };
         }
 
+        private byte[] GenerateIV()
+        {
+            SecureRandom random = new SecureRandom();
+            byte[] iv = new byte[12];
+            random.NextBytes(iv);
+            return iv;
+        }
+
         private PreKeyBundle GeneratePreKey(SignalProtocolStore store, uint deviceID, IPreKeyCollection preKeyStore)
         {
             ECKeyPair preKeyPair = Curve.generateKeyPair();
@@ -215,6 +226,36 @@ namespace Sharp.Ws.Xmpp.Extensions
             pep.Publish("eu.siacs.conversations.axolotl.devicelist", "current", data: devices);
 
             return new OmemoDevice(device, jid);
+        }
+
+        internal void SendMessage(SignalProtocolStore store, OmemoBundle bundle, Sharp.Xmpp.Im.Message message, uint sid)
+        {
+            SignalProtocolAddress address = new SignalProtocolAddress(message.To.GetBareJid().ToString(), bundle.DeviceID);
+            SessionBuilder session = new SessionBuilder(store, address);
+            PreKeyBundle pkb = bundle.ToPreKey();
+            session.process(pkb);
+
+            SessionCipher cipher = new SessionCipher(store, address);
+            CiphertextMessage encryptedMessage = cipher.encrypt(Encoding.UTF8.GetBytes(message.Body));
+            byte[] encryptedData = encryptedMessage.serialize();
+
+            message.Body = "You received an encrypted message, but your client doesn't seem to support OMEMO.";
+
+            message.Data.Child(Xml.Element("encryption", "urn:xmpp:eme:0").Attr("name", "OMEMO").Attr("namespace", "eu.siacs.conversations.axolotl"));
+
+            XmlElement encryptedElement = Xml.Element("encrypted", "eu.siacs.conversations.axolotl");
+            XmlElement headerElement = Xml.Element("header").Attr("sid", sid.ToString());
+            XmlElement keyElement = Xml.Element("key").Attr("rid", bundle.DeviceID.ToString()).InnerText(Convert.ToBase64String(pkb.getSignedPreKey().serialize()));
+            XmlElement ivElement = Xml.Element("iv").InnerText(Convert.ToBase64String(pkb.getSignedPreKeySignature()));
+
+            headerElement.Child(keyElement);
+            headerElement.Child(ivElement);
+
+            encryptedElement.Child(headerElement);
+
+            message.Data.Child(encryptedElement);
+
+            string xml = message.ToString();
         }
 
         public void Output(Iq stanza)

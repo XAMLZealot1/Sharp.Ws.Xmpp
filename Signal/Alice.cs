@@ -22,11 +22,11 @@ namespace Sharp.Ws.Xmpp.Signal
 
             SessionBuilder sessionBuilder = new SessionBuilder(store, bob.Address);
 
-            var bundle1 = bob.RequestBundle(out ECPublicKey spk, out ECPublicKey pk);
+            OmemoBundle bundle = new OmemoBundle();
 
-            var obundle = new OmemoBundle(bundle1, new OmemoKey[] { new OmemoKey(Convert.ToBase64String(bundle1.getPreKey().serialize()), bundle1.getPreKeyId()) });
 
-            sessionBuilder.process(obundle.ToPreKey());
+
+            //sessionBuilder.process(obundle.ToPreKey());
 
             string plainTextMessage = "Hello, Bob. This is Alice.";
 

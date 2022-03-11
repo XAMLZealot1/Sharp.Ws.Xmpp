@@ -30,24 +30,22 @@ namespace Sharp.Ws.Xmpp.Extensions.Omemo
         }
         public OmemoBundle(PreKeyBundle bundle, IEnumerable<OmemoKey> keys)
         {
-            var signedPreKey = new DjbECPublicKey(bundle.getSignedPreKey().serialize());
-
-            SignedPreKeyPublic = new OmemoKey(Convert.ToBase64String(signedPreKey.getPublicKey()), bundle.getSignedPreKeyId());
+            SignedPreKeyPublic = new OmemoKey(Convert.ToBase64String(bundle.getSignedPreKey().serialize()), bundle.getSignedPreKeyId());
             SignedPreKeySignature = bundle.getSignedPreKeySignature();
             IdentityKeyData = bundle.getIdentityKey().serialize();
             DeviceID = bundle.getDeviceId();
             PreKeys.AddRange(keys);
         }
 
-        public uint DeviceID { get; private set; }
+        public uint DeviceID { get; set; }
 
-        public byte[] IdentityKeyData { get; private set; }
+        public byte[] IdentityKeyData { get; set; }
 
-        public List<OmemoKey> PreKeys { get; private set; } = new List<OmemoKey>();
+        public List<OmemoKey> PreKeys { get; set; } = new List<OmemoKey>();
 
-        public OmemoKey SignedPreKeyPublic { get; private set; }
+        public OmemoKey SignedPreKeyPublic { get; set; }
 
-        public byte[] SignedPreKeySignature { get; private set; }
+        public byte[] SignedPreKeySignature { get; set; }
 
         private void GenerateBundle(PreKeyBundle bundle, IEnumerable<PreKeyRecord> preKeys)
         {

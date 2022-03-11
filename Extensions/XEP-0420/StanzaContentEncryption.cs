@@ -9,7 +9,7 @@ using Message = Sharp.Xmpp.Im.Message;
 
 namespace Sharp.Ws.Xmpp.Extensions
 {
-    internal class StanzaContentEncryption : XmppExtension, IOutputFilter<Message>
+    internal class StanzaContentEncryption : XmppExtension
     {
         internal const string NS_EXTENSION = "urn:xmpp:sce:1";
 
@@ -94,11 +94,9 @@ namespace Sharp.Ws.Xmpp.Extensions
             return randomstring;
         }
 
-        public void Output(Message stanza)
+        internal void SendMessage(Message message, byte[] encryptedData)
         {
 
-
-            string xml = stanza.ToString();
         }
 
     }

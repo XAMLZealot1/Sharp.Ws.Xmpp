@@ -65,9 +65,9 @@ namespace Sharp.Ws.Xmpp.Extensions.Omemo
             MyDevice = omemoEncryption.PublishDeviceList(deviceID, jid);
         }
 
-        internal void SendMessage()
+        public void SendMessage(OmemoBundle bundle, Sharp.Xmpp.Im.Message message)
         {
-
+            omemoEncryption.SendMessage(myStore, bundle, message, MyDevice.DeviceID);
         }
 
 
