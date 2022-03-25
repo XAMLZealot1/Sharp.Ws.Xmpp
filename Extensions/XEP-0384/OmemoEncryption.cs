@@ -125,7 +125,7 @@ namespace Sharp.Ws.Xmpp.Extensions
             return result.FirstOrDefault(x => x.DeviceID == deviceID);
         }
 
-        internal IEnumerable<OmemoDevice> GetDeviceList(Jid jid, SignalProtocolStore store)
+        internal IEnumerable<OmemoDevice> GetDeviceList(Jid jid)
         {
             try
             {
@@ -145,7 +145,7 @@ namespace Sharp.Ws.Xmpp.Extensions
                     {
                         foreach (var item in items)
                         {
-                            var deviceList = new DeviceList(item, jid, store);
+                            var deviceList = new DeviceList(item, jid);
                             foreach (var device in deviceList?.Devices)
                             {
                                 if (!devices.Any(x => x.DeviceID == device.DeviceID))
@@ -165,14 +165,6 @@ namespace Sharp.Ws.Xmpp.Extensions
             }
 
             return new OmemoDevice[] { };
-        }
-
-        private byte[] GenerateIV()
-        {
-            SecureRandom random = new SecureRandom();
-            byte[] iv = new byte[12];
-            random.NextBytes(iv);
-            return iv;
         }
 
         private PreKeyBundle GeneratePreKey(SignalProtocolStore store, uint deviceID, IPreKeyCollection preKeyStore)

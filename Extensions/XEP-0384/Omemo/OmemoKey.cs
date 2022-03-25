@@ -28,9 +28,13 @@ namespace Sharp.Ws.Xmpp.Extensions.Omemo.Keys
 
         public string Base64Payload { get; private set; }
 
+        public bool IsPreKey { get; set; }
+
         public byte[] KeyData { get; private set; }
 
         public uint PreKeyID { get; private set; }
+
+        public uint RecipientID { get; set; }
 
         private void ParseNode(XmlElement node)
         {
@@ -42,6 +46,11 @@ namespace Sharp.Ws.Xmpp.Extensions.Omemo.Keys
 
             if (!string.IsNullOrEmpty(Base64Payload))
                 KeyData = Convert.FromBase64String(Base64Payload);
+
+            IsPreKey = node.GetAttribute("prekey")?.ToLower() == "true";
+            string rid = node.GetAttribute("rid");
+            if (!string.IsNullOrEmpty(rid))
+                RecipientID = uint.Parse(rid);
         }
 
     }

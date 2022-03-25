@@ -22,7 +22,7 @@ namespace Sharp.Ws.Xmpp.Signal
 
             SessionBuilder sessionBuilder = new SessionBuilder(store, bob.Address);
 
-            OmemoBundle bundle = new OmemoBundle();
+            //OmemoBundle bundle = new OmemoBundle();
 
 
 
@@ -39,10 +39,12 @@ namespace Sharp.Ws.Xmpp.Signal
             string encryptedText = Convert.ToBase64String(data);
 
 
-            bob.SendMessage(this, encryptedText);
+            bob.SendMessage(this.Address, encryptedText);
 
 
         }
+
+       
 
     }
 }

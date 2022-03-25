@@ -18,7 +18,15 @@ namespace Sharp.Ws.Xmpp.Extensions.Omemo
         private static readonly uint RemoteRegistrationID = uint.MaxValue;
         private org.whispersystems.curve25519.Curve25519 curve = org.whispersystems.curve25519.Curve25519.getInstance(org.whispersystems.curve25519.Curve25519.BEST);
 
-        public OmemoBundle() { }
+        public OmemoBundle(Jid jid)
+        {
+            JabberID = jid;
+        }
+        public OmemoBundle(XmlElement e, Jid jid) : this(jid)
+        {
+            ParseDeviceID(e.GetAttribute("node"));
+            ParseElement(e["item"]);
+        }
         public OmemoBundle (XmlElement bundleItem, string node)
         {
             ParseDeviceID(node);
@@ -40,6 +48,8 @@ namespace Sharp.Ws.Xmpp.Extensions.Omemo
         public uint DeviceID { get; set; }
 
         public byte[] IdentityKeyData { get; set; }
+
+        public Jid JabberID { get; set; }
 
         public List<OmemoKey> PreKeys { get; set; } = new List<OmemoKey>();
 
@@ -85,19 +95,19 @@ namespace Sharp.Ws.Xmpp.Extensions.Omemo
             if (bundleNode == null)
                 return;
 
-            var signedPreKeyPublicNode = bundleNode["signedPreKeyPublic"];
-            var signedPreKeySignatureNode = bundleNode["signedPreKeySignature"];
-            var identityKeyNode = bundleNode["identityKey"];
-            var prekeysNode = bundleNode["prekeys"];
+            SPKPublicElement = bundleNode["signedPreKeyPublic"];
+            SPKSignatureElement = bundleNode["signedPreKeySignature"];
+            IdentityKeyElement = bundleNode["identityKey"];
+            PreKeysElement = bundleNode["prekeys"];
 
-            SignedPreKeyPublic = new OmemoKey(signedPreKeyPublicNode);
-            SignedPreKeySignature = Convert.FromBase64String(signedPreKeySignatureNode?.InnerText);
-            IdentityKeyData = Convert.FromBase64String(identityKeyNode?.InnerText);
+            SignedPreKeyPublic = new OmemoKey(SPKPublicElement);
+            SignedPreKeySignature = Convert.FromBase64String(SPKSignatureElement?.InnerText);
+            IdentityKeyData = Convert.FromBase64String(IdentityKeyElement?.InnerText);
 
-            if (prekeysNode == null)
+            if (PreKeysElement == null)
                 return;
 
-            foreach (var preKey in prekeysNode.ChildNodes)
+            foreach (var preKey in PreKeysElement.ChildNodes)
                 PreKeys.Add(new OmemoKey((XmlElement)preKey));
         }
 

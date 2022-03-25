@@ -30,39 +30,47 @@ namespace Sharp.Ws.Xmpp.Extensions.Omemo
             myJid = jid;
             this.myStore = myStore;
             omemoEncryption = extension;
-            LoadDevice(jid, deviceID, myStore);
+            LoadDevice(jid, deviceID);
             LoadBundle(jid, deviceID, myStore, preKeyStore);
             Address = new SignalProtocolAddress(jid.GetBareJid().ToString(), MyDevice.DeviceID);
         }
-
 
         /// <summary>
         /// 
         /// </summary>
         /// <param name="jid">The user for which to request device list. If null, will request own devices.</param>
-        public IEnumerable<OmemoDevice> GetDeviceList(Jid jid, SignalProtocolStore store)
+        public IEnumerable<OmemoDevice> GetDeviceList(Jid jid)
         {
-            return omemoEncryption.GetDeviceList(jid, store);
+            return omemoEncryption.GetDeviceList(jid);
         }
 
         private void LoadBundle(Jid jid, uint deviceID, SignalProtocolStore myStore, IPreKeyCollection preKeyStore)
         {
-            MyBundle = omemoEncryption.GetBundle(jid, deviceID);
+            //MyBundle = omemoEncryption.GetBundle(jid, deviceID);
 
-            if (MyBundle != null)
-                return;
+            //if (MyBundle != null)
+            //    return;
 
             MyBundle = omemoEncryption.PublishBundle(myStore, deviceID, preKeyStore);
         }
 
-        private void LoadDevice(Jid jid, uint deviceID, SignalProtocolStore myStore)
+        private void LoadDevice(Jid jid, uint deviceID)
         {
-            MyDevice = GetDeviceList(jid, myStore).FirstOrDefault(x => x.DeviceID == deviceID);
+            MyDevice = GetDeviceList(jid).FirstOrDefault(x => x.DeviceID == deviceID);
 
             if (MyDevice != null)
                 return;
                 
             MyDevice = omemoEncryption.PublishDeviceList(deviceID, jid);
+        }
+
+        public OmemoMessage ReceiveMessage(Sharp.Xmpp.Im.Message message)
+        {
+            var result = new OmemoMessage(message.Data);
+
+            result.Decrypt(MyDevice.DeviceID, myStore);
+
+            return result;
         }
 
         public void SendMessage(OmemoBundle bundle, Sharp.Xmpp.Im.Message message)

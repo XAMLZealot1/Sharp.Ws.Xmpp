@@ -32,4 +32,10 @@ Several extensions have been added to support Rainbow features (https://openrain
     <PackageReference Include="Rebex.Elliptic.Ed25519" Version="1.2.1" />
   </ItemGroup>
 
+  <ItemGroup>
+    <Reference Include="Mono.Android">
+      <HintPath>..\..\..\..\..\Program Files\Microsoft Visual Studio\2022\Enterprise\Common7\IDE\ReferenceAssemblies\Microsoft\Framework\MonoAndroid\v12.0\Mono.Android.dll</HintPath>
+    </Reference>
+  </ItemGroup>
+
 </Project>

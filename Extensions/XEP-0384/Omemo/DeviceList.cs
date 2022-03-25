@@ -18,7 +18,7 @@ namespace Sharp.Ws.Xmpp.Extensions.Omemo
         {
 
         }
-        internal DeviceList(XmlElement e, Jid jid, SignalProtocolStore store)
+        internal DeviceList(XmlElement e, Jid jid)
         {
             Jid = jid;
 

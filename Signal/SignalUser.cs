@@ -68,7 +68,7 @@ namespace Sharp.Ws.Xmpp.Signal
                 byte[] signedPreKeySignature = Curve.calculateSignature(store.GetIdentityKeyPair().getPrivateKey(), signedPreKeyPair.getPublicKey().serialize());
                 preKeyId = GenerateRandomUint(1000000, 1000100);
 
-                uint signedPreKeyId = GenerateRandomUint();
+                uint signedPreKeyId = 29150; // GenerateRandomUint();
 
                 preKey = new PreKeyBundle(
                     uint.MaxValue,                                                            // Registration ID
@@ -92,26 +92,17 @@ namespace Sharp.Ws.Xmpp.Signal
             return preKey;
         }
 
-        public OmemoBundle GetBundle()
-        {
-            var bundle = RequestBundle(out ECPublicKey spk, out ECPublicKey pk);
-            var prekey = store.LoadPreKey(preKeyId);
-
-            OmemoKey key = new OmemoKey(Convert.ToBase64String(prekey.getKeyPair().getPublicKey().serialize()), preKeyId);
-
-            return new OmemoBundle(bundle, new OmemoKey[] { key });
-        }
-
         protected uint GenerateRandomUint(int lowerBound = 0, int upperBound = int.MaxValue)
         {
             return Convert.ToUInt32(random.Next(lowerBound, upperBound));
         }
 
-        public void SendMessage(SignalUser sender, string encryptedText)
+        public void SendMessage(SignalProtocolAddress sender, string encryptedText)
         {
             PreKeySignalMessage encryptedMessage = new PreKeySignalMessage(Convert.FromBase64String(encryptedText));
 
-            SessionCipher cipher = new SessionCipher(store, sender.Address);
+
+            SessionCipher cipher = new SessionCipher(store, sender);
 
             byte[] plainTextData = cipher.decrypt(encryptedMessage);
 

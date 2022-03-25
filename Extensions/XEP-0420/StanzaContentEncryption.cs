@@ -99,5 +99,9 @@ namespace Sharp.Ws.Xmpp.Extensions
 
         }
 
+        public bool Input(Stanza stanza)
+        {
+            return false;
+        }
     }
 }
