@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace Sharp.Xmpp.Extensions
+namespace XMPP.Net.Extensions
 {
     public class ThumbnailEventArgs : EventArgs
     {

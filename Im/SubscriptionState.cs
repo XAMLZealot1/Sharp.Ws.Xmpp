@@ -1,4 +1,4 @@
-﻿namespace Sharp.Xmpp.Im
+﻿namespace XMPP.Net.Im
 {
     /// <summary>
     /// Defines the possible values for the subscription state of a roster item.

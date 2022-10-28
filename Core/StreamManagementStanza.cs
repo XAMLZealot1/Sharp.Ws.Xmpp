@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Text;
 using System.Xml;
 
-namespace Sharp.Xmpp.Core
+namespace XMPP.Net.Core
 {
     
     public class StreamManagementStanza : Stanza

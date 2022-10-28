@@ -6,12 +6,12 @@ using System.Net;
 using System.Net.Security;
 using System.Xml;
 
-using Sharp.Xmpp.Extensions;
-using Sharp.Xmpp.Im;
+using XMPP.Net.Extensions;
+using XMPP.Net.Im;
 
 using Microsoft.Extensions.Logging;
 
-namespace Sharp.Xmpp.Client
+namespace XMPP.Net.Client
 {
     /// <summary>
     /// Implements an XMPP client providing basic instant messaging (IM) and
@@ -487,7 +487,7 @@ namespace Sharp.Xmpp.Client
         /// The event that is raised when the connection status with the server is modified
         /// received.
         /// </summary>
-        public event EventHandler<Sharp.Xmpp.Core.ConnectionStatusEventArgs> ConnectionStatus
+        public event EventHandler<Core.ConnectionStatusEventArgs> ConnectionStatus
         {
             add
             {
@@ -838,7 +838,7 @@ namespace Sharp.Xmpp.Client
         /// <summary>
         /// The event that is raised when an alert message is received
         /// </summary>
-        public event EventHandler<Sharp.Xmpp.Im.MessageEventArgs> AlertMessage
+        public event EventHandler<Im.MessageEventArgs> AlertMessage
         {
             add
             {
@@ -1018,7 +1018,7 @@ namespace Sharp.Xmpp.Client
         /// <summary>
         /// The event that is raised when a call service message not specifically managed is received
         /// </summary>
-        public event EventHandler<Sharp.Xmpp.Extensions.MessageEventArgs> CallServiceMessageReceived
+        public event EventHandler<Extensions.MessageEventArgs> CallServiceMessageReceived
         {
             add
             {
@@ -1033,7 +1033,7 @@ namespace Sharp.Xmpp.Client
         /// <summary>
         /// The event that is raised when we asked and have PBX calls in progress
         /// </summary>
-        public event EventHandler<Sharp.Xmpp.Extensions.MessageEventArgs> PBXCallsInProgress
+        public event EventHandler<Extensions.MessageEventArgs> PBXCallsInProgress
         {
             add
             {
@@ -1124,7 +1124,7 @@ namespace Sharp.Xmpp.Client
         /// <summary>
         /// The event that is raised when a conference has been updated
         /// </summary>
-        public event EventHandler<Sharp.Xmpp.Extensions.MessageEventArgs> ConferenceUpdated
+        public event EventHandler<Extensions.MessageEventArgs> ConferenceUpdated
         {
             add
             {
@@ -1170,7 +1170,7 @@ namespace Sharp.Xmpp.Client
         /// <summary>
         /// The event raised when a ChannelItem is created, updated, deleted
         /// </summary>
-        public event EventHandler<Sharp.Xmpp.Extensions.MessageEventArgs> ChanneItemManagement
+        public event EventHandler<Extensions.MessageEventArgs> ChanneItemManagement
         {
             add
             {
@@ -1185,7 +1185,7 @@ namespace Sharp.Xmpp.Client
         /// <summary>
         /// The event raised when a Group is created, updated, deleted but alos when a member is added / remove in a group
         /// </summary>
-        public event EventHandler<Sharp.Xmpp.Extensions.MessageEventArgs> GroupManagement
+        public event EventHandler<Extensions.MessageEventArgs> GroupManagement
         {
             add
             {
@@ -1200,7 +1200,7 @@ namespace Sharp.Xmpp.Client
         /// <summary>
         /// The event raised when a record has been done in a conference. We receive a RecordingFile info node
         /// </summary>
-        public event EventHandler<Sharp.Xmpp.Extensions.MessageEventArgs> RecordingFile
+        public event EventHandler<Extensions.MessageEventArgs> RecordingFile
         {
             add
             {

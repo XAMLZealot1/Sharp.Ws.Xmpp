@@ -2,15 +2,15 @@
 using System.Collections.Generic;
 using System.Xml;
 
-using Sharp.Xmpp.Core;
-using Sharp.Xmpp.Im;
+using XMPP.Net.Core;
+using XMPP.Net.Im;
 
 using Microsoft.Extensions.Logging;
 
 
-namespace Sharp.Xmpp.Extensions
+namespace XMPP.Net.Extensions
 {
-    internal class JingleMessageInitiation : XmppExtension, IInputFilter<Sharp.Xmpp.Im.Message>, IInputFilter<Iq>
+    internal class JingleMessageInitiation : XmppExtension, IInputFilter<Im.Message>, IInputFilter<Iq>
     {
         private static readonly ILogger log = LogFactory.CreateLogger<JingleMessageInitiation>();
 
@@ -69,7 +69,7 @@ namespace Sharp.Xmpp.Extensions
         /// <param name="stanza">The stanza which has been received.</param>
         /// <returns>true to intercept the stanza or false to pass the stanza
         /// on to the next handler.</returns>
-        public bool Input(Sharp.Xmpp.Im.Message message)
+        public bool Input(Im.Message message)
         {
             String action = null;
             if (message.Data["propose"] != null)
@@ -172,7 +172,7 @@ namespace Sharp.Xmpp.Extensions
         /// <param name="jingleMessage">Jingle Message to send</param>
         public void Send(JingleMessage jingleMessage)
         {
-            Sharp.Xmpp.Im.Message message = new Sharp.Xmpp.Im.Message(jingleMessage.ToJid);
+            Im.Message message = new Im.Message(jingleMessage.ToJid);
             XmlElement e = message.Data;
 
             XmlElement actionElement = e.OwnerDocument.CreateElement(jingleMessage.Action, NamespaceJingleMessage);

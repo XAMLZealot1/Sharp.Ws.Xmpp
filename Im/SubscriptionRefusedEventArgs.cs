@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace Sharp.Xmpp.Im
+namespace XMPP.Net.Im
 {
     /// <summary>
     /// Provides data for the SubscriptionRefused Event.

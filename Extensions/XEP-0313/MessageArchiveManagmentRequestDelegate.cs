@@ -1,4 +1,4 @@
-namespace Sharp.Xmpp.Extensions
+namespace XMPP.Net.Extensions
 {
     /// <summary>
     /// Invoked when a CustomIqRequest is made.

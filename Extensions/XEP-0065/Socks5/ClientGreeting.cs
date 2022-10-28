@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Runtime.Serialization;
 
-namespace Sharp.Xmpp.Extensions.Socks5
+namespace XMPP.Net.Extensions.Socks5
 {
     /// <summary>
     /// Represents a SOCKS5 client-greeting message.

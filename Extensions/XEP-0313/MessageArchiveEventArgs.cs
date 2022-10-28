@@ -1,7 +1,7 @@
 ﻿using System;
-using Sharp.Xmpp.Im;
+using XMPP.Net.Im;
 
-namespace Sharp.Xmpp.Extensions
+namespace XMPP.Net.Extensions
 {
     public class MessageArchiveEventArgs : EventArgs
     {

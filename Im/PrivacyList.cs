@@ -2,7 +2,7 @@
 using System.Collections;
 using System.Collections.Generic;
 
-namespace Sharp.Xmpp.Im
+namespace XMPP.Net.Im
 {
     /// <summary>
     /// Represents an XMPP privacy list.

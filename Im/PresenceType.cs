@@ -1,4 +1,4 @@
-﻿namespace Sharp.Xmpp.Im
+﻿namespace XMPP.Net.Im
 {
     /// <summary>
     /// Defines the possible types for Presence stanzas.

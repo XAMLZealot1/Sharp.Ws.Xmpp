@@ -2,7 +2,7 @@
 using System.Text;
 using System.Text.RegularExpressions;
 
-namespace Sharp.Xmpp
+namespace XMPP.Net
 {
     /// <summary>
     /// Represents the address of an XMPP entity, also known as Jabber Identifier (JID).

@@ -1,5 +1,5 @@
-using Sharp.Xmpp.Core;
-using Sharp.Xmpp.Im;
+using XMPP.Net.Core;
+using XMPP.Net.Im;
 using System;
 using System.Collections.Generic;
 using System.Xml;
@@ -7,12 +7,12 @@ using System.Xml;
 using Microsoft.Extensions.Logging;
 
 
-namespace Sharp.Xmpp.Extensions
+namespace XMPP.Net.Extensions
 {
     /// <summary>
     /// Implements the 'CallLog' extension used in Rainbow Hub
     /// </summary>
-    internal class CallLog : XmppExtension, IInputFilter<Sharp.Xmpp.Im.Message>
+    internal class CallLog : XmppExtension, IInputFilter<Im.Message>
     {
         private static readonly ILogger log = LogFactory.CreateLogger<CallLog>();
 
@@ -72,7 +72,7 @@ namespace Sharp.Xmpp.Extensions
         /// <param name="stanza">The stanza which has been received.</param>
         /// <returns>true to intercept the stanza or false to pass the stanza
         /// on to the next handler.</returns>
-        public bool Input(Sharp.Xmpp.Im.Message message)
+        public bool Input(Im.Message message)
         {
             if (message.Type == MessageType.Webrtc)
             {
@@ -225,7 +225,7 @@ namespace Sharp.Xmpp.Extensions
                 if (iq.Type == IqType.Result)
                 {
                     string queryid = "";
-                    CallLogResult complete = Sharp.Xmpp.Extensions.CallLogResult.Error;
+                    CallLogResult complete = Extensions.CallLogResult.Error;
                     int count = 0;
                     string first = "";
                     string last = "";
@@ -236,7 +236,7 @@ namespace Sharp.Xmpp.Extensions
                             XmlElement e = iq.Data["query"];
 
                             queryid = e.GetAttribute("queryid");
-                            complete = (e.GetAttribute("complete") == "false") ? Sharp.Xmpp.Extensions.CallLogResult.InProgress : Sharp.Xmpp.Extensions.CallLogResult.Complete;
+                            complete = (e.GetAttribute("complete") == "false") ? Extensions.CallLogResult.InProgress : Extensions.CallLogResult.Complete;
 
                             if (e["set"]["count"] != null)
                                 count = Int16.Parse(e["set"]["count"].InnerText);
@@ -258,7 +258,7 @@ namespace Sharp.Xmpp.Extensions
                         log.LogError("RequestCustomIqAsync - an error occurred ...");
                     }
 
-                    CallLogResult.Raise(this, new CallLogResultEventArgs(queryid, Sharp.Xmpp.Extensions.CallLogResult.Error, count, first, last));
+                    CallLogResult.Raise(this, new CallLogResultEventArgs(queryid, Extensions.CallLogResult.Error, count, first, last));
                 }
             });
         }
@@ -313,7 +313,7 @@ namespace Sharp.Xmpp.Extensions
         public void MarkCallLogAsRead(String callId)
         {
             string jid = im.Jid.Node + "@" + im.Jid.Domain;
-            Sharp.Xmpp.Im.Message message = new Sharp.Xmpp.Im.Message(jid);
+            Im.Message message = new Im.Message(jid);
 
             XmlElement e = message.Data;
 

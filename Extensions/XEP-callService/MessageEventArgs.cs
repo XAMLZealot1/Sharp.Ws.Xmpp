@@ -1,7 +1,7 @@
 ﻿
 using System;
 
-namespace Sharp.Xmpp.Extensions
+namespace XMPP.Net.Extensions
 {
     /// <summary>
     /// Provides data for the MessageEventArgs event

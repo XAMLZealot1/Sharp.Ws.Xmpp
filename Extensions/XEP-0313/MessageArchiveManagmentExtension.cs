@@ -1,19 +1,17 @@
-using Sharp.Xmpp.Core;
-using Sharp.Xmpp.Im;
+using Microsoft.Extensions.Logging;
 using System;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.Xml;
+using XMPP.Net.Core;
+using XMPP.Net.Im;
 
-using Microsoft.Extensions.Logging;
 
-
-namespace Sharp.Xmpp.Extensions
+namespace XMPP.Net.Extensions
 {
     /// <summary>
     /// Implements Mechanism for providing MaM support
     /// </summary>
-    internal class MessageArchiveManagment : XmppExtension, IInputFilter<Sharp.Xmpp.Im.Message>
+    internal class MessageArchiveManagment : XmppExtension, IInputFilter<Im.Message>
     {
         private static readonly ILogger log = LogFactory.CreateLogger<MessageArchiveManagment>();
 
@@ -80,7 +78,7 @@ namespace Sharp.Xmpp.Extensions
         /// <param name="stanza">The stanza which has been received.</param>
         /// <returns>true to intercept the stanza or false to pass the stanza
         /// on to the next handler.</returns>
-        public bool Input(Sharp.Xmpp.Im.Message message)
+        public bool Input(Im.Message message)
         {
             if ( (message.Data["result"] != null)
                 && (message.Data["result"].NamespaceURI == "urn:xmpp:mam:1") )

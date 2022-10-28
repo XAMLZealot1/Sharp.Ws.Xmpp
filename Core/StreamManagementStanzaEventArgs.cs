@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using System.Text;
 
-namespace Sharp.Xmpp.Core
+namespace XMPP.Net.Core
 {
     /// <summary>
     /// Provides data for the Presence event.

@@ -1,10 +1,10 @@
-﻿using Sharp.Xmpp.Core;
-using Sharp.Xmpp.Im;
+﻿using XMPP.Net.Core;
+using XMPP.Net.Im;
 using System;
 using System.Collections.Generic;
 using System.Xml;
 
-namespace Sharp.Xmpp.Extensions
+namespace XMPP.Net.Extensions
 {
     /// <summary>
     /// Implements the 'Personal Eventing Protocol' extension as defined in XEP-0163.

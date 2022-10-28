@@ -1,5 +1,5 @@
-﻿using Sharp.Xmpp.Core;
-using Sharp.Xmpp.Extensions;
+﻿using XMPP.Net.Core;
+using XMPP.Net.Extensions;
 
 using System;
 using System.Collections.Generic;
@@ -15,7 +15,7 @@ using System.Xml;
 using Microsoft.Extensions.Logging;
 
 
-namespace Sharp.Xmpp.Im
+namespace XMPP.Net.Im
 {
     /// <summary>
     /// Implements the basic instant messaging (IM) and presence functionality.

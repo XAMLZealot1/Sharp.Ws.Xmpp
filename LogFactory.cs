@@ -4,7 +4,7 @@ using System;
 using System.Collections.Generic;
 using System.Text;
 
-namespace Sharp.Xmpp
+namespace XMPP.Net
 {
     /// <summary>
     /// Class used to manage LoggerFactory object

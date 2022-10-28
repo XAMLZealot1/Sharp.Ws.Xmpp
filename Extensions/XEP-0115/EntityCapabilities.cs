@@ -1,11 +1,11 @@
-﻿using Sharp.Xmpp.Im;
+﻿using XMPP.Net.Im;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Security.Cryptography;
 using System.Text;
 
-namespace Sharp.Xmpp.Extensions
+namespace XMPP.Net.Extensions
 {
     /// <summary>
     /// Implements the 'Entity Capabilities' extension as defined in XEP-0092.

@@ -13,7 +13,7 @@ using System.Xml;
 using Microsoft.Extensions.Logging;
 
 
-namespace Sharp.Xmpp.Core
+namespace XMPP.Net.Core
 {
     internal class WebSocket
     {

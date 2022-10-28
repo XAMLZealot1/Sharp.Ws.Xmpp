@@ -1,4 +1,4 @@
-using Sharp.Xmpp.Im;
+using XMPP.Net.Im;
 using System;
 using System.Collections.Generic;
 
@@ -6,7 +6,7 @@ using Microsoft.Extensions.Logging;
 using System.Xml;
 
 
-namespace Sharp.Xmpp.Extensions
+namespace XMPP.Net.Extensions
 {
     /// <summary>
     /// Implements the 'Configuration' extension used in Rainbow Hub

@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using System.Xml;
 
-namespace Sharp.Xmpp.Extensions.Dataforms
+namespace XMPP.Net.Extensions.Dataforms
 {
     /// <summary>
     /// Represents a field that is intended to be invisible to the form-submitting

@@ -1,9 +1,9 @@
-using Sharp.Xmpp.Im;
+using XMPP.Net.Im;
 using System;
 using System.Collections.Generic;
 using System.Xml;
 
-namespace Sharp.Xmpp.Extensions
+namespace XMPP.Net.Extensions
 {
     public enum ReceiptType
     {

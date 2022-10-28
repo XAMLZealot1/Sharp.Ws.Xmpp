@@ -4,7 +4,7 @@ using System.Linq;
 using System.Security.Cryptography;
 using System.Text;
 
-namespace Sharp.Xmpp.Core.Sasl.Mechanisms
+namespace XMPP.Net.Core.Sasl.Mechanisms
 {
     /// <summary>
     /// Implements the Sasl SCRAM-SHA-1 authentication method as described in

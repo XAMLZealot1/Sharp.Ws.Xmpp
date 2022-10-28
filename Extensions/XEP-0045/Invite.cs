@@ -2,9 +2,9 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Xml;
-using Sharp.Xmpp.Core;
+using XMPP.Net.Core;
 
-namespace Sharp.Xmpp.Extensions
+namespace XMPP.Net.Extensions
 {
     /// <summary>
     /// Implements MUC Mediated Invitation as described in XEP-0045.

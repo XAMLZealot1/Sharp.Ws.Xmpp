@@ -4,14 +4,14 @@ using System.Text;
 
 using Microsoft.Extensions.Logging;
 
-using Sharp.Xmpp.Im;
+using XMPP.Net.Im;
 
-namespace Sharp.Xmpp.Extensions
+namespace XMPP.Net.Extensions
 {
     /// <summary>
     /// Implements the 'Cap' extension (Common Alert Protocol) used in Rainbow Hub
     /// </summary>
-    internal class Cap : XmppExtension, IInputFilter<Sharp.Xmpp.Im.Message>
+    internal class Cap : XmppExtension, IInputFilter<Im.Message>
     {
         private static readonly ILogger log = LogFactory.CreateLogger<Cap>();
 
@@ -43,7 +43,7 @@ namespace Sharp.Xmpp.Extensions
         /// <summary>
         /// The event that is raised when a chat message is received.
         /// </summary>
-        public event EventHandler<Sharp.Xmpp.Im.MessageEventArgs> AlertMessage;
+        public event EventHandler<Im.MessageEventArgs> AlertMessage;
 
         /// <summary>
         /// Invoked when a message stanza has been received.
@@ -51,7 +51,7 @@ namespace Sharp.Xmpp.Extensions
         /// <param name="stanza">The stanza which has been received.</param>
         /// <returns>true to intercept the stanza or false to pass the stanza
         /// on to the next handler.</returns>
-        public bool Input(Sharp.Xmpp.Im.Message message)
+        public bool Input(Im.Message message)
         {
             if (message.Type == MessageType.Headline)
             {
@@ -59,7 +59,7 @@ namespace Sharp.Xmpp.Extensions
                 {
                     //TO DO
                     log.LogDebug("[Input] Alert message received");
-                    AlertMessage.Raise(this, new Sharp.Xmpp.Im.MessageEventArgs(message.From, message));
+                    AlertMessage.Raise(this, new Im.MessageEventArgs(message.From, message));
                     return true;
                 }
             }

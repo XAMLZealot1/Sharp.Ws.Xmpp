@@ -1,4 +1,4 @@
-﻿namespace Sharp.Xmpp
+﻿namespace XMPP.Net
 {
     /// <summary>
     /// Defines possible values for the type of XMPP errors.

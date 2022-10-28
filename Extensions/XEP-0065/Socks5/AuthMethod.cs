@@ -1,4 +1,4 @@
-﻿namespace Sharp.Xmpp.Extensions.Socks5
+﻿namespace XMPP.Net.Extensions.Socks5
 {
     /// <summary>
     /// Defines possible values for the different authentication methods

@@ -1,4 +1,4 @@
-﻿namespace Sharp.Xmpp.Extensions.Dataforms
+﻿namespace XMPP.Net.Extensions.Dataforms
 {
     /// <summary>
     /// Defines possible values for the different types of data-fields.

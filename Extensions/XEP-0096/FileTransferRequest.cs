@@ -1,4 +1,4 @@
-﻿namespace Sharp.Xmpp.Extensions
+﻿namespace XMPP.Net.Extensions
 {
     /// <summary>
     /// Represents a request for a file-transfer.

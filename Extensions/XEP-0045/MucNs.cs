@@ -1,4 +1,4 @@
-﻿namespace Sharp.Xmpp.Extensions
+﻿namespace XMPP.Net.Extensions
 {
     /// <summary>
     /// Identifiers used to describe objects in objects in the MUC Namespace.

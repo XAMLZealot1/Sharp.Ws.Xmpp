@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace Sharp.Xmpp.Core
+namespace XMPP.Net.Core
 {
     /// <summary>
     /// Provides data for the Iq event.

@@ -1,4 +1,4 @@
-﻿namespace Sharp.Xmpp.Extensions
+﻿namespace XMPP.Net.Extensions
 {
     /// <summary>
     /// Describes the Affiliation of a participant in a group chat.

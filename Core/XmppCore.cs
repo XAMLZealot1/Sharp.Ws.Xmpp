@@ -1,5 +1,5 @@
-﻿using Sharp.Xmpp.Core.Sasl;
-using Sharp.Xmpp.Extensions;
+﻿using XMPP.Net.Core.Sasl;
+using XMPP.Net.Extensions;
 
 using System;
 using System.Collections.Concurrent;
@@ -19,7 +19,7 @@ using System.Xml;
 using Microsoft.Extensions.Logging;
 
 
-namespace Sharp.Xmpp.Core
+namespace XMPP.Net.Core
 {
     /// <summary>
     /// Implements the core features of the XMPP protocol.

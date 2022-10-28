@@ -1,12 +1,12 @@
-﻿using Sharp.Xmpp.Core;
-using Sharp.Xmpp.Extensions.Dataforms;
-using Sharp.Xmpp.Im;
+﻿using XMPP.Net.Core;
+using XMPP.Net.Extensions.Dataforms;
+using XMPP.Net.Im;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Xml;
 
-namespace Sharp.Xmpp.Extensions
+namespace XMPP.Net.Extensions
 {
     /// <summary>
     /// Implements the 'In-Band Registration' extension as defined in XEP-0077.

@@ -1,9 +1,9 @@
-﻿using Sharp.Xmpp.Core;
-using Sharp.Xmpp.Im;
+﻿using XMPP.Net.Core;
+using XMPP.Net.Im;
 using System;
 using System.Collections.Generic;
 
-namespace Sharp.Xmpp.Extensions
+namespace XMPP.Net.Extensions
 {
     internal class MessageCarbons : XmppExtension
     {
@@ -39,10 +39,9 @@ namespace Sharp.Xmpp.Extensions
                     "be enabled.");
         }
 
-        public MessageCarbons(XmppIm im) :
-            base(im)
+        public MessageCarbons(XmppIm im) : base(im)
         {
-            ;
+            
         }
     }
 }

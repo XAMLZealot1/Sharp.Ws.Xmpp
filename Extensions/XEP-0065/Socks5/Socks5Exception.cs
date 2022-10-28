@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Runtime.Serialization;
 
-namespace Sharp.Xmpp.Extensions.Socks5
+namespace XMPP.Net.Extensions.Socks5
 {
     /// <summary>
     /// The exception that is thrown when a SOCKS5 error has been encountered.

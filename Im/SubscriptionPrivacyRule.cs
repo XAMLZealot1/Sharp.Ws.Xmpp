@@ -1,4 +1,4 @@
-﻿namespace Sharp.Xmpp.Im
+﻿namespace XMPP.Net.Im
 {
     /// <summary>
     /// Represents a privacy rule pertaining to a subscription state.

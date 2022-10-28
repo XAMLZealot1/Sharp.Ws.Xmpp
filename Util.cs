@@ -1,11 +1,11 @@
-﻿using Sharp.Xmpp.Core;
+﻿using XMPP.Net.Core;
 using System;
 using System.Collections;
 using System.Diagnostics;
 using System.Reflection;
 using System.Xml;
 
-namespace Sharp.Xmpp
+namespace XMPP.Net
 {
     public class TextEventArgs : EventArgs
     {

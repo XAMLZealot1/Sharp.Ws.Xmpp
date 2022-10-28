@@ -1,5 +1,5 @@
-using Sharp.Xmpp.Core;
-using Sharp.Xmpp.Im;
+using XMPP.Net.Core;
+using XMPP.Net.Im;
 using System;
 using System.Collections.Generic;
 using System.Xml;
@@ -7,12 +7,12 @@ using System.Xml;
 using Microsoft.Extensions.Logging;
 
 
-namespace Sharp.Xmpp.Extensions
+namespace XMPP.Net.Extensions
 {
     /// <summary>
     /// Implements the 'CallService' extension used in Rainbow Hub
     /// </summary>
-    internal class CallService : XmppExtension, IInputFilter<Sharp.Xmpp.Im.Message>
+    internal class CallService : XmppExtension, IInputFilter<Im.Message>
     {
         private static readonly ILogger log = LogFactory.CreateLogger<CallService>();
 
@@ -79,7 +79,7 @@ namespace Sharp.Xmpp.Extensions
         /// <param name="stanza">The stanza which has been received.</param>
         /// <returns>true to intercept the stanza or false to pass the stanza
         /// on to the next handler.</returns>
-        public bool Input(Sharp.Xmpp.Im.Message message)
+        public bool Input(Im.Message message)
         {
             if ( (message.Data["callservice"] != null)
                 && (message.Data["callservice"].NamespaceURI == "urn:xmpp:pbxagent:callservice:1") )

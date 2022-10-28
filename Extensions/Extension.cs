@@ -1,4 +1,4 @@
-﻿namespace Sharp.Xmpp.Extensions
+﻿namespace XMPP.Net.Extensions
 {
     /// <summary>
     /// An enumeration of supported XMPP extensions.
@@ -203,6 +203,11 @@
         /// <summary>
         /// An extension added by Rainbow Hub to manage conference
         /// </summary>
-        Conference
+        Conference,
+
+        /// <summary>
+        /// An extension added by Donnie Hyatt to manage OMEMO encryption
+        /// </summary>
+        OMEMO
     }
 }

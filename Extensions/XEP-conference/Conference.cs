@@ -1,4 +1,4 @@
-using Sharp.Xmpp.Im;
+using XMPP.Net.Im;
 using System;
 using System.Collections.Generic;
 
@@ -6,7 +6,7 @@ using Microsoft.Extensions.Logging;
 using System.Xml;
 
 
-namespace Sharp.Xmpp.Extensions
+namespace XMPP.Net.Extensions
 {
     /// <summary>
     /// Implements the 'Conference' extension used in Rainbow Hub
@@ -43,7 +43,7 @@ namespace Sharp.Xmpp.Extensions
         /// <summary>
         /// The event that is raised when a conference has been updated
         /// </summary>
-         public event EventHandler<Sharp.Xmpp.Extensions.MessageEventArgs> ConferenceUpdated;
+         public event EventHandler<MessageEventArgs> ConferenceUpdated;
 
         /// <summary>
         /// Invoked when a message stanza has been received.
@@ -58,7 +58,7 @@ namespace Sharp.Xmpp.Extensions
                 // Do we receive a conference-info message ?
                 if (message.Data["conference-info"] != null)
                 {
-                    ConferenceUpdated.Raise(this, new Sharp.Xmpp.Extensions.MessageEventArgs(message.Data["conference-info"].ToXmlString()));
+                    ConferenceUpdated.Raise(this, new MessageEventArgs(message.Data["conference-info"].ToXmlString()));
                     return true;
                 }
             }

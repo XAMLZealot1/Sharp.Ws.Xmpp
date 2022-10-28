@@ -1,0 +1,26 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net6.0</TargetFramework>
+    <AssemblyName>XMPP.Net</AssemblyName>
+    <Version>2.6.2</Version>
+    <Authors>Christophe Irles</Authors>
+    <Company>ALE International</Company>
+    <Product>Sharp.Ws.Xmpp</Product>
+    <Description>Based on project Sharp.Xmpp, this package allow XMPP features using Web socket
+Several extensions have been added to support Rainbow features (https://openrainbow.com)</Description>
+    <PackageProjectUrl>https://github.com/ALE-Rainbow/Sharp.Xmpp</PackageProjectUrl>
+    <Copyright>ALE International</Copyright>
+    <PackageLicenseUrl>https://github.com/ALE-Rainbow/Sharp.Xmpp/blob/master/License.md</PackageLicenseUrl>
+    <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="6.0.0" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\OMEMO.Net\OMEMO.Net\OMEMO.Net.csproj" />
+  </ItemGroup>
+
+</Project>

@@ -4,7 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace Sharp.Xmpp.Core
+namespace XMPP.Net.Core
 {
     /// <summary>
     /// Provides event about for the connection status.

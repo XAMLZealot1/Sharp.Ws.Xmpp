@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace Sharp.Xmpp.Extensions
+namespace XMPP.Net.Extensions
 {
     /// <summary>
     /// Defines possible values for the information changed
